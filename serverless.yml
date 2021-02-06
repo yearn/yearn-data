@@ -1,0 +1,85 @@
+service: yearn-data
+
+# Create an optimized package for our functions
+package:
+  individually: true
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-offline
+  - serverless-dotenv-plugin # Load .env as environment variables
+  - serverless-domain-manager # Use vaults.finance
+
+custom:
+  customDomain:
+    domainName: ${self:custom.${opt:stage, self:provider.stage}.domain}
+    createRoute53Record: true
+    basePath: ""
+    stage: ${opt:stage, self:provider.stage}
+  dev:
+    domain: dev.vaults.finance
+    jobs-schedule:
+      enabled: false
+  prod:
+    domain: vaults.finance
+    jobs-schedule:
+      enabled: true
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${opt:stage, self:provider.stage}
+  region: us-east-1
+  apiGateway:
+    shouldStartNameWithService: true
+  environment:
+    DDB_VAULTS_CACHE: ${self:service}-${opt:stage, self:provider.stage}-VaultsCache
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DDB_VAULTS_CACHE}"
+
+functions:
+  ping:
+    handler: endpoints/ping.handler
+    events:
+      - http:
+          path: ping
+          method: get
+  all:
+    handler: endpoints/all/endpoint.handler
+    events:
+      - http:
+          path: all
+          method: get
+
+  all-job:
+    timeout: 300
+    handler: endpoints/all/job.handler
+    events:
+      - schedule:
+          rate: rate(10 minutes)
+          enabled: ${self:custom.${self:provider.stage}.jobs-schedule.enabled}
+
+resources:
+  Resources:
+    VaultsCache:
+      Type: "AWS::DynamoDB::Table"
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: address
+            AttributeType: S
+        KeySchema:
+          - AttributeName: address
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
+        TableName: ${self:provider.environment.DDB_VAULTS_CACHE}
