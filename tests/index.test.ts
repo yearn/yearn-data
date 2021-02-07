@@ -1,6 +1,6 @@
-import { handler } from "../endpoints/ping";
+import { handler } from "../endpoints/index";
 
-test("hello", async () => {
+test("index", async () => {
   const event = "event";
   const context = "context";
   const callback = (_, response) => {

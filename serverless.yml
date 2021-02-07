@@ -9,6 +9,7 @@ plugins:
   - serverless-offline
   - serverless-dotenv-plugin # Load .env as environment variables
   - serverless-domain-manager # Use vaults.finance
+  - serverless-api-gateway-caching
 
 custom:
   customDomain:
@@ -16,6 +17,9 @@ custom:
     createRoute53Record: true
     basePath: ""
     stage: ${opt:stage, self:provider.stage}
+  apiGatewayCaching:
+    enabled: true
+    ttlInSeconds: 600
   dev:
     domain: dev.vaults.finance
     jobs-schedule:
@@ -48,22 +52,33 @@ provider:
       Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DDB_VAULTS_CACHE}"
 
 functions:
-  ping:
-    handler: endpoints/ping.handler
+  index:
+    handler: endpoints/index.handler
     events:
       - http:
-          path: ping
+          path: /
           method: get
+          caching:
+            enabled: true
   all:
-    handler: endpoints/all/endpoint.handler
+    handler: endpoints/all.handler
     events:
       - http:
           path: all
           method: get
-
-  all-job:
+          caching:
+            enabled: true
+  integrations-coingecko-pools:
+    handler: endpoints/integrations/coingecko/pools.handler
+    events:
+      - http:
+          path: integrations/coingecko/pools
+          method: get
+          caching:
+            enabled: true
+  job-vaults:
     timeout: 300
-    handler: endpoints/all/job.handler
+    handler: jobs/vaults.handler
     events:
       - schedule:
           rate: rate(10 minutes)
