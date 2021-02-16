@@ -13,7 +13,8 @@ type CoinPrices = { [address: string]: { usd: number } }; // CoinGecko ids
 function filter(vault: CachedVault) {
   return (
     vault.apy &&
-    vault.apy.oneMonthSample &&
+    vault.apy.data &&
+    vault.apy.data.oneMonthSample &&
     vault.type === "v2" &&
     vault.endorsed &&
     vault.tvl &&
@@ -42,7 +43,10 @@ export const handler = wrap(async () => {
   return vaults.map((vault) => ({
     identifier: vault.displayName ?? vault.name,
     apy:
-      vault.apy && vault.apy.oneMonthSample && vault.apy.oneMonthSample * 100,
+      vault.apy &&
+      vault.apy.data &&
+      vault.apy.data.oneMonthSample &&
+      Number(vault.apy.data.oneMonthSample) * 100,
     liquidity_locked: new BigNumber(vault.tvl ?? 0)
       .multipliedBy(prices[vault.token.address.toLowerCase()].usd)
       .toNumber(),

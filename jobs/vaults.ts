@@ -1,4 +1,4 @@
-import * as yearn from "@yfi/sdk";
+import { Context, data, protocols } from "@yfi/sdk";
 import { providers } from "ethers";
 import * as plimit from "p-limit";
 
@@ -11,11 +11,11 @@ const limit = plimit(2);
 
 const VaultsCache = process.env.DDB_VAULTS_CACHE!;
 
-export type FetchedVault = yearn.vault.Vault & {
+export type FetchedVault = protocols.yearn.vault.Vault & {
   endorsed?: boolean;
 };
 
-export type CachedToken = yearn.vault.Token & {
+export type CachedToken = protocols.yearn.vault.Token & {
   displayName: string;
   icon: string | null;
 };
@@ -23,7 +23,7 @@ export type CachedToken = yearn.vault.Token & {
 export type CachedVault = FetchedVault & {
   displayName: string;
   icon: string | null;
-  apy: yearn.vault.VaultApy | null;
+  apy: protocols.Apy | null;
   tvl: number | null;
   token: CachedToken;
   updated: number;
@@ -31,10 +31,10 @@ export type CachedVault = FetchedVault & {
 
 // FetchAllVaults with a batch call to all the available addresses for each
 // version. Extracting name, symbol, decimals and the token address.
-async function fetchAllVaults(ctx: yearn.Context): Promise<FetchedVault[]> {
-  let v1Addresses = await yearn.vault.fetchV1Addresses(ctx);
-  let v2Addresses = await yearn.vault.fetchV2Addresses(ctx);
-  const v2ExperimentalAddresses = await yearn.vault.fetchV2ExperimentalAddresses(
+async function fetchAllVaults(ctx: Context): Promise<FetchedVault[]> {
+  let v1Addresses = await protocols.yearn.vault.fetchV1Addresses(ctx);
+  let v2Addresses = await protocols.yearn.vault.fetchV2Addresses(ctx);
+  const v2ExperimentalAddresses = await protocols.yearn.vault.fetchV2ExperimentalAddresses(
     ctx
   );
 
@@ -55,13 +55,13 @@ async function fetchAllVaults(ctx: yearn.Context): Promise<FetchedVault[]> {
     v1Addresses
       .map<Promise<FetchedVault>>((address) =>
         limit(async () => {
-          return await yearn.vault.resolveV1(address, ctx);
+          return await protocols.yearn.vault.resolveV1(address, ctx);
         })
       )
       .concat(
         v2Addresses.map((address) =>
           limit(async () => {
-            const vault = await yearn.vault.resolveV2(address, ctx);
+            const vault = await protocols.yearn.vault.resolveV2(address, ctx);
             return { ...vault, endorsed: true };
           })
         )
@@ -69,7 +69,7 @@ async function fetchAllVaults(ctx: yearn.Context): Promise<FetchedVault[]> {
       .concat(
         v2ExperimentalAddresses.map((address) =>
           limit(async () => {
-            const vault = await yearn.vault.resolveV2(address, ctx);
+            const vault = await protocols.yearn.vault.resolveV2(address, ctx);
             return { ...vault, endorsed: false };
           })
         )
@@ -85,7 +85,7 @@ export const handler = wrap(async () => {
     "homestead"
   );
   const etherscan = process.env.ETHERSCAN_API_KEY;
-  const ctx = new yearn.Context({ provider, etherscan });
+  const ctx = new Context({ provider, etherscan });
 
   const vaults = (await fetchAllVaults(ctx)) as CachedVault[];
 
@@ -95,7 +95,7 @@ export const handler = wrap(async () => {
     vaults.map((vault) =>
       limit(async () => {
         try {
-          vault.apy = await yearn.vault.calculateApy(vault, ctx);
+          vault.apy = await protocols.yearn.vault.calculateApy(vault, ctx);
         } catch (err) {
           console.error(vault, err);
           vault.apy = null;
@@ -111,7 +111,7 @@ export const handler = wrap(async () => {
       limit(async () => {
         if (vault.type === "v2") {
           try {
-            vault.tvl = await yearn.vault.calculateTvlV2(vault, ctx);
+            vault.tvl = await protocols.yearn.vault.calculateTvlV2(vault, ctx);
           } catch (err) {
             console.error(vault, err);
             vault.tvl = null;
@@ -125,8 +125,8 @@ export const handler = wrap(async () => {
 
   console.log("Injecting assets in all vaults");
 
-  const assets = await yearn.data.assets.fetchAssets();
-  const aliases = await yearn.data.assets.fetchAliases();
+  const assets = await data.assets.fetchAssets();
+  const aliases = await data.assets.fetchAliases();
 
   for (const vault of vaults) {
     const alias = aliases[vault.token.address];
