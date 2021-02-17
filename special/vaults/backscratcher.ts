@@ -1,13 +1,12 @@
 import { Context } from "@yfi/sdk";
-import { vault } from "@yfi/sdk/dist/protocols/yearn";
 import { ethers } from "ethers";
 import fetch from "node-fetch";
 
 import { Vault } from "../../interfaces/vaults";
-import CurveRewardDistributionAbi from "../../static/abi/curve.reward.distribution.abi.json";
-import CurveSwapAbi from "../../static/abi/curve.swap.abi.json";
-import CurveVotingEscrowAbi from "../../static/abi/curve.voting.escrow.abi.json";
-import veCurveVaultAbi from "../../static/abi/ve.curve.vault.abi.json";
+import * as CurveRewardDistributionAbi from "../../static/abi/curve.reward.distribution.abi.json";
+import * as CurveSwapAbi from "../../static/abi/curve.swap.abi.json";
+import * as CurveVotingEscrowAbi from "../../static/abi/curve.voting.escrow.abi.json";
+import * as veCurveVaultAbi from "../../static/abi/ve.curve.vault.abi.json";
 
 const BackScratcherMetadata: Vault = {
   token: {
@@ -20,15 +19,9 @@ const BackScratcherMetadata: Vault = {
   apy: {
     recommended: 0.5,
     composite: true,
-    description: "Pool APY + Boosted CRV APY",
+    description: "yveCRV Admin Fees",
     type: "curve",
-    data: {
-      // currentBoost: 1.62,
-      // boostedApy: 0.873,
-      // totalApy: 0.873,
-      // poolApy: 0.5395,
-      // baseApy: 0.5395,
-    },
+    data: {},
   },
   address: "0xc5bDdf9843308380375a611c18B50Fb9341f502A",
   strategies: [],
