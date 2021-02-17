@@ -76,6 +76,14 @@ functions:
           method: get
           caching:
             enabled: true
+  integrations-cream-tvl:
+    handler: endpoints/integrations/cream/tvl.handler
+    events:
+      - http:
+          path: integrations/cream/tvl
+          method: get
+          caching:
+            enabled: true
   job-vaults:
     timeout: 300
     handler: jobs/vaults.handler
