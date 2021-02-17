@@ -84,6 +84,14 @@ functions:
           method: get
           caching:
             enabled: true
+  tvlV2:
+    handler: endpoints/tvlV2.handler
+    events:
+      - http:
+          path: tvlV2
+          method: get
+          caching:
+            enabled: true
   job-vaults:
     timeout: 300
     handler: jobs/vaults.handler
