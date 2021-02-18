@@ -85,10 +85,10 @@ functions:
           caching:
             enabled: true
   integrations-cream-tvl:
-    handler: endpoints/integrations/cream/tvl.handler
+    handler: endpoints/integrations/cream/ironbank/tvl.handler
     events:
       - http:
-          path: integrations/cream/tvl
+          path: integrations/cream/ironbank/tvl
           method: get
           caching:
             enabled: true

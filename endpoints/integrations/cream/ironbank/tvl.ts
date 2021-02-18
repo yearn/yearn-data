@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
 
-import wrap from "../../../utils/wrap";
+import wrap from "../../../../utils/wrap";
 
 const CreamApiURL =
   "https://api.cream.finance/api/v1/crtoken?comptroller=ironbank";
