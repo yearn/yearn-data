@@ -1,4 +1,4 @@
-import { Context, data, protocols } from "@yfi/sdk";
+import { Context, data, yearn } from "@yfi/sdk";
 import { providers } from "ethers";
 import * as plimit from "p-limit";
 
@@ -16,9 +16,9 @@ const VaultsCache = process.env.DDB_VAULTS_CACHE!;
 // FetchAllVaults with a batch call to all the available addresses for each
 // version. Extracting name, symbol, decimals and the token address.
 async function fetchAllVaults(ctx: Context): Promise<PartialVaults[]> {
-  let v1Addresses = await protocols.yearn.vault.fetchV1Addresses(ctx);
-  let v2Addresses = await protocols.yearn.vault.fetchV2Addresses(ctx);
-  const v2ExperimentalAddresses = await protocols.yearn.vault.fetchV2ExperimentalAddresses(
+  let v1Addresses = await yearn.vault.fetchV1Addresses(ctx);
+  let v2Addresses = await yearn.vault.fetchV2Addresses(ctx);
+  const v2ExperimentalAddresses = await yearn.vault.fetchV2ExperimentalAddresses(
     ctx
   );
 
@@ -39,13 +39,13 @@ async function fetchAllVaults(ctx: Context): Promise<PartialVaults[]> {
     v1Addresses
       .map<Promise<PartialVaults>>((address) =>
         limit(async () => {
-          return await protocols.yearn.vault.resolveV1(address, ctx);
+          return await yearn.vault.resolveV1(address, ctx);
         })
       )
       .concat(
         v2Addresses.map((address) =>
           limit(async () => {
-            const vault = await protocols.yearn.vault.resolveV2(address, ctx);
+            const vault = await yearn.vault.resolveV2(address, ctx);
             return { ...vault, endorsed: true };
           })
         )
@@ -53,7 +53,7 @@ async function fetchAllVaults(ctx: Context): Promise<PartialVaults[]> {
       .concat(
         v2ExperimentalAddresses.map((address) =>
           limit(async () => {
-            const vault = await protocols.yearn.vault.resolveV2(address, ctx);
+            const vault = await yearn.vault.resolveV2(address, ctx);
             return { ...vault, endorsed: false };
           })
         )
@@ -79,7 +79,7 @@ export const handler = wrap(async () => {
     vaults.map((vault) =>
       limit(async () => {
         try {
-          vault.apy = await protocols.yearn.vault.calculateApy(vault, ctx);
+          vault.apy = await yearn.vault.apy.calculate(vault, ctx);
         } catch (err) {
           console.error(vault, err);
           vault.apy = null;
@@ -99,7 +99,7 @@ export const handler = wrap(async () => {
       limit(async () => {
         if (vault.type === "v2") {
           try {
-            vault.tvl = await protocols.yearn.vault.calculateTvlV2(vault, ctx);
+            vault.tvl = await yearn.vault.calculateTvlV2(vault, ctx);
           } catch (err) {
             console.error(vault, err);
             vault.tvl = null;

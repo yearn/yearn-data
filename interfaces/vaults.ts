@@ -1,14 +1,14 @@
-import { protocols } from "@yfi/sdk";
+import { Apy,yearn } from "@yfi/sdk";
 
-export type PartialVaults = protocols.yearn.vault.Vault & {
+export type PartialVaults = yearn.vault.Vault & {
   endorsed?: boolean;
 };
 
 export type Vault = PartialVaults & {
-  apy: protocols.Apy | null;
+  apy: Apy | null;
 };
 
-export type CachedToken = WithAssets<protocols.yearn.vault.Token>;
+export type CachedToken = WithAssets<yearn.vault.Token>;
 
 export type CachedVault = WithAssets<Vault> & {
   token: CachedToken;
