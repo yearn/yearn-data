@@ -68,6 +68,14 @@ functions:
           method: get
           caching:
             enabled: true
+  tvl-v2:
+    handler: endpoints/tvl/v2.handler
+    events:
+      - http:
+          path: tvl/v2
+          method: get
+          caching:
+            enabled: true
   integrations-coingecko-pools:
     handler: endpoints/integrations/coingecko/pools.handler
     events:
@@ -81,14 +89,6 @@ functions:
     events:
       - http:
           path: integrations/cream/tvl
-          method: get
-          caching:
-            enabled: true
-  tvlV2:
-    handler: endpoints/tvlV2.handler
-    events:
-      - http:
-          path: tvlV2
           method: get
           caching:
             enabled: true

@@ -1,9 +1,9 @@
 import BigNumber from "bignumber.js";
 import fetch from "node-fetch";
 
-import { CachedVault } from "../jobs/vaults";
-import { scan } from "../utils/ddb";
-import wrap from "../utils/wrap";
+import { CachedVault } from "../../interfaces/vaults";
+import { scan } from "../../utils/ddb";
+import wrap from "../../utils/wrap";
 
 const CoinGeckoApiURL = "https://api.coingecko.com/api/v3";
 const VaultsCache = process.env.DDB_VAULTS_CACHE!;
@@ -37,12 +37,14 @@ export const handler = wrap(async () => {
     (vault) => !!prices[vault.token.address.toLowerCase()]
   );
 
-  return vaults.reduce(
-    (r: number, vault) =>
-      r +
+  const tvl = vaults.reduce(
+    (value: number, vault) =>
+      value +
       new BigNumber(vault.tvl ?? 0)
         .multipliedBy(prices[vault.token.address.toLowerCase()].usd)
         .toNumber(),
     0
   );
+
+  return { tvl };
 });
