@@ -87,7 +87,5 @@ export async function backscratcher(ctx: Context): Promise<Vault> {
   const vault = { ...BackScratcherMetadata };
   if (vault.apy) vault.apy.data = data;
 
-  console.log(vault);
-
   return BackScratcherMetadata;
 }

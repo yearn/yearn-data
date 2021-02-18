@@ -1365,10 +1365,10 @@
     "@typescript-eslint/types" "4.14.2"
     eslint-visitor-keys "^2.0.0"
 
-"@yfi/sdk@^0.0.15":
-  version "0.0.15"
-  resolved "https://registry.yarnpkg.com/@yfi/sdk/-/sdk-0.0.15.tgz#a54debbffa72053a49784c4751a784af130facb7"
-  integrity sha512-ujgS3wCZAf8KNDOJXEi3S19jTzBNp4s5k6A+gBYwRHN0Hdqc4pvfA5ZX5ElJY4WJieQTF8I+Vn0DbESQodyL/Q==
+"@yfi/sdk@^0.0.16":
+  version "0.0.16"
+  resolved "https://registry.yarnpkg.com/@yfi/sdk/-/sdk-0.0.16.tgz#a2ee427c21beca081302a89fe2c597134f6e50b6"
+  integrity sha512-w95elwQZoYkuudIfUIaVEexwmsLGa5OOPVVdbWUWMqqtwUTb1wRO4prZGpFGXw09cPRI74dS/MPVIQ5kWbicEA==
   dependencies:
     bignumber.js "^9.0.1"
     fromentries "^1.3.2"
