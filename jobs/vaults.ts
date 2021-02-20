@@ -131,7 +131,7 @@ export const handler = wrap(async () => {
   for (const vault of vaults) {
     vault.updated = timestamp;
   }
-
+  
   await batchSet(VaultsCache, vaults);
 
   return {
