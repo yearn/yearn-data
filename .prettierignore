@@ -1,2 +1,4 @@
 .serverless
-.build
+.webpack
+
+lib/sdk/contracts

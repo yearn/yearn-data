@@ -1,4 +1,5 @@
 {
+  "extends": "./tsconfig.paths.json",
   "compilerOptions": {
     "preserveConstEnums": true,
     "strictNullChecks": true,
@@ -8,7 +9,16 @@
     "outDir": ".build",
     "moduleResolution": "node",
     "resolveJsonModule": true,
+    "esModuleInterop": true,
     "lib": ["es2019", "DOM"],
     "rootDir": "."
-  }
+  },
+  "include": ["**/*.ts"],
+  "exclude": [
+    "node_modules/**/*",
+    ".serverless/**/*",
+    ".webpack/**/*",
+    "_warmup/**/*",
+    ".vscode/**/*"
+  ]
 }

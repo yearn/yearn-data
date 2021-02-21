@@ -1,7 +1,7 @@
 import BigNumber from "bignumber.js";
 import fetch from "node-fetch";
 
-import { CachedVault } from "../../interfaces/vaults";
+import { CachedVault } from "../../lib/interfaces/vaults";
 import { scan } from "../../utils/ddb";
 import wrap from "../../utils/wrap";
 

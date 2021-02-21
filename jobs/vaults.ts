@@ -1,10 +1,10 @@
-import { Context, data, yearn } from "@yfi/sdk";
 import { providers } from "ethers";
-import * as plimit from "p-limit";
+import plimit from "p-limit";
 
-import { CachedVault, PartialVaults } from "../interfaces/vaults";
-import { backscratcher } from "../special/vaults/backscratcher";
-import * as excluded from "../static/vaults/excluded.json";
+import { CachedVault, PartialVaults } from "../lib/interfaces/vaults";
+import { Context, data, yearn } from "../lib/sdk";
+import { backscratcher } from "../lib/special/vaults/backscratcher";
+import excluded from "../static/vaults/excluded.json";
 import { batchSet } from "../utils/ddb";
 import unix from "../utils/timestamp";
 import wrap from "../utils/wrap";
@@ -65,7 +65,7 @@ async function fetchAllVaults(ctx: Context): Promise<PartialVaults[]> {
 
 export const handler = wrap(async () => {
   const provider = new providers.WebSocketProvider(
-    process.env.WEB3_PROVIDER!,
+    process.env.WEB3_PROVIDER_WSS!,
     "homestead"
   );
   const etherscan = process.env.ETHERSCAN_API_KEY;
@@ -131,7 +131,7 @@ export const handler = wrap(async () => {
   for (const vault of vaults) {
     vault.updated = timestamp;
   }
-  
+
   await batchSet(VaultsCache, vaults);
 
   return {

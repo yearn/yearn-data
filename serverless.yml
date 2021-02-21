@@ -5,7 +5,7 @@ package:
   individually: true
 
 plugins:
-  - serverless-plugin-typescript
+  - serverless-webpack
   - serverless-offline
   - serverless-dotenv-plugin # Load .env as environment variables
   - serverless-domain-manager # Use vaults.finance
@@ -17,6 +17,9 @@ custom:
     createRoute53Record: true
     basePath: ""
     stage: ${opt:stage, self:provider.stage}
+  webpack:
+    webpackConfig: webpack.config.js
+    includeModules: true
   apiGatewayCaching:
     enabled: true
     ttlInSeconds: 600
@@ -34,22 +37,25 @@ provider:
   runtime: nodejs12.x
   stage: ${opt:stage, 'dev'}
   region: us-east-1
+  lambdaHashingVersion: 20201221
   apiGateway:
     shouldStartNameWithService: true
   environment:
     DDB_VAULTS_CACHE: ${self:service}-${opt:stage, self:provider.stage}-VaultsCache
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-        - dynamodb:BatchGetItem
-        - dynamodb:BatchWriteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DDB_VAULTS_CACHE}"
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+            - dynamodb:BatchGetItem
+            - dynamodb:BatchWriteItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DDB_VAULTS_CACHE}"
 
 functions:
   index:

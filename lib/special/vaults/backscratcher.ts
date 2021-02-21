@@ -1,12 +1,12 @@
-import { Context } from "@yfi/sdk";
 import { ethers } from "ethers";
+import { Context } from "lib/sdk";
 import fetch from "node-fetch";
 
+import CurveRewardDistributionAbi from "../../../static/abi/curve.reward.distribution.abi.json";
+import CurveSwapAbi from "../../../static/abi/curve.swap.abi.json";
+import CurveVotingEscrowAbi from "../../../static/abi/curve.voting.escrow.abi.json";
+import veCurveVaultAbi from "../../../static/abi/ve.curve.vault.abi.json";
 import { Vault } from "../../interfaces/vaults";
-import * as CurveRewardDistributionAbi from "../../static/abi/curve.reward.distribution.abi.json";
-import * as CurveSwapAbi from "../../static/abi/curve.swap.abi.json";
-import * as CurveVotingEscrowAbi from "../../static/abi/curve.voting.escrow.abi.json";
-import * as veCurveVaultAbi from "../../static/abi/ve.curve.vault.abi.json";
 
 const BackScratcherMetadata: Vault = {
   token: {
