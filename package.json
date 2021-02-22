@@ -44,8 +44,10 @@
     "bignumber.js": "^9.0.1",
     "ethers": "^5.0.29",
     "fromentries": "^1.3.2",
+    "ms": "^2.1.3",
     "node-fetch": "^2.6.1",
     "p-limit": "^3.1.0",
-    "p-throttle": "^4.1.0"
+    "p-throttle": "^4.1.0",
+    "semver": "^7.3.4"
   }
 }
