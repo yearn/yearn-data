@@ -1,9 +1,8 @@
+import { DDBVaultsCache } from "../settings/env";
 import { scan } from "../utils/ddb";
 import wrap from "../utils/wrap";
 
-const VaultsCache = process.env.DDB_VAULTS_CACHE!;
-
 export const handler = wrap(async () => {
-  const cached = await scan(VaultsCache);
+  const cached = await scan(DDBVaultsCache);
   return cached;
 });

@@ -1,4 +1,4 @@
-import { Apy, yearn } from "../sdk";
+import { Apy, yearn } from "..";
 
 export type PartialVaults = yearn.vault.Vault & {
   endorsed?: boolean;

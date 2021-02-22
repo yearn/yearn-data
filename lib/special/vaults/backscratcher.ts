@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { Context } from "lib/sdk";
+import { Context } from "lib";
 import fetch from "node-fetch";
 
 import CurveRewardDistributionAbi from "../../../static/abi/curve.reward.distribution.abi.json";

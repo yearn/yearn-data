@@ -7,8 +7,8 @@
   "main": "handler.js",
   "scripts": {
     "test": "jest",
-    "abi": "typechain --target ethers-v5 --outDir lib/sdk/contracts \"abi/compressed/**/*.json\"",
-    "abi:dev": "typechain --target ethers-v5 --outDir lib/sdk/contracts \"abi/full/**/*.json\""
+    "abi": "typechain --target ethers-v5 --outDir lib/contracts \"abi/compressed/**/*.json\"",
+    "abi:dev": "typechain --target ethers-v5 --outDir lib/contracts \"abi/full/**/*.json\""
   },
   "repository": {
     "type": "git",

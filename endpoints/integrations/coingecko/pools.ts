@@ -2,11 +2,11 @@ import BigNumber from "bignumber.js";
 import fetch from "node-fetch";
 
 import { CachedVault } from "../../../lib/interfaces/vaults";
+import { DDBVaultsCache } from "../../../settings/env";
 import { scan } from "../../../utils/ddb";
 import wrap from "../../../utils/wrap";
 
 const CoinGeckoApiURL = "https://api.coingecko.com/api/v3";
-const VaultsCache = process.env.DDB_VAULTS_CACHE!;
 
 type CoinPrices = { [address: string]: { usd: number } }; // CoinGecko ids
 
@@ -23,7 +23,7 @@ function filter(vault: CachedVault) {
 }
 
 export const handler = wrap(async () => {
-  const cached = await scan<CachedVault>(VaultsCache);
+  const cached = await scan<CachedVault>(DDBVaultsCache);
 
   let vaults = cached.filter(filter);
 

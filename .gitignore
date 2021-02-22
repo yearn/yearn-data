@@ -4,4 +4,4 @@ node_modules
 .build
 .env
 
-lib/sdk/contracts
+lib/contracts

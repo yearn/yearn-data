@@ -9,17 +9,17 @@ plugins:
   - serverless-offline
   - serverless-dotenv-plugin # Load .env as environment variables
   - serverless-domain-manager # Use vaults.finance
-  - serverless-api-gateway-caching
+  - serverless-api-gateway-caching # Cache api responses
 
 custom:
+  webpack:
+    webpackConfig: webpack.config.js
+    includeModules: true
   customDomain:
     domainName: ${self:custom.${opt:stage, self:provider.stage}.domain}
     createRoute53Record: true
     basePath: ""
     stage: ${opt:stage, self:provider.stage}
-  webpack:
-    webpackConfig: webpack.config.js
-    includeModules: true
   apiGatewayCaching:
     enabled: true
     ttlInSeconds: 600

@@ -2,10 +2,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@contracts/*": ["lib/sdk/contracts/*"],
-      "@data/*": ["lib/sdk/data/*"],
-      "@protocols/*": ["lib/sdk/protocols/*"],
-      "@utils/*": ["lib/sdk/utils/*"]
+      "@contracts/*": ["lib/contracts/*"],
+      "@data/*": ["lib/data/*"],
+      "@protocols/*": ["lib/protocols/*"],
+      "@utils/*": ["lib/utils/*"]
     }
   }
 }

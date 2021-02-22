@@ -1,17 +1,16 @@
 import { providers } from "ethers";
 import plimit from "p-limit";
+import { DDBVaultsCache, EtherscanApiKey, Web3ProviderWss } from "settings/env";
 
+import { Context, data, yearn } from "../lib";
 import { CachedVault, PartialVaults } from "../lib/interfaces/vaults";
-import { Context, data, yearn } from "../lib/sdk";
 import { backscratcher } from "../lib/special/vaults/backscratcher";
+import { unix } from "../lib/utils/time";
 import excluded from "../static/vaults/excluded.json";
 import { batchSet } from "../utils/ddb";
-import unix from "../utils/timestamp";
 import wrap from "../utils/wrap";
 
 const limit = plimit(2);
-
-const VaultsCache = process.env.DDB_VAULTS_CACHE!;
 
 // FetchAllVaults with a batch call to all the available addresses for each
 // version. Extracting name, symbol, decimals and the token address.
@@ -65,10 +64,10 @@ async function fetchAllVaults(ctx: Context): Promise<PartialVaults[]> {
 
 export const handler = wrap(async () => {
   const provider = new providers.WebSocketProvider(
-    process.env.WEB3_PROVIDER_WSS!,
+    Web3ProviderWss,
     "homestead"
   );
-  const etherscan = process.env.ETHERSCAN_API_KEY;
+  const etherscan = EtherscanApiKey;
   const ctx = new Context({ provider, etherscan });
 
   const vaults = (await fetchAllVaults(ctx)) as CachedVault[];
@@ -132,7 +131,7 @@ export const handler = wrap(async () => {
     vault.updated = timestamp;
   }
 
-  await batchSet(VaultsCache, vaults);
+  await batchSet(DDBVaultsCache, vaults);
 
   return {
     message: "Job executed correctly",
