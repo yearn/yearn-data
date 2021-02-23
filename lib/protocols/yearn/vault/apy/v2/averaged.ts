@@ -33,27 +33,60 @@ export async function calculateAveraged(
       composite: false,
       type: "error",
       description: "no harvests",
-      data: { oneMonthSample: null, inceptionSample: null },
+      data: {
+        oneWeekSample: null,
+        oneMonthSample: null,
+        inceptionSample: null,
+        grossApy: null,
+        netApy: null,
+        performanceFee: null,
+        managementFee: null,
+      },
     };
   }
+
   const latest = await fetchLatestBlock(ctx);
   const inception = await createTimedBlock(harvests[2], ctx);
+  const oneWeek = await estimateBlockPrecise(
+    latest.timestamp - seconds("1 week"),
+    ctx
+  );
   const oneMonth = await estimateBlockPrecise(
     latest.timestamp - seconds("4 weeks"),
     ctx
   );
-  const data = await calculateFromPps(
+  const ppsSampleData = await calculateFromPps(
     latest.block,
     inception.block,
-    { oneMonthSample: oneMonth, inceptionSample: inception.block },
+    {
+      oneWeekSample: oneWeek,
+      oneMonthSample: oneMonth,
+      inceptionSample: inception.block,
+    },
     contract.pricePerShare
   );
+
+  const netApy =
+    Math.max(ppsSampleData.oneMonthSample, ppsSampleData.oneWeekSample) || 0;
+  const v2PerformanceFee = (vault.performanceFee * 2) / 10000;
+  const v2ManagementFee = vault.managementFee / 10000;
+  const grossApy = netApy / (1 - v2PerformanceFee) + v2ManagementFee;
+
+  const data = {
+    ...ppsSampleData,
+    grossApy,
+    netApy,
+    performanceFee: v2PerformanceFee,
+    managementFee: v2ManagementFee,
+  };
+
   const apy = {
-    recommended: data.oneMonthSample || 0,
+    recommended: grossApy,
     type: "pricePerShareV2OneMonth",
     composite: false,
     description: "Price per share - One month sample",
     data,
   };
+
   return apy;
 }

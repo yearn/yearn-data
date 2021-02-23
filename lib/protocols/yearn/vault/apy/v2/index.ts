@@ -9,7 +9,7 @@ import { calculateSimple } from "./simple";
 export async function calculate(vault: VaultV2, ctx: Context): Promise<Apy> {
   const isCurveVault = await curve.hasCurvePool(vault.token.address, ctx);
   if (isCurveVault) {
-    return await curve.calculateApy(vault.token.address, ctx);
+    return await curve.calculateApy(vault, ctx);
   } else if (shouldBeAveraged(vault)) {
     return await calculateAveraged(vault, ctx);
   }

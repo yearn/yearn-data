@@ -43,9 +43,21 @@ export async function resolveV2(
 ): Promise<VaultV2> {
   const basic = await resolveBasic(address, ctx);
   const vault = VaultV2Contract__factory.connect(address, ctx.provider);
+  const performanceFee = vault
+    .performanceFee()
+    .catch(() => vault.performanceFee().catch(() => undefined))
+    .then((val) => val && val.toNumber());
+
+  const managementFee = vault
+    .managementFee()
+    .catch(() => vault.managementFee().catch(() => undefined))
+    .then((val) => val && val.toNumber());
+
   const structure = {
     emergencyShutdown: vault.emergencyShutdown(),
     apiVersion: vault.apiVersion(),
+    performanceFee,
+    managementFee,
   };
   const specific = await objectAll(structure);
 

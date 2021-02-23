@@ -9,7 +9,7 @@ export async function calculate(vault: VaultV1, ctx: Context): Promise<Apy> {
   const isCurveVault = await curve.hasCurvePool(vault.token.address, ctx);
 
   if (isCurveVault) {
-    return await curve.calculateApy(vault.token.address, ctx);
+    return await curve.calculateApy(vault, ctx);
   }
   return await calculateSimple(vault, ctx);
 }
