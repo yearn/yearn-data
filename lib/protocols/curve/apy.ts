@@ -17,7 +17,7 @@ const CurveRegistryAddress = "0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c";
 const CrvAddress = "0xD533a949740bb3306d119CC777fa900bA034cd52";
 
 const WbtcAddress = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
-const RenBtcAddress = "0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D";
+const RenBtcAddress = "0xEB4C278feeDenominatorebA804CE9a9803C67d0893436bB27D";
 const SBtcAddress = "0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6";
 const SEthAddress = "0x5e74C9036fb86BD7eCdcb084a0673EFc32eA31cb";
 
@@ -145,37 +145,61 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     .pow(365 - 1)
     .minus(1);
 
-  const keepCrv = vault.type === "v1" ? vault.fees.keepCRV / 1e4 : 0;
-
-  const managementFee =
-    vault.type === "v2" ? vault.fees.managementFee / 1e4 : 0;
-
-  const otherFees =
-    vault.type === "v1"
-      ? vault.fees.strategistReward + vault.fees.treasuryFee
-      : 0;
-
-  const totalPerformanceFees =
-    (vault.fees.performanceFee * 3 + otherFees) / 1e4;
-
-  const netApy = boostedApy
-    .times(1 - keepCrv)
-    .plus(poolApy)
-    .times(1 - totalPerformanceFees)
-    .minus(managementFee)
-    .plus(poolApy);
-
   const totalApy = boostedApy.plus(poolApy).toNumber();
-  const data = {
-    baseApy: baseApy.toNumber(),
-    currentBoost: currentBoost.toNumber(),
-    boostedApy: boostedApy.toNumber(),
-    poolApy: poolApy.toNumber(),
-    netApy: netApy.toNumber(),
-    keepCrv,
-    totalPerformanceFees,
-    totalApy,
-  };
+
+  const feeDenominator = 1e4;
+
+  let data;
+  if (vault.type === "v1") {
+    const keepCrv = vault.fees.special.keepCrv ?? 0 / feeDenominator;
+    const performanceFee = vault.fees.general.performanceFee / feeDenominator;
+    const managementFee = 0;
+    const other =
+      (vault.fees.general.strategistReward + vault.fees.general.treasuryFee) /
+      feeDenominator;
+    const totalPerformanceFee = performanceFee + other;
+
+    const netApy = boostedApy
+      .times(1 - keepCrv)
+      .plus(poolApy)
+      .times(1 - totalPerformanceFee)
+      .minus(managementFee)
+      .plus(poolApy);
+
+    data = {
+      baseApy: baseApy.toNumber(),
+      currentBoost: currentBoost.toNumber(),
+      boostedApy: boostedApy.toNumber(),
+      poolApy: poolApy.toNumber(),
+      netApy: netApy.toNumber(),
+      keepCrv,
+      totalPerformanceFee,
+      totalApy,
+    };
+  } else if (vault.type === "v2") {
+    const keepCrv = vault.fees.special.keepCrv ?? 0;
+    const performanceFee = vault.fees.general.performanceFee / feeDenominator;
+    const managementFee = vault.fees.general.managementFee / feeDenominator;
+    const totalPerformanceFee = performanceFee * 2;
+
+    const netApy = boostedApy
+      .times(1 - keepCrv)
+      .plus(poolApy)
+      .times(1 - totalPerformanceFee)
+      .minus(managementFee)
+      .plus(poolApy);
+
+    data = {
+      baseApy: baseApy.toNumber(),
+      currentBoost: currentBoost.toNumber(),
+      boostedApy: boostedApy.toNumber(),
+      poolApy: poolApy.toNumber(),
+      netApy: netApy.toNumber(),
+      keepCrv,
+      totalPerformanceFee,
+      totalApy,
+    };
+  }
 
   const apy = {
     recommended: totalApy,
@@ -184,5 +208,6 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     description: "Pool APY + Boosted CRV APY",
     data,
   };
+
   return apy;
 }

@@ -7,7 +7,13 @@ import { Context } from "@data/context";
 import { NullAddress } from "@utils/constants";
 import { objectAll } from "@utils/promise";
 
-import { FeesV2, Strategy, VaultV2 } from "../interfaces";
+import {
+  FeesV2,
+  GeneralFeesV2,
+  SpecialFeesV2,
+  Strategy,
+  VaultV2,
+} from "../interfaces";
 import { resolveBasic } from "./common";
 
 export async function resolveStrategyV2(
@@ -15,12 +21,9 @@ export async function resolveStrategyV2(
   ctx: Context
 ): Promise<Strategy> {
   const strategy = StrategyV2Contract__factory.connect(address, ctx.provider);
-  const structure = {
-    name: strategy.name(),
-  };
-  const result = await objectAll(structure);
+  const name = await strategy.name();
   return {
-    ...result,
+    name,
     address,
   };
 }
@@ -39,6 +42,7 @@ export async function resolveTagsV2(
 
 export async function resolveFeesV2(
   address: string,
+  strategyAddresses: string[],
   ctx: Context
 ): Promise<FeesV2> {
   const vault = VaultV2Contract__factory.connect(address, ctx.provider);
@@ -51,7 +55,41 @@ export async function resolveFeesV2(
     .managementFee()
     .then((val) => val && val.toNumber())
     .catch(() => performanceFee);
-  return { performanceFee, managementFee };
+
+  const general = { performanceFee, managementFee };
+
+  if (strategyAddresses.length > 1) {
+    return { general, special: {} };
+  }
+
+  const [strategyAddress] = strategyAddresses;
+  const strategy = StrategyV2Contract__factory.connect(
+    strategyAddress,
+    ctx.provider
+  );
+  const keepCrv = await strategy
+    .keepCRV()
+    .then((val) => val && val.toNumber())
+    .catch(() => 0);
+
+  return { general, special: { keepCrv } };
+}
+
+export async function resolveSpecialFeesV2(
+  strategyAddresses: string[],
+  ctx: Context
+): Promise<SpecialFeesV2> {
+  if (strategyAddresses.length === 0) {
+    const [address] = strategyAddresses;
+    const strategy = StrategyV2Contract__factory.connect(address, ctx.provider);
+    const keepCrv = await strategy
+      .keepCRV()
+      .then((val) => val && val.toNumber())
+      .catch(() => 0);
+
+    return { keepCrv };
+  }
+  return {};
 }
 
 export async function resolveV2(
@@ -84,7 +122,8 @@ export async function resolveV2(
   );
 
   const tags = await resolveTagsV2(address, ctx);
-  const fees = await resolveFeesV2(address, ctx);
+
+  const fees = await resolveFeesV2(address, strategyAddresses, ctx);
 
   return { ...basic, ...specific, strategies, tags, fees, type: "v2" };
 }

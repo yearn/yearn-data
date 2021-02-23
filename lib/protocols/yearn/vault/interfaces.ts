@@ -10,17 +10,34 @@ export interface Strategy {
   address: string;
 }
 
-export interface FeesV1 {
+export interface SpecialFeesV1 {
+  keepCrv?: number;
+}
+
+export interface GeneralFeesV1 {
   strategistReward: number;
   performanceFee: number;
   withdrawalFee: number;
   treasuryFee: number;
-  keepCRV: number;
+}
+
+export interface FeesV1 {
+  general: GeneralFeesV1;
+  special: SpecialFeesV1;
+}
+
+export interface SpecialFeesV2 {
+  keepCrv?: number;
+}
+
+export interface GeneralFeesV2 {
+  performanceFee: number;
+  managementFee: number;
 }
 
 export interface FeesV2 {
-  performanceFee: number;
-  managementFee: number;
+  general: GeneralFeesV2;
+  special: SpecialFeesV2;
 }
 
 export interface VaultBase {

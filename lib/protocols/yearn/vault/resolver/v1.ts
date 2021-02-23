@@ -63,16 +63,18 @@ export async function resolveFeesV1(
     .withdrawalFee()
     .then((val) => val.toNumber())
     .catch(() => 0);
-  const keepCRV = await strategy
+  const keepCrv = await strategy
     .keepCRV()
     .then((val) => val.toNumber())
     .catch(() => 0);
   return {
-    strategistReward,
-    performanceFee,
-    withdrawalFee,
-    treasuryFee,
-    keepCRV,
+    general: {
+      strategistReward,
+      performanceFee,
+      withdrawalFee,
+      treasuryFee,
+    },
+    special: { keepCrv },
   };
 }
 
@@ -82,7 +84,7 @@ export async function resolveV1(
 ): Promise<VaultV1> {
   const basic = await resolveBasic(address, ctx);
   const info = await resolveInfoV1(address, ctx);
-  const fees = await resolveFeesV1(address, ctx);
+  const fees = await resolveFeesV1(info.strategy, ctx);
   const strategy = await resolveStrategyV1(info.strategy, ctx);
   return {
     ...basic,
