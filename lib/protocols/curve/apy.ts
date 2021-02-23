@@ -17,7 +17,7 @@ const CurveRegistryAddress = "0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c";
 const CrvAddress = "0xD533a949740bb3306d119CC777fa900bA034cd52";
 
 const WbtcAddress = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
-const RenBtcAddress = "0xEB4C278feeDenominatorebA804CE9a9803C67d0893436bB27D";
+const RenBtcAddress = "0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D";
 const SBtcAddress = "0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6";
 const SEthAddress = "0x5e74C9036fb86BD7eCdcb084a0673EFc32eA31cb";
 
