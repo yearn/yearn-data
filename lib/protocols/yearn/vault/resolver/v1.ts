@@ -21,6 +21,9 @@ export interface VaultV1Info {
 export interface StrategyV1 extends Strategy {
   performanceFee?: number;
   withdrawalFee?: number;
+  treasuryFee?: number;
+  keepCRV?: number;
+  strategistReward?: number;
 }
 
 export async function fetchInfoV1(
@@ -45,18 +48,33 @@ export async function resolveStrategyV1(
   } catch {
     name = DefaultStrategyV1Name;
   }
-  const performanceFee = await strategy
+  const strategistReward = await strategy
+    .strategistReward()
+    .catch(() => strategy.strategistReward().catch(() => 0))
+    .then((val) => val && val.toNumber());
+  const treasuryFee = await strategy
     .treasuryFee()
-    .catch(() => strategy.performanceFee().catch(() => undefined))
+    .catch(() => strategy.treasuryFee().catch(() => 0))
+    .then((val) => val && val.toNumber());
+  const performanceFee = await strategy
+    .performanceFee()
+    .catch(() => strategy.performanceFee().catch(() => 0))
     .then((val) => val && val.toNumber());
   const withdrawalFee = await strategy
     .withdrawalFee()
     .then((val) => val.toNumber())
-    .catch(() => undefined);
+    .catch(() => 0);
+  const keepCRV = await strategy
+    .keepCRV()
+    .then((val) => val.toNumber())
+    .catch(() => 0);
   return {
     name,
     performanceFee,
     withdrawalFee,
+    strategistReward,
+    treasuryFee,
+    keepCRV,
     address,
   };
 }
@@ -70,12 +88,18 @@ export async function resolveV1(
   const {
     performanceFee,
     withdrawalFee,
+    strategistReward,
+    treasuryFee,
+    keepCRV,
     ...strategy
   } = await resolveStrategyV1(info.strategy, ctx);
   return {
     ...basic,
     performanceFee,
     withdrawalFee,
+    strategistReward,
+    treasuryFee,
+    keepCRV,
     strategies: [strategy],
     type: "v1",
   };

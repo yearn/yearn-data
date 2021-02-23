@@ -26,16 +26,43 @@ export async function calculateSimple(
     };
   }
   const latest = await fetchLatestBlock(ctx);
+  const oneWeek = await estimateBlockPrecise(
+    latest.timestamp - seconds("1 week"),
+    ctx
+  );
   const oneMonth = await estimateBlockPrecise(
     latest.timestamp - seconds("4 weeks"),
     ctx
   );
-  const data = await calculateFromPps(
+
+  const ppsSampleData = await calculateFromPps(
     latest.block,
     inception.block,
-    { oneMonthSample: oneMonth, inceptionSample: inception.block },
+    {
+      oneWeekSample: oneWeek,
+      oneMonthSample: oneMonth,
+      inceptionSample: inception.block,
+    },
     contract.getPricePerFullShare
   );
+
+  const netApy =
+    Math.max(ppsSampleData.oneMonthSample, ppsSampleData.oneWeekSample) || 0;
+
+  const totalPerformanceFee =
+    (vault.strategistReward + vault.treasuryFee + vault.performanceFee) / 10000;
+  const withdrawalFee = vault.withdrawalFee / 1000;
+
+  const grossApy = netApy / (1 - totalPerformanceFee);
+
+  const data = {
+    ...ppsSampleData,
+    grossApy,
+    netApy,
+    withdrawalFee,
+    performanceFee: totalPerformanceFee,
+  };
+
   const apy = {
     recommended: data.oneMonthSample || 0,
     type: "pricePerShareV1OneMonth",
@@ -43,5 +70,6 @@ export async function calculateSimple(
     description: "Price per share - One month sample",
     data,
   };
+
   return apy;
 }

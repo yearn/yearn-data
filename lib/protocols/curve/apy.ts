@@ -6,10 +6,10 @@ import {
 import { Context } from "lib/data/context";
 import { getPrice } from "lib/protocols/coingecko";
 import { Apy, calculateFromPps } from "lib/protocols/common/apy";
+import { VaultBase } from "lib/protocols/yearn/vaults/interfaces";
 import { BigNumber, toBigNumber } from "lib/utils/bignumber";
 import { estimateBlockPrecise, fetchLatestBlock } from "lib/utils/block";
 import { seconds } from "lib/utils/time";
-
 import { getPoolFromLpToken } from "./registry";
 
 const CurveRegistryAddress = "0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c";
@@ -27,9 +27,10 @@ const YearnVeCrvvoterAddress = "0xF147b8125d2ef93FB6965Db97D6746952a133934";
 const MaxBoost = 2.5;
 
 export async function calculatePoolApr(
-  lpToken: string,
+  vault: VaultBase,
   ctx: Context
 ): Promise<number | null> {
+  const lpToken = vault.token.address;
   const registry = CurveRegistryContract__factory.connect(
     CurveRegistryAddress,
     ctx.provider
@@ -55,9 +56,10 @@ const btcLikeAddresses = [RenBtcAddress, WbtcAddress, SBtcAddress];
 const ethLikeAddresses = [SEthAddress, EthAddress, WethAddress, StEthAddress];
 
 export async function calculateApy(
-  lpToken: string,
+  vault: VaultBase,
   ctx: Context
 ): Promise<Apy> {
+  const lpToken = vault.token.address;
   const registry = CurveRegistryContract__factory.connect(
     CurveRegistryAddress,
     ctx.provider
@@ -137,27 +139,50 @@ export async function calculateApy(
 
   const boostedApy = baseApy.times(currentBoost);
 
-  const poolApr = new BigNumber((await calculatePoolApr(lpToken, ctx)) || 0);
+  const poolApr = new BigNumber((await calculatePoolApr(vault, ctx)) || 0);
   const poolApy = poolApr
     .div(365)
     .plus(1)
     .pow(365 - 1)
     .minus(1);
-  const aggregateApy = boostedApy.plus(poolApy);
 
+  const keepCrv = vault.keepCRV / 10000;
+  const managementFee = vault.managementFee ? vault.managementFee / 10000 : 0;
+
+  const totalPerformanceFee =
+    (vault.performanceFee * 2 +
+      vault.strategistReward +
+      vault.treasuryFee +
+      vault.performanceFee) /
+    10000;
+
+  const netApy =
+    (boostedApy * (1 - keepCrv) + poolApy) *
+      (1 - totalPerformanceFee) -
+    managementFee +
+    poolApy;
+
+  const totalApy = boostedApy.plus(poolApy).toNumber();
   const data = {
     baseApy: baseApy.toNumber(),
     currentBoost: currentBoost.toNumber(),
     boostedApy: boostedApy.toNumber(),
     poolApy: poolApy.toNumber(),
-    totalApy: aggregateApy.toNumber(),
+    keepCrv,
+    netApy,
+    strategistReward: vault.strategistReward,
+    treasuryFee: vault.treasuryFee,
+    managementFee: v2ManagementFee,
+    performanceFee: totalPerformanceFee,
+    totalApy,
   };
 
-  return {
-    recommended: aggregateApy.toNumber(),
+  const apy = {
+    recommended: totalApy,
     type: "curve",
     composite: true,
     description: "Pool APY + Boosted CRV APY",
     data,
   };
+  return apy;
 }

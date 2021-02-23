@@ -28,25 +28,59 @@ export async function calculateSimple(
       composite: false,
       type: "error",
       description: "no harvests",
-      data: { oneMonthSample: null, inceptionSample: null },
+      data: {
+        oneWeekSample: null,
+        oneMonthSample: null,
+        inceptionSample: null,
+        grossApy: null,
+        netApy: null,
+        performanceFee: null,
+        managementFee: null,
+      },
     };
   }
   const latest = await createTimedBlock(harvests[harvests.length - 1], ctx);
   const inception = await createTimedBlock(harvests[0], ctx);
+  const oneWeek = await estimateBlockPrecise(
+    latest.timestamp - seconds("1 week"),
+    ctx
+  );
   const oneMonth = await estimateBlockPrecise(
     latest.timestamp - seconds("4 weeks"),
     ctx
   );
+
+  const oneWeekHarvest = findNearestBlock(oneWeek, harvests);
   const oneMonthHarvest = findNearestBlock(oneMonth, harvests);
-  const data = await calculateFromPps(
+  const ppsSampleData = await calculateFromPps(
     latest.block,
     inception.block,
-    { oneMonthSample: oneMonthHarvest, inceptionSample: inception.block },
+    {
+      oneWeekSample: oneWeekHarvest,
+      oneMonthSample: oneMonthHarvest,
+      inceptionSample: inception.block,
+    },
     contract.pricePerShare
   );
+
+  // Default to higher sample as the result is largely dependent on number of harvests (usually one week sample is sufficient)
+  const netApy =
+    Math.max(ppsSampleData.oneMonthSample, ppsSampleData.oneWeekSample) || 0;
+
+  const v2PerformanceFee = (vault.performanceFee * 2) / 10000;
+  const v2ManagementFee = vault.managementFee / 10000;
+  const grossApy = netApy / (1 - v2PerformanceFee) + v2ManagementFee;
+
+  const data = {
+    ...ppsSampleData,
+    grossApy,
+    netApy,
+    performanceFee: v2PerformanceFee,
+    managementFee: v2ManagementFee,
+  };
   const apy = {
-    recommended: data.oneMonthSample || 0,
-    composite: false,
+    recommended: grossApy,
+    composite: true,
     type: "pricePerShareV2OneMonth",
     description: "Price per share - One month sample",
     data,
