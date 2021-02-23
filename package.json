@@ -7,6 +7,9 @@
   "main": "handler.js",
   "scripts": {
     "test": "jest",
+    "lint": "yarn lint:es && yarn lint:style",
+    "lint:es": "eslint .",
+    "lint:style": "prettier --check .",
     "abi": "typechain --target ethers-v5 --outDir lib/contracts \"abi/compressed/**/*.json\"",
     "abi:dev": "typechain --target ethers-v5 --outDir lib/contracts \"abi/full/**/*.json\""
   },

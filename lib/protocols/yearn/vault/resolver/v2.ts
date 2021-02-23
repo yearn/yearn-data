@@ -7,13 +7,7 @@ import { Context } from "@data/context";
 import { NullAddress } from "@utils/constants";
 import { objectAll } from "@utils/promise";
 
-import {
-  FeesV2,
-  GeneralFeesV2,
-  SpecialFeesV2,
-  Strategy,
-  VaultV2,
-} from "../interfaces";
+import { FeesV2, SpecialFeesV2, Strategy, VaultV2 } from "../interfaces";
 import { resolveBasic } from "./common";
 
 export async function resolveStrategyV2(

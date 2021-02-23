@@ -131,8 +131,7 @@ export const handler = wrap(async () => {
     vault.updated = timestamp;
   }
 
-  console.log(JSON.stringify(vaults));
-  // await batchSet(DDBVaultsCache, vaults);
+  await batchSet(DDBVaultsCache, vaults);
 
   return {
     message: "Job executed correctly",

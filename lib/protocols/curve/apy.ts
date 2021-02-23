@@ -149,57 +149,42 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
 
   const feeDenominator = 1e4;
 
-  let data;
+  const poolRewardsApy = 0; // TODO: investigate
+
+  let keepCrv: number, totalPerformanceFee: number, managementFee: number;
   if (vault.type === "v1") {
-    const keepCrv = vault.fees.special.keepCrv ?? 0 / feeDenominator;
+    keepCrv = (vault.fees.special.keepCrv ?? 0) / feeDenominator;
     const performanceFee = vault.fees.general.performanceFee / feeDenominator;
-    const managementFee = 0;
+    managementFee = 0;
     const other =
       (vault.fees.general.strategistReward + vault.fees.general.treasuryFee) /
       feeDenominator;
-    const totalPerformanceFee = performanceFee + other;
-
-    const netApy = boostedApy
-      .times(1 - keepCrv)
-      .plus(poolApy)
-      .times(1 - totalPerformanceFee)
-      .minus(managementFee)
-      .plus(poolApy);
-
-    data = {
-      baseApy: baseApy.toNumber(),
-      currentBoost: currentBoost.toNumber(),
-      boostedApy: boostedApy.toNumber(),
-      poolApy: poolApy.toNumber(),
-      netApy: netApy.toNumber(),
-      keepCrv,
-      totalPerformanceFee,
-      totalApy,
-    };
-  } else if (vault.type === "v2") {
-    const keepCrv = vault.fees.special.keepCrv ?? 0;
+    totalPerformanceFee = performanceFee + other;
+  } else {
+    // v2
+    keepCrv = (vault.fees.special.keepCrv ?? 0) / feeDenominator;
     const performanceFee = vault.fees.general.performanceFee / feeDenominator;
-    const managementFee = vault.fees.general.managementFee / feeDenominator;
-    const totalPerformanceFee = performanceFee * 2;
-
-    const netApy = boostedApy
-      .times(1 - keepCrv)
-      .plus(poolApy)
-      .times(1 - totalPerformanceFee)
-      .minus(managementFee)
-      .plus(poolApy);
-
-    data = {
-      baseApy: baseApy.toNumber(),
-      currentBoost: currentBoost.toNumber(),
-      boostedApy: boostedApy.toNumber(),
-      poolApy: poolApy.toNumber(),
-      netApy: netApy.toNumber(),
-      keepCrv,
-      totalPerformanceFee,
-      totalApy,
-    };
+    managementFee = vault.fees.general.managementFee / feeDenominator;
+    totalPerformanceFee = performanceFee * 2;
   }
+
+  const netApy = boostedApy
+    .times(1 - keepCrv)
+    .plus(poolRewardsApy)
+    .times(1 - totalPerformanceFee)
+    .minus(managementFee)
+    .plus(poolApy);
+
+  const data = {
+    baseApy: baseApy.toNumber(),
+    currentBoost: currentBoost.toNumber(),
+    boostedApy: boostedApy.toNumber(),
+    poolApy: poolApy.toNumber(),
+    netApy: netApy.toNumber(),
+    keepCrv,
+    totalPerformanceFee,
+    totalApy,
+  };
 
   const apy = {
     recommended: totalApy,
