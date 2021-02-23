@@ -1,6 +1,6 @@
-import { VaultV2Contract__factory } from "lib/contracts/index";
-import { Context } from "lib/data/context";
-import { toBigNumber } from "lib/utils/bignumber";
+import { VaultV2Contract__factory } from "@contracts/index";
+import { Context } from "@data/context";
+import { toBigNumber } from "@utils/bignumber";
 
 import { VaultV2 } from "../interfaces";
 

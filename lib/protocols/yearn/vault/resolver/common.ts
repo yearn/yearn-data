@@ -1,9 +1,9 @@
 import {
   Erc20Contract__factory,
   VaultV1Contract__factory,
-} from "lib/contracts/index";
-import { Context } from "lib/data/context";
-import { objectAll } from "lib/utils/promise";
+} from "@contracts/index";
+import { Context } from "@data/context";
+import { objectAll } from "@utils/promise";
 
 import { Token, VaultBase } from "../interfaces";
 

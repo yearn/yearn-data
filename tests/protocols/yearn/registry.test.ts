@@ -2,11 +2,7 @@ import "dotenv/config";
 
 import { Context } from "@data/context";
 import { WebSocketProvider } from "@ethersproject/providers";
-import {
-  fetchV1Addresses,
-  fetchV2Addresses,
-  fetchV2ExperimentalAddresses,
-} from "@protocols/yearn/vault";
+import { registry } from "@protocols/yearn/vault";
 
 describe("registry", () => {
   let provider: WebSocketProvider;
@@ -18,21 +14,21 @@ describe("registry", () => {
   });
 
   it("should fetch a list of v1 addresses (network)", () => {
-    const length = fetchV1Addresses(ctx).then(({ length }) => length);
+    const length = registry.fetchV1Addresses(ctx).then(({ length }) => length);
     return expect(length).resolves.toBeGreaterThan(0);
-  });
+  }, 1e4);
 
   it("should fetch a list of v2 addresses (network)", () => {
-    const length = fetchV2Addresses(ctx).then(({ length }) => length);
+    const length = registry.fetchV2Addresses(ctx).then(({ length }) => length);
     return expect(length).resolves.toBeGreaterThan(0);
-  });
+  }, 1e4);
 
   it("should fetch a list of v2 experimental addresses (network)", () => {
-    const length = fetchV2ExperimentalAddresses(ctx).then(
-      ({ length }) => length
-    );
+    const length = registry
+      .fetchV2ExperimentalAddresses(ctx)
+      .then(({ length }) => length);
     return expect(length).resolves.toBeGreaterThan(0);
-  });
+  }, 1e4);
 
   afterAll(() => {
     return provider.destroy();

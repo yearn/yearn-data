@@ -2,9 +2,10 @@ import "dotenv/config";
 
 import { Context } from "@data/context";
 import { WebSocketProvider } from "@ethersproject/providers";
-import { calculateApy } from "@protocols/curve";
+import * as curve from "@protocols/curve";
+import * as yearn from "@protocols/yearn";
 
-const CurveVault = "0xFd2a8fA60Abd58Efe3EeE34dd494cD491dC14900";
+const CurveVault = "0x5dbcF33D8c2E976c6b560249878e6F1491Bca25c";
 
 describe("", () => {
   let provider: WebSocketProvider;
@@ -16,7 +17,8 @@ describe("", () => {
   });
 
   it("calculate apy (network)", async () => {
-    const apy = await calculateApy(CurveVault, ctx);
+    const vault = await yearn.vault.resolver.resolveV1(CurveVault, ctx);
+    const apy = await curve.calculateApy(vault, ctx);
     return expect(apy).toEqual({
       recommended: expect.any(Number),
       composite: expect.any(Boolean),
@@ -24,7 +26,7 @@ describe("", () => {
       description: expect.any(String),
       data: expect.any(Object),
     });
-  }, 30000);
+  }, 3e4);
 
   afterAll(() => {
     return provider.destroy();

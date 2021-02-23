@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import { Context } from "@data/context";
 import { WebSocketProvider } from "@ethersproject/providers";
-import { calculateTvlV2 } from "@protocols/yearn/vault";
+import { tvl } from "@protocols/yearn/vault";
 
 import { vaults } from "./testdata";
 
@@ -16,11 +16,11 @@ describe("tvl", () => {
   });
 
   it("should calculate tvl for a v2 vault (network)", () => {
-    const tvl = calculateTvlV2(vaults.v2.object, ctx);
-    return expect(tvl).resolves.toStrictEqual(expect.any(Number));
-  });
+    const valueLocked = tvl.calculateTvlV2(vaults.v2.object, ctx);
+    return expect(valueLocked).resolves.toStrictEqual(expect.any(Number));
+  }, 1e4);
 
   afterAll(() => {
     return provider.destroy();
-  }, 1e4);
+  });
 });

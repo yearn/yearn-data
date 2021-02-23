@@ -1,7 +1,7 @@
-import { RegistryV2Contract__factory } from "lib/contracts/index";
-import { Context } from "lib/data/context";
+import { RegistryV2Contract__factory } from "@contracts/index";
+import { Context } from "@data/context";
 
-const RegistryV2 = "v2.registry.ychad.eth";
+export const RegistryV2 = "v2.registry.ychad.eth";
 
 export async function fetchV2Addresses(ctx: Context): Promise<string[]> {
   const registry = RegistryV2Contract__factory.connect(

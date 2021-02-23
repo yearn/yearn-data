@@ -1,8 +1,8 @@
-import { VaultV2Contract__factory } from "lib/contracts/index";
-import { Context } from "lib/data/context";
-import { Apy, calculateFromPps } from "lib/protocols/common/apy";
-import { Block, createTimedBlock, estimateBlockPrecise } from "lib/utils/block";
-import { seconds } from "lib/utils/time";
+import { VaultV2Contract__factory } from "@contracts/index";
+import { Context } from "@data/context";
+import { Apy, calculateFromPps } from "@protocols/common/apy";
+import { Block, createTimedBlock, estimateBlockPrecise } from "@utils/block";
+import { seconds } from "@utils/time";
 
 import { VaultV2 } from "../../interfaces";
 import { fetchHarvestCalls } from "../../reader";
@@ -13,7 +13,7 @@ function findNearestBlock(needle: Block, haystack: Block[]) {
   );
 }
 
-export async function calculateSimple(
+export async function calculateSimpleApy(
   vault: VaultV2,
   ctx: Context
 ): Promise<Apy> {
@@ -64,11 +64,13 @@ export async function calculateSimple(
   );
 
   // Default to higher sample as the result is largely dependent on number of harvests (usually one week sample is sufficient)
-  const netApy =
-    Math.max(ppsSampleData.oneMonthSample, ppsSampleData.oneWeekSample) || 0;
+  const netApy = Math.max(
+    ppsSampleData.oneMonthSample ?? 0,
+    ppsSampleData.oneWeekSample ?? 0
+  );
 
-  const v2PerformanceFee = (vault.performanceFee * 2) / 10000;
-  const v2ManagementFee = vault.managementFee / 10000;
+  const v2PerformanceFee = (vault.fees.performanceFee * 2) / 10000;
+  const v2ManagementFee = vault.fees.managementFee / 10000;
   const grossApy = netApy / (1 - v2PerformanceFee) + v2ManagementFee;
 
   const data = {

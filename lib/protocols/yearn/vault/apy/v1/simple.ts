@@ -1,13 +1,13 @@
-import { VaultV1Contract__factory } from "lib/contracts/index";
-import { Context } from "lib/data/context";
-import { Apy, calculateFromPps } from "lib/protocols/common/apy";
-import { estimateBlockPrecise, fetchLatestBlock } from "lib/utils/block";
-import { seconds } from "lib/utils/time";
+import { VaultV1Contract__factory } from "@contracts/index";
+import { Context } from "@data/context";
+import { Apy, calculateFromPps } from "@protocols/common/apy";
+import { estimateBlockPrecise, fetchLatestBlock } from "@utils/block";
+import { seconds } from "@utils/time";
 
 import { VaultV1 } from "../../interfaces";
 import { fetchInceptionBlock } from "../../reader";
 
-export async function calculateSimple(
+export async function calculateSimpleApy(
   vault: VaultV1,
   ctx: Context
 ): Promise<Apy> {
@@ -46,12 +46,17 @@ export async function calculateSimple(
     contract.getPricePerFullShare
   );
 
-  const netApy =
-    Math.max(ppsSampleData.oneMonthSample, ppsSampleData.oneWeekSample) || 0;
+  const netApy = Math.max(
+    ppsSampleData.oneMonthSample ?? 0,
+    ppsSampleData.oneWeekSample ?? 0
+  );
 
   const totalPerformanceFee =
-    (vault.strategistReward + vault.treasuryFee + vault.performanceFee) / 10000;
-  const withdrawalFee = vault.withdrawalFee / 1000;
+    (vault.fees.strategistReward +
+      vault.fees.treasuryFee +
+      vault.fees.performanceFee) /
+    10000;
+  const withdrawalFee = vault.fees.withdrawalFee / 1000;
 
   const grossApy = netApy / (1 - totalPerformanceFee);
 

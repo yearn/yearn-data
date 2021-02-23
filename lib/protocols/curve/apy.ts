@@ -2,14 +2,15 @@ import {
   CurveGaugeContract__factory,
   CurveGaugeControllerContract__factory,
   CurveRegistryContract__factory,
-} from "lib/contracts/index";
-import { Context } from "lib/data/context";
-import { getPrice } from "lib/protocols/coingecko";
-import { Apy, calculateFromPps } from "lib/protocols/common/apy";
-import { VaultBase } from "lib/protocols/yearn/vaults/interfaces";
-import { BigNumber, toBigNumber } from "lib/utils/bignumber";
-import { estimateBlockPrecise, fetchLatestBlock } from "lib/utils/block";
-import { seconds } from "lib/utils/time";
+} from "@contracts/index";
+import { Context } from "@data/context";
+import { getPrice } from "@protocols/coingecko";
+import { Apy, calculateFromPps } from "@protocols/common/apy";
+import { Vault } from "@protocols/yearn/vault/interfaces";
+import { BigNumber, toBigNumber } from "@utils/bignumber";
+import { estimateBlockPrecise, fetchLatestBlock } from "@utils/block";
+import { seconds } from "@utils/time";
+
 import { getPoolFromLpToken } from "./registry";
 
 const CurveRegistryAddress = "0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c";
@@ -19,6 +20,7 @@ const WbtcAddress = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
 const RenBtcAddress = "0xEB4C2781e4ebA804CE9a9803C67d0893436bB27D";
 const SBtcAddress = "0xfE18be6b3Bd88A2D2A7f928d00292E7a9963CfC6";
 const SEthAddress = "0x5e74C9036fb86BD7eCdcb084a0673EFc32eA31cb";
+
 const EthAddress = "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE";
 const StEthAddress = "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84";
 const WethAddress = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2";
@@ -27,7 +29,7 @@ const YearnVeCrvvoterAddress = "0xF147b8125d2ef93FB6965Db97D6746952a133934";
 const MaxBoost = 2.5;
 
 export async function calculatePoolApr(
-  vault: VaultBase,
+  vault: Vault,
   ctx: Context
 ): Promise<number | null> {
   const lpToken = vault.token.address;
@@ -55,10 +57,7 @@ const btcLikeAddresses = [RenBtcAddress, WbtcAddress, SBtcAddress];
 
 const ethLikeAddresses = [SEthAddress, EthAddress, WethAddress, StEthAddress];
 
-export async function calculateApy(
-  vault: VaultBase,
-  ctx: Context
-): Promise<Apy> {
+export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   const lpToken = vault.token.address;
   const registry = CurveRegistryContract__factory.connect(
     CurveRegistryAddress,
@@ -124,7 +123,7 @@ export async function calculateApy(
     .times(priceOfCrv.usd)
     .div(priceOfBaseAsset.usd);
 
-  let currentBoost;
+  let currentBoost: BigNumber;
 
   if (yearnGaugeBalance.isGreaterThan(0)) {
     currentBoost = yearnWorkingBalance.div(
@@ -146,21 +145,25 @@ export async function calculateApy(
     .pow(365 - 1)
     .minus(1);
 
-  const keepCrv = vault.keepCRV / 10000;
-  const managementFee = vault.managementFee ? vault.managementFee / 10000 : 0;
+  const keepCrv = vault.type === "v1" ? vault.fees.keepCRV / 1e4 : 0;
 
-  const totalPerformanceFee =
-    (vault.performanceFee * 2 +
-      vault.strategistReward +
-      vault.treasuryFee +
-      vault.performanceFee) /
-    10000;
+  const managementFee =
+    vault.type === "v2" ? vault.fees.managementFee / 1e4 : 0;
 
-  const netApy =
-    (boostedApy * (1 - keepCrv) + poolApy) *
-      (1 - totalPerformanceFee) -
-    managementFee +
-    poolApy;
+  const otherFees =
+    vault.type === "v1"
+      ? vault.fees.strategistReward + vault.fees.treasuryFee
+      : 0;
+
+  const totalPerformanceFees =
+    (vault.fees.performanceFee * 3 + otherFees) / 1e4;
+
+  const netApy = boostedApy
+    .times(1 - keepCrv)
+    .plus(poolApy)
+    .times(1 - totalPerformanceFees)
+    .minus(managementFee)
+    .plus(poolApy);
 
   const totalApy = boostedApy.plus(poolApy).toNumber();
   const data = {
@@ -168,12 +171,9 @@ export async function calculateApy(
     currentBoost: currentBoost.toNumber(),
     boostedApy: boostedApy.toNumber(),
     poolApy: poolApy.toNumber(),
+    netApy: netApy.toNumber(),
     keepCrv,
-    netApy,
-    strategistReward: vault.strategistReward,
-    treasuryFee: vault.treasuryFee,
-    managementFee: v2ManagementFee,
-    performanceFee: totalPerformanceFee,
+    totalPerformanceFees,
     totalApy,
   };
 

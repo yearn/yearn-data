@@ -1,5 +1,5 @@
+import { handleHTTPError } from "@utils/fetch";
 import fromEntries from "fromentries";
-import { handleHTTPError } from "lib/utils/fetch";
 import fetch from "node-fetch";
 
 export type Price<T extends string> = { [K in T]: number };
