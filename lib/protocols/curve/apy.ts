@@ -116,7 +116,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   const secondsInYear = new BigNumber(seconds("1 year"));
   const inverseMaxBoost = new BigNumber(1 / MaxBoost);
 
-  const baseApy = gaugeInflationRate
+  const baseApr = gaugeInflationRate
     .times(gaugeRelativeWeight)
     .times(secondsInYear.div(gaugeWorkingSupply))
     .times(inverseMaxBoost.div(poolVirtualPrice))
@@ -136,20 +136,15 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     currentBoost = new BigNumber(MaxBoost);
   }
 
-  const boostedApy = baseApy.times(currentBoost);
-
-  const poolApr = new BigNumber((await calculatePoolApr(vault, ctx)) || 0);
-  const poolApy = poolApr
-    .div(365)
-    .plus(1)
-    .pow(365 - 1)
-    .minus(1);
-
-  const totalApy = boostedApy.plus(poolApy).toNumber();
-
   const feeDenominator = 1e4;
 
-  const poolRewardsApy = 0; // TODO: investigate
+  const tokenRewardsApr = 0;
+  const compoundingEvents = 52; // TODO: investigate
+
+  const poolApr = new BigNumber((await calculatePoolApr(vault, ctx)) || 0);
+  const poolApy = poolApr.div(365).plus(1).pow(365).minus(1);
+
+  const boostedApr = baseApr.times(currentBoost);
 
   let keepCrv: number, totalPerformanceFee: number, managementFee: number;
   if (vault.type === "v1") {
@@ -168,26 +163,54 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     totalPerformanceFee = performanceFee * 2;
   }
 
-  const netApy = boostedApy
+  const grossFarmedApy = boostedApr
+    .times(keepCrv)
+    .plus(
+      boostedApr
+        .times(1 - keepCrv)
+        .plus(tokenRewardsApr)
+        .div(compoundingEvents)
+        .plus(1)
+        .pow(compoundingEvents)
+    )
+    .minus(1);
+
+  const totalApy = grossFarmedApy.plus(1).times(poolApy.plus(1)).minus(1);
+
+  console.log({
+    boostedApr: boostedApr.toNumber(),
+    grossFarmedApy: grossFarmedApy.toNumber(),
+    tokenRewardsApr,
+    poolApy: poolApy.toNumber(),
+    compoundingEvents,
+    keepCrv,
+  });
+
+  const netCurveApr = boostedApr
     .times(1 - keepCrv)
-    .plus(poolRewardsApy)
+    .plus(tokenRewardsApr)
     .times(1 - totalPerformanceFee)
-    .minus(managementFee)
-    .plus(poolApy);
+    .minus(managementFee);
+
+  const netFarmedApy = netCurveApr
+    .div(compoundingEvents)
+    .plus(1)
+    .pow(compoundingEvents)
+    .minus(1);
+  
+  const netCurveApy = netFarmedApy.plus(1).times(poolApy.plus(1)).minus(1);
 
   const data = {
-    baseApy: baseApy.toNumber(),
     currentBoost: currentBoost.toNumber(),
-    boostedApy: boostedApy.toNumber(),
+    totalApy: totalApy.toNumber(),
     poolApy: poolApy.toNumber(),
-    netApy: netApy.toNumber(),
-    keepCrv,
-    totalPerformanceFee,
-    totalApy,
+    boostedApr: boostedApr.toNumber(),
+    baseApr: baseApr.toNumber(),
+    netCurveApy: netCurveApy.toNumber(),
   };
 
   const apy = {
-    recommended: totalApy,
+    recommended: totalApy.toNumber(),
     type: "curve",
     composite: true,
     description: "Pool APY + Boosted CRV APY",
