@@ -15,10 +15,8 @@ export interface SpecialFeesV1 {
 }
 
 export interface GeneralFeesV1 {
-  strategistReward: number;
-  performanceFee: number;
   withdrawalFee: number;
-  treasuryFee: number;
+  performanceFee: number;
 }
 
 export interface FeesV1 {
@@ -28,6 +26,8 @@ export interface FeesV1 {
 
 export interface SpecialFeesV2 {
   keepCrv?: number;
+  strategistReward?: number;
+  treasuryFee?: number;
 }
 
 export interface GeneralFeesV2 {

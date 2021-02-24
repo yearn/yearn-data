@@ -214,6 +214,17 @@
     "gas": "1890"
   },
   {
+    "name": "reward_contract",
+    "outputs": [{
+      "type": "address",
+      "name": ""
+    }],
+    "inputs": [],
+    "stateMutability": "view",
+    "type": "function",
+    "gas": "2051"
+  },
+  {
     "name": "integrate_inv_supply",
     "outputs": [{ "type": "uint256", "name": "" }],
     "inputs": [{ "type": "uint256", "name": "arg0" }],

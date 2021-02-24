@@ -2,6 +2,7 @@ import {
   CurveGaugeContract__factory,
   CurveGaugeControllerContract__factory,
   CurveRegistryContract__factory,
+  CurveStakingRewards__factory,
 } from "@contracts/index";
 import { Context } from "@data/context";
 import { getPrice } from "@protocols/coingecko";
@@ -137,8 +138,120 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   }
 
   const feeDenominator = 1e4;
+  const rewardAddress = await gauge.reward_contract().catch(() => null);
 
-  const tokenRewardsApr = 0;
+  let tokenRewardsApr = new BigNumber(0);
+  const zeroAddress = "0x0000000000000000000000000000000000000000";
+  if (rewardAddress && rewardAddress !== zeroAddress) {
+    const stakingRewards = CurveStakingRewards__factory.connect(
+      rewardAddress,
+      ctx.provider
+    );
+
+    const stakingRewardsRewardsTokenAddress = await stakingRewards
+      .rewardsToken()
+      .catch(() => null);
+
+    const stakingRewardsRewardTokenAddress = await stakingRewards
+      .rewardToken()
+      .catch(() => null);
+
+    const stakingRewardsSnxAddress = await stakingRewards
+      .snx()
+      .catch(() => null);
+
+    const stakingRewardsRate = await stakingRewards
+      .rewardRate()
+      .then((val) => toBigNumber(val))
+      .catch(() => 0);
+
+    const stakingRewardsTotalSupply = await stakingRewards
+      .totalSupply()
+      .then((val) => toBigNumber(val))
+      .catch(() => 0);
+
+    const rewardTokenAddress =
+      stakingRewardsRewardTokenAddress ||
+      stakingRewardsRewardsTokenAddress ||
+      stakingRewardsSnxAddress;
+
+    const priceOfRewardAsset = (rewardTokenAddress &&
+      (await getPrice(rewardTokenAddress, ["usd"]))) || { usd: 0 };
+    if (priceOfRewardAsset) {
+      // console.log({
+      //   priceOfRewardAsset: priceOfRewardAsset.usd,
+      //   secondsInYear: secondsInYear.toFixed(),
+      //   stakingRewardsRate: stakingRewardsRate.toFixed(),
+      //   stakingRewardsTotalSupply: stakingRewardsTotalSupply.toFixed(),
+      //   poolVirtualPrice: poolVirtualPrice.toFixed(),
+      //   priceOfBaseAsset: priceOfBaseAsset.usd,
+      // });
+
+      // Single rewards token
+      if (stakingRewardsRate) {
+        // TODO: Always multiply by 10**18?
+        tokenRewardsApr = secondsInYear
+          .times(stakingRewardsRate)
+          .times(priceOfRewardAsset.usd)
+          .div(
+            poolVirtualPrice
+              .times(stakingRewardsTotalSupply)
+              .times(priceOfBaseAsset.usd)
+          )
+          .times(10 ** 18);
+      } else {
+        // Multiple reward tokens
+        // TODO: Support more than 2 reward tokens...
+        const rewardToken0Address = await stakingRewards.rewardTokens(0);
+        const rewardToken1Address = await stakingRewards.rewardTokens(1);
+        const stakingRewardsRate0 = await stakingRewards
+          .rewardData(rewardToken0Address)
+          .then((val) => toBigNumber(val.rewardRate))
+          .catch(() => 0);
+        const stakingRewardsRate1 = await stakingRewards
+          .rewardData(rewardToken0Address)
+          .then((val) => toBigNumber(val.rewardRate))
+          .catch(() => 0);
+        const priceOfRewardAsset0 = (rewardToken0Address &&
+          (await getPrice(rewardToken0Address, ["usd"]))) || { usd: 0 };
+        const priceOfRewardAsset1 = (rewardToken1Address &&
+          (await getPrice(rewardToken1Address, ["usd"]))) || { usd: 0 };
+
+        const tokenRewardsApr0 = secondsInYear
+          .times(stakingRewardsRate0)
+          .times(priceOfRewardAsset0.usd)
+          .div(
+            poolVirtualPrice
+              .times(stakingRewardsTotalSupply)
+              .times(priceOfBaseAsset.usd)
+          )
+          .times(10 ** 18);
+        const tokenRewardsApr1 = secondsInYear
+          .times(stakingRewardsRate1)
+          .times(priceOfRewardAsset1.usd)
+          .div(
+            poolVirtualPrice
+              .times(stakingRewardsTotalSupply)
+              .times(priceOfBaseAsset.usd)
+          )
+          .times(10 ** 18);
+
+        // console.log({
+        //   poolVirtualPrice: poolVirtualPrice.toFixed(),
+        //   stakingRewardsTotalSupply: stakingRewardsTotalSupply.toFixed(),
+        //   priceOfRewardAsset0,
+        //   priceOfRewardAsset1,
+        //   tokenRewardsApr0: tokenRewardsApr0.toFixed(),
+        //   tokenRewardsApr1: tokenRewardsApr1.toFixed(),
+        //   stakingRewardsRate0: stakingRewardsRate0.toFixed(),
+        //   stakingRewardsRate1: stakingRewardsRate1.toFixed(),
+        // });
+
+        tokenRewardsApr = tokenRewardsApr0.plus(tokenRewardsApr1);
+      }
+    }
+  }
+
   const compoundingEvents = 52; // TODO: investigate
 
   const poolApr = new BigNumber((await calculatePoolApr(vault, ctx)) || 0);
@@ -146,21 +259,22 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
 
   const boostedApr = baseApr.times(currentBoost);
 
-  let keepCrv: number, totalPerformanceFee: number, managementFee: number;
+  let keepCrv: number,
+    totalPerformanceFee: number,
+    withdrawalFee: number,
+    managementFee: number;
   if (vault.type === "v1") {
     keepCrv = (vault.fees.special.keepCrv ?? 0) / feeDenominator;
-    const performanceFee = vault.fees.general.performanceFee / feeDenominator;
     managementFee = 0;
-    const other =
-      (vault.fees.general.strategistReward + vault.fees.general.treasuryFee) /
-      feeDenominator;
-    totalPerformanceFee = performanceFee + other;
+    totalPerformanceFee = vault.fees.general.performanceFee / feeDenominator;
+    withdrawalFee = vault.fees.general.withdrawalFee / 10000;
   } else {
     // v2
     keepCrv = (vault.fees.special.keepCrv ?? 0) / feeDenominator;
     const performanceFee = vault.fees.general.performanceFee / feeDenominator;
     managementFee = vault.fees.general.managementFee / feeDenominator;
     totalPerformanceFee = performanceFee * 2;
+    withdrawalFee = 0;
   }
 
   const grossFarmedApy = boostedApr
@@ -180,7 +294,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   console.log({
     boostedApr: boostedApr.toNumber(),
     grossFarmedApy: grossFarmedApy.toNumber(),
-    tokenRewardsApr,
+    tokenRewardsApr: tokenRewardsApr.toFixed(),
     poolApy: poolApy.toNumber(),
     compoundingEvents,
     keepCrv,
@@ -197,7 +311,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     .plus(1)
     .pow(compoundingEvents)
     .minus(1);
-  
+
   const netCurveApy = netFarmedApy.plus(1).times(poolApy.plus(1)).minus(1);
 
   const data = {
@@ -206,7 +320,10 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     poolApy: poolApy.toNumber(),
     boostedApr: boostedApr.toNumber(),
     baseApr: baseApr.toNumber(),
-    netCurveApy: netCurveApy.toNumber(),
+    netApy: netCurveApy.toNumber(),
+    performanceFee: totalPerformanceFee,
+    withdrawalFee,
+    tokenRewardsApr: tokenRewardsApr.toNumber(),
   };
 
   const apy = {

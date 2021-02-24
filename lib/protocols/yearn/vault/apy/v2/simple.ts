@@ -69,8 +69,8 @@ export async function calculateSimpleApy(
     ppsSampleData.oneWeekSample ?? 0
   );
 
-  const v2PerformanceFee = (vault.fees.performanceFee * 2) / 10000;
-  const v2ManagementFee = vault.fees.managementFee / 10000;
+  const v2PerformanceFee = (vault.fees.general.performanceFee * 2) / 10000;
+  const v2ManagementFee = vault.fees.general.managementFee / 10000;
   const grossApy = netApy / (1 - v2PerformanceFee) + v2ManagementFee;
 
   const data = {

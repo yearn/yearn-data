@@ -63,14 +63,14 @@ describe("vault apy", () => {
     return expect(inception).resolves.toEqual({
       composite: expect.any(Boolean),
       data: {
-        baseApy: expect.any(Number),
-        boostedApy: expect.any(Number),
+        baseApr: expect.any(Number),
+        boostedApr: expect.any(Number),
         currentBoost: expect.any(Number),
         netApy: expect.any(Number),
-        keepCrv: expect.any(Number),
+        // keepCrv: expect.any(Number),
         poolApy: expect.any(Number),
         totalApy: expect.any(Number),
-        totalPerformanceFees: expect.any(Number),
+        performanceFee: expect.any(Number),
       },
       description: expect.any(String),
       recommended: expect.any(Number),

@@ -55,7 +55,7 @@ export async function resolveFeesV1(
     .treasuryFee()
     .then((val) => val && val.toNumber())
     .catch(() => 0);
-  const performanceFee = await strategy
+  const strategyPerformanceFee = await strategy
     .performanceFee()
     .then((val) => val && val.toNumber())
     .catch(() => 0);
@@ -67,12 +67,13 @@ export async function resolveFeesV1(
     .keepCRV()
     .then((val) => val.toNumber())
     .catch(() => 0);
+
+  const performanceFee =
+    strategistReward + treasuryFee + strategyPerformanceFee;
   return {
     general: {
-      strategistReward,
       performanceFee,
       withdrawalFee,
-      treasuryFee,
     },
     special: { keepCrv },
   };
