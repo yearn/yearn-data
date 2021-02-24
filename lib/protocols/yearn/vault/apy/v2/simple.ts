@@ -24,7 +24,7 @@ export async function calculateSimpleApy(
   const harvests = await fetchHarvestCalls(vault, ctx);
   if (harvests.length < 2) {
     return {
-      recommended: "NEW",
+      recommended: 0,
       composite: false,
       type: "error",
       description: "no harvests",

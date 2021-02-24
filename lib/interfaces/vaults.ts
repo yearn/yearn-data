@@ -1,10 +1,6 @@
 import { Apy, yearn } from "..";
 
-export type PartialVaults = yearn.vault.Vault & {
-  endorsed?: boolean;
-};
-
-export type Vault = PartialVaults & {
+export type Vault = yearn.vault.Vault & {
   apy: Apy | null;
 };
 

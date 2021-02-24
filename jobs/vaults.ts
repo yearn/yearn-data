@@ -3,7 +3,7 @@ import plimit from "p-limit";
 import { DDBVaultsCache, EtherscanApiKey, Web3ProviderWss } from "settings/env";
 
 import { Context, data, yearn } from "../lib";
-import { CachedVault, PartialVaults } from "../lib/interfaces/vaults";
+import { CachedVault } from "../lib/interfaces/vaults";
 import { backscratcher } from "../lib/special/vaults/backscratcher";
 import { unix } from "../lib/utils/time";
 import excluded from "../static/vaults/excluded.json";
@@ -14,12 +14,9 @@ const limit = plimit(2);
 
 // FetchAllVaults with a batch call to all the available addresses for each
 // version. Extracting name, symbol, decimals and the token address.
-async function fetchAllVaults(ctx: Context): Promise<PartialVaults[]> {
+async function fetchAllVaults(ctx: Context): Promise<yearn.vault.Vault[]> {
   let v1Addresses = await yearn.vault.registry.fetchV1Addresses(ctx);
   let v2Addresses = await yearn.vault.registry.fetchV2Addresses(ctx);
-  const v2ExperimentalAddresses = await yearn.vault.registry.fetchV2ExperimentalAddresses(
-    ctx
-  );
 
   v1Addresses = v1Addresses.filter((address) => !excluded.includes(address));
   v2Addresses = v2Addresses.filter((address) => !excluded.includes(address));
@@ -29,31 +26,24 @@ async function fetchAllVaults(ctx: Context): Promise<PartialVaults[]> {
     v1Addresses.length,
     "v1 vaults",
     v2Addresses.length,
-    "v2 vaults",
-    v2ExperimentalAddresses.length,
-    "v2 experimental vaults"
+    "v2 vaults"
   );
 
   const vaults = await Promise.all(
     v1Addresses
-      .map<Promise<PartialVaults>>((address) =>
+      .map<Promise<yearn.vault.Vault>>((address) =>
         limit(async () => {
           return await yearn.vault.resolver.resolveV1(address, ctx);
+        }).catch(() => {
+          throw new Error(`Could not fetch v1: ${address}`);
         })
       )
       .concat(
         v2Addresses.map((address) =>
           limit(async () => {
-            const vault = await yearn.vault.resolver.resolveV2(address, ctx);
-            return { ...vault, endorsed: true };
-          })
-        )
-      )
-      .concat(
-        v2ExperimentalAddresses.map((address) =>
-          limit(async () => {
-            const vault = await yearn.vault.resolver.resolveV2(address, ctx);
-            return { ...vault, endorsed: false };
+            return await yearn.vault.resolver.resolveV2(address, ctx);
+          }).catch(() => {
+            throw new Error(`Could not fetch v2 production: ${address}`);
           })
         )
       )
