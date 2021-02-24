@@ -1,4 +1,4 @@
-import { Context } from "lib/protocols/yearn/vault/apy/node_modules/lib/data/context";
+import { Context } from "@data/context";
 
 import { BlocksPerSecond } from "./constants";
 import { unix } from "./time";

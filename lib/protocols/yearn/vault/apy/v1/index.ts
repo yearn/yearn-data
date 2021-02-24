@@ -1,17 +1,17 @@
-import { Context } from "lib/data/context";
-import { Apy } from "lib/protocols/common/apy";
-import * as curve from "lib/protocols/curve";
+import { Context } from "@data/context";
+import { Apy } from "@protocols/common/apy";
+import * as curve from "@protocols/curve";
 
 import { VaultV1 } from "../../interfaces";
-import { calculateSimple } from "./simple";
+import { calculateSimpleApy } from "./simple";
 
-export async function calculate(vault: VaultV1, ctx: Context): Promise<Apy> {
+export async function calculateApy(vault: VaultV1, ctx: Context): Promise<Apy> {
   const isCurveVault = await curve.hasCurvePool(vault.token.address, ctx);
 
   if (isCurveVault) {
     return await curve.calculateApy(vault, ctx);
   }
-  return await calculateSimple(vault, ctx);
+  return await calculateSimpleApy(vault, ctx);
 }
 
-export { calculateSimple };
+export { calculateSimpleApy as calculateSimple };

@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import { Context } from "@data/context";
 import { WebSocketProvider } from "@ethersproject/providers";
-import { fetchInceptionBlock } from "@protocols/yearn/vault";
+import { reader } from "@protocols/yearn/vault";
 
 import { vaults } from "./testdata";
 
@@ -16,20 +16,20 @@ describe("yearn read vaults", () => {
   });
 
   it("should find the correct inception block (network)", () => {
-    const inception = fetchInceptionBlock(vaults.v1.object, ctx);
+    const inception = reader.fetchInceptionBlock(vaults.v1.object, ctx);
     return expect(inception).resolves.toEqual({
       block: vaults.v1.inception,
       timestamp: expect.any(Number),
     });
-  }, 10000);
+  }, 1e4);
 
   it("should find the correct inception block (network)", () => {
-    const inception = fetchInceptionBlock(vaults.v2.object, ctx);
+    const inception = reader.fetchInceptionBlock(vaults.v2.object, ctx);
     return expect(inception).resolves.toEqual({
       block: vaults.v2.inception,
       timestamp: expect.any(Number),
     });
-  }, 10000);
+  }, 1e4);
 
   afterAll(() => {
     return provider.destroy();

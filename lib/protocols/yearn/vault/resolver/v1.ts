@@ -1,10 +1,10 @@
 import {
   RegistryV1Contract__factory,
   StrategyV1Contract__factory,
-} from "lib/contracts/index";
-import { Context } from "lib/data/context";
+} from "@contracts/index";
+import { Context } from "@data/context";
 
-import { Strategy, VaultV1 } from "../interfaces";
+import { FeesV1, Strategy, VaultV1 } from "../interfaces";
 import { RegistryV1 } from "../registry/v1";
 import { resolveBasic } from "./common";
 
@@ -18,15 +18,7 @@ export interface VaultV1Info {
   isDelegated: boolean;
 }
 
-export interface StrategyV1 extends Strategy {
-  performanceFee?: number;
-  withdrawalFee?: number;
-  treasuryFee?: number;
-  keepCRV?: number;
-  strategistReward?: number;
-}
-
-export async function fetchInfoV1(
+export async function resolveInfoV1(
   address: string,
   ctx: Context
 ): Promise<VaultV1Info> {
@@ -40,42 +32,50 @@ export async function fetchInfoV1(
 export async function resolveStrategyV1(
   address: string,
   ctx: Context
-): Promise<StrategyV1> {
+): Promise<Strategy> {
   const strategy = StrategyV1Contract__factory.connect(address, ctx.provider);
-  let name;
   try {
-    name = await strategy.getName();
+    const name = await strategy.getName();
+    return { address, name };
   } catch {
-    name = DefaultStrategyV1Name;
+    return { address, name: DefaultStrategyV1Name };
   }
+}
+
+export async function resolveFeesV1(
+  address: string,
+  ctx: Context
+): Promise<FeesV1> {
+  const strategy = StrategyV1Contract__factory.connect(address, ctx.provider);
   const strategistReward = await strategy
     .strategistReward()
-    .catch(() => strategy.strategistReward().catch(() => 0))
-    .then((val) => val && val.toNumber());
+    .then((val) => val && val.toNumber())
+    .catch(() => 0);
   const treasuryFee = await strategy
     .treasuryFee()
-    .catch(() => strategy.treasuryFee().catch(() => 0))
-    .then((val) => val && val.toNumber());
-  const performanceFee = await strategy
+    .then((val) => val && val.toNumber())
+    .catch(() => 0);
+  const strategyPerformanceFee = await strategy
     .performanceFee()
-    .catch(() => strategy.performanceFee().catch(() => 0))
-    .then((val) => val && val.toNumber());
+    .then((val) => val && val.toNumber())
+    .catch(() => 0);
   const withdrawalFee = await strategy
     .withdrawalFee()
     .then((val) => val.toNumber())
     .catch(() => 0);
-  const keepCRV = await strategy
+  const keepCrv = await strategy
     .keepCRV()
     .then((val) => val.toNumber())
     .catch(() => 0);
+
+  const performanceFee =
+    strategistReward + treasuryFee + strategyPerformanceFee;
   return {
-    name,
-    performanceFee,
-    withdrawalFee,
-    strategistReward,
-    treasuryFee,
-    keepCRV,
-    address,
+    general: {
+      performanceFee,
+      withdrawalFee,
+    },
+    special: { keepCrv },
   };
 }
 
@@ -84,22 +84,12 @@ export async function resolveV1(
   ctx: Context
 ): Promise<VaultV1> {
   const basic = await resolveBasic(address, ctx);
-  const info = await fetchInfoV1(address, ctx);
-  const {
-    performanceFee,
-    withdrawalFee,
-    strategistReward,
-    treasuryFee,
-    keepCRV,
-    ...strategy
-  } = await resolveStrategyV1(info.strategy, ctx);
+  const info = await resolveInfoV1(address, ctx);
+  const fees = await resolveFeesV1(info.strategy, ctx);
+  const strategy = await resolveStrategyV1(info.strategy, ctx);
   return {
     ...basic,
-    performanceFee,
-    withdrawalFee,
-    strategistReward,
-    treasuryFee,
-    keepCRV,
+    fees,
     strategies: [strategy],
     type: "v1",
   };

@@ -2,7 +2,7 @@ import "dotenv/config";
 
 import { Context } from "@data/context";
 import { WebSocketProvider } from "@ethersproject/providers";
-import { resolveV1, resolveV2 } from "@protocols/yearn/vault";
+import { resolver } from "@protocols/yearn/vault";
 
 import { vaults } from "./testdata";
 
@@ -16,16 +16,16 @@ describe("resolver", () => {
   });
 
   it("should resolve a v1 vault (network)", async () => {
-    const vault = resolveV1(vaults.v1.address, ctx);
+    const vault = resolver.resolveV1(vaults.v1.address, ctx);
     return expect(vault).resolves.toMatchObject(vaults.v1.object);
   }, 1e4);
 
   it("should resolve a v2 vault (network)", () => {
-    const vault = resolveV2(vaults.v2.address, ctx);
-    return expect(vault).resolves.toEqual(vaults.v2.object);
-  });
+    const vault = resolver.resolveV2(vaults.v2.address, ctx);
+    return expect(vault).resolves.toMatchObject(vaults.v2.object);
+  }, 1e4);
 
   afterAll(() => {
     return provider.destroy();
-  }, 1e4);
+  });
 });

@@ -1,12 +1,12 @@
-import { VaultV2Contract__factory } from "lib/contracts/index";
-import { Context } from "lib/data/context";
-import { Apy, calculateFromPps } from "lib/protocols/common/apy";
+import { VaultV2Contract__factory } from "@contracts/index";
+import { Context } from "@data/context";
+import { Apy, calculateFromPps } from "@protocols/common/apy";
 import {
   createTimedBlock,
   estimateBlockPrecise,
   fetchLatestBlock,
-} from "lib/utils/block";
-import { seconds } from "lib/utils/time";
+} from "@utils/block";
+import { seconds } from "@utils/time";
 import semver from "semver";
 
 import { VaultV2 } from "../../interfaces";
@@ -18,7 +18,7 @@ export function shouldBeAveraged(vault: VaultV2): boolean {
   return semver.gte(vault.apiVersion, AveragedFromVersion);
 }
 
-export async function calculateAveraged(
+export async function calculateAveragedApy(
   vault: VaultV2,
   ctx: Context
 ): Promise<Apy> {
@@ -29,7 +29,7 @@ export async function calculateAveraged(
   const harvests = await fetchHarvestCalls(vault, ctx);
   if (harvests.length < 4) {
     return {
-      recommended: 0,
+      recommended: "NEW",
       composite: false,
       type: "error",
       description: "no harvests",
@@ -66,10 +66,12 @@ export async function calculateAveraged(
     contract.pricePerShare
   );
 
-  const netApy =
-    Math.max(ppsSampleData.oneMonthSample, ppsSampleData.oneWeekSample) || 0;
-  const v2PerformanceFee = (vault.performanceFee * 2) / 10000;
-  const v2ManagementFee = vault.managementFee / 10000;
+  const netApy = Math.max(
+    ppsSampleData.oneMonthSample ?? 0,
+    ppsSampleData.oneWeekSample ?? 0
+  );
+  const v2PerformanceFee = (vault.fees.general.performanceFee * 2) / 10000;
+  const v2ManagementFee = vault.fees.general.managementFee / 10000;
   const grossApy = netApy / (1 - v2PerformanceFee) + v2ManagementFee;
 
   const data = {

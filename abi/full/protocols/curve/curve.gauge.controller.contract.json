@@ -78,7 +78,7 @@
     "inputs": [{ "type": "address", "name": "addr" }],
     "stateMutability": "nonpayable",
     "type": "function",
-    "gas": 37597
+    "gas": "37597"
   },
   {
     "name": "apply_transfer_ownership",
@@ -86,7 +86,7 @@
     "inputs": [],
     "stateMutability": "nonpayable",
     "type": "function",
-    "gas": 38497
+    "gas": "38497"
   },
   {
     "name": "gauge_types",
@@ -94,7 +94,7 @@
     "inputs": [{ "type": "address", "name": "_addr" }],
     "stateMutability": "view",
     "type": "function",
-    "gas": 1625
+    "gas": "1625"
   },
   {
     "name": "add_gauge",
@@ -123,7 +123,7 @@
     "inputs": [],
     "stateMutability": "nonpayable",
     "type": "function",
-    "gas": 18033784416
+    "gas": "18033784416"
   },
   {
     "name": "checkpoint_gauge",
@@ -131,7 +131,7 @@
     "inputs": [{ "type": "address", "name": "addr" }],
     "stateMutability": "nonpayable",
     "type": "function",
-    "gas": 18087678795
+    "gas": "18087678795"
   },
   {
     "name": "gauge_relative_weight",
@@ -193,7 +193,7 @@
     ],
     "stateMutability": "nonpayable",
     "type": "function",
-    "gas": 36246310050
+    "gas": "36246310050"
   },
   {
     "name": "change_gauge_weight",
@@ -204,7 +204,7 @@
     ],
     "stateMutability": "nonpayable",
     "type": "function",
-    "gas": 36354170809
+    "gas": "36354170809"
   },
   {
     "name": "vote_for_gauge_weights",
@@ -215,7 +215,7 @@
     ],
     "stateMutability": "nonpayable",
     "type": "function",
-    "gas": 18142052127
+    "gas": "18142052127"
   },
   {
     "name": "get_gauge_weight",
@@ -223,7 +223,7 @@
     "inputs": [{ "type": "address", "name": "addr" }],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2974
+    "gas": "2974"
   },
   {
     "name": "get_type_weight",
@@ -231,7 +231,7 @@
     "inputs": [{ "type": "int128", "name": "type_id" }],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2977
+    "gas": "2977"
   },
   {
     "name": "get_total_weight",
@@ -239,7 +239,7 @@
     "inputs": [],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2693
+    "gas": "2693"
   },
   {
     "name": "get_weights_sum_per_type",
@@ -247,7 +247,7 @@
     "inputs": [{ "type": "int128", "name": "type_id" }],
     "stateMutability": "view",
     "type": "function",
-    "gas": 3109
+    "gas": "3109"
   },
   {
     "name": "admin",
@@ -255,7 +255,7 @@
     "inputs": [],
     "stateMutability": "view",
     "type": "function",
-    "gas": 1841
+    "gas": "1841"
   },
   {
     "name": "future_admin",
@@ -263,7 +263,7 @@
     "inputs": [],
     "stateMutability": "view",
     "type": "function",
-    "gas": 1871
+    "gas": "1871"
   },
   {
     "name": "token",
@@ -271,7 +271,7 @@
     "inputs": [],
     "stateMutability": "view",
     "type": "function",
-    "gas": 1901
+    "gas": "1901"
   },
   {
     "name": "voting_escrow",
@@ -279,7 +279,7 @@
     "inputs": [],
     "stateMutability": "view",
     "type": "function",
-    "gas": 1931
+    "gas": "1931"
   },
   {
     "name": "n_gauge_types",
@@ -287,7 +287,7 @@
     "inputs": [],
     "stateMutability": "view",
     "type": "function",
-    "gas": 1961
+    "gas": "1961"
   },
   {
     "name": "n_gauges",
@@ -295,7 +295,7 @@
     "inputs": [],
     "stateMutability": "view",
     "type": "function",
-    "gas": 1991
+    "gas": "1991"
   },
   {
     "name": "gauge_type_names",
@@ -303,7 +303,7 @@
     "inputs": [{ "type": "int128", "name": "arg0" }],
     "stateMutability": "view",
     "type": "function",
-    "gas": 8628
+    "gas": "8628"
   },
   {
     "name": "gauges",
@@ -311,7 +311,7 @@
     "inputs": [{ "type": "uint256", "name": "arg0" }],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2160
+    "gas": "2160"
   },
   {
     "name": "vote_user_slopes",
@@ -326,7 +326,7 @@
     ],
     "stateMutability": "view",
     "type": "function",
-    "gas": 5020
+    "gas": "5020"
   },
   {
     "name": "vote_user_power",
@@ -334,7 +334,7 @@
     "inputs": [{ "type": "address", "name": "arg0" }],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2265
+    "gas": "2265"
   },
   {
     "name": "last_user_vote",
@@ -345,7 +345,7 @@
     ],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2449
+    "gas": "2449"
   },
   {
     "name": "points_weight",
@@ -359,7 +359,7 @@
     ],
     "stateMutability": "view",
     "type": "function",
-    "gas": 3859
+    "gas": "3859"
   },
   {
     "name": "time_weight",
@@ -367,7 +367,7 @@
     "inputs": [{ "type": "address", "name": "arg0" }],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2355
+    "gas": "2355"
   },
   {
     "name": "points_sum",
@@ -381,7 +381,7 @@
     ],
     "stateMutability": "view",
     "type": "function",
-    "gas": 3970
+    "gas": "3970"
   },
   {
     "name": "time_sum",
@@ -389,7 +389,7 @@
     "inputs": [{ "type": "uint256", "name": "arg0" }],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2370
+    "gas": "2370"
   },
   {
     "name": "points_total",
@@ -397,7 +397,7 @@
     "inputs": [{ "type": "uint256", "name": "arg0" }],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2406
+    "gas": "2406"
   },
   {
     "name": "time_total",
@@ -405,7 +405,7 @@
     "inputs": [],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2321
+    "gas": "2321"
   },
   {
     "name": "points_type_weight",
@@ -416,7 +416,7 @@
     ],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2671
+    "gas": "2671"
   },
   {
     "name": "time_type_weight",
@@ -424,6 +424,6 @@
     "inputs": [{ "type": "uint256", "name": "arg0" }],
     "stateMutability": "view",
     "type": "function",
-    "gas": 2490
+    "gas": "2490"
   }
 ]

@@ -1,11 +1,11 @@
+import { BigNumber, toBigNumber } from "@utils/bignumber";
+import { Block } from "@utils/block";
+import { BlocksPerDay } from "@utils/constants";
 import { CallOverrides, ethers } from "ethers";
 import fromEntries from "fromentries";
-import { BigNumber, toBigNumber } from "lib/utils/bignumber";
-import { Block } from "lib/utils/block";
-import { BlocksPerDay } from "lib/utils/constants";
 
 export interface Apy {
-  recommended: number;
+  recommended: number | string;
   composite: boolean;
   type: string;
   description: string;

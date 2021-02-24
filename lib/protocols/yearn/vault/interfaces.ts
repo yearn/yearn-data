@@ -10,6 +10,36 @@ export interface Strategy {
   address: string;
 }
 
+export interface SpecialFeesV1 {
+  keepCrv?: number;
+}
+
+export interface GeneralFeesV1 {
+  withdrawalFee: number;
+  performanceFee: number;
+}
+
+export interface FeesV1 {
+  general: GeneralFeesV1;
+  special: SpecialFeesV1;
+}
+
+export interface SpecialFeesV2 {
+  keepCrv?: number;
+  strategistReward?: number;
+  treasuryFee?: number;
+}
+
+export interface GeneralFeesV2 {
+  performanceFee: number;
+  managementFee: number;
+}
+
+export interface FeesV2 {
+  general: GeneralFeesV2;
+  special: SpecialFeesV2;
+}
+
 export interface VaultBase {
   name: string;
   address: string;
@@ -21,8 +51,7 @@ export interface VaultBase {
 export interface VaultV1 extends VaultBase {
   type: "v1";
   strategies: Strategy[];
-  performanceFee?: number;
-  withdrawalFee?: number;
+  fees: FeesV1;
 }
 
 export interface VaultV2 extends VaultBase {
@@ -31,8 +60,7 @@ export interface VaultV2 extends VaultBase {
   apiVersion: string;
   strategies: Strategy[];
   tags: string[];
-  performanceFee?: number;
-  managementFee?: number;
+  fees: FeesV2;
 }
 
 export type Vault = VaultV1 | VaultV2;

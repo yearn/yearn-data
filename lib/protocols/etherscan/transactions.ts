@@ -1,5 +1,5 @@
-import { Context } from "lib/data/context";
-import { handleHTTPError } from "lib/utils/fetch";
+import { Context } from "@data/context";
+import { handleHTTPError } from "@utils/fetch";
 import fetch from "node-fetch";
 import throttle from "p-throttle";
 
