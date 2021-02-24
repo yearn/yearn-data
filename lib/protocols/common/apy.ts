@@ -5,7 +5,7 @@ import { CallOverrides, ethers } from "ethers";
 import fromEntries from "fromentries";
 
 export interface Apy {
-  recommended: number;
+  recommended: number | string;
   composite: boolean;
   type: string;
   description: string;

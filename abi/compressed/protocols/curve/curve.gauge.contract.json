@@ -22,10 +22,12 @@
   },
   {
     "name": "reward_contract",
-    "outputs": [{
-      "type": "address",
-      "name": ""
-    }],
+    "outputs": [
+      {
+        "type": "address",
+        "name": ""
+      }
+    ],
     "inputs": [],
     "stateMutability": "view",
     "type": "function"

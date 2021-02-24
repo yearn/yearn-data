@@ -29,7 +29,7 @@ export async function calculateAveragedApy(
   const harvests = await fetchHarvestCalls(vault, ctx);
   if (harvests.length < 4) {
     return {
-      recommended: 0,
+      recommended: "NEW",
       composite: false,
       type: "error",
       description: "no harvests",
