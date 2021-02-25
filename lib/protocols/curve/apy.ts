@@ -176,43 +176,44 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
       stakingRewardsSnxAddress;
 
     const priceOfRewardAsset = (rewardTokenAddress &&
-      (await getPrice(rewardTokenAddress, ["usd"]))) ?? { usd: 0 };
+      (await getPrice(rewardTokenAddress, ["usd"]))) || { usd: 0 };
 
-    if (priceOfRewardAsset) {
+    const singleRewardToken = priceOfRewardAsset.usd && stakingRewardsRate;
+    if (singleRewardToken) {
       // Single rewards token
-      if (stakingRewardsRate) {
-        tokenRewardsApr = SecondsInYear.times(
-          stakingRewardsRate.div(EthConstant)
-        )
+      tokenRewardsApr = SecondsInYear.times(stakingRewardsRate.div(EthConstant))
+        .times(priceOfRewardAsset.usd)
+        .div(
+          poolVirtualPrice
+            .div(EthConstant)
+            .times(stakingRewardsTotalSupply.div(EthConstant))
+            .times(priceOfBaseAsset.usd)
+        );
+    } else {
+      // Multiple reward tokens
+      let i = 0;
+      let rewardTokenAddress = await stakingRewards.rewardTokens(i);
+      while (rewardTokenAddress !== NullAddress) {
+        const stakingRewardsRate = await stakingRewards
+          .rewardData(rewardTokenAddress)
+          .then((val) => toBigNumber(val.rewardRate).div(EthConstant))
+          .catch(() => 0);
+        const priceOfRewardAsset = (await getPrice(rewardTokenAddress, [
+          "usd",
+        ])) ?? { usd: 0 };
+        const tokenRewardApr = SecondsInYear.times(stakingRewardsRate)
           .times(priceOfRewardAsset.usd)
           .div(
             poolVirtualPrice
               .div(EthConstant)
-              .times(stakingRewardsTotalSupply.div(EthConstant))
+              .times(stakingRewardsTotalSupply)
+              .div(EthConstant)
               .times(priceOfBaseAsset.usd)
           );
-      } else {
-        // Multiple reward tokens
-        let i = 0;
-        let rewardTokenAddress = await stakingRewards.rewardTokens(i);
-        while (rewardTokenAddress !== NullAddress) {
-          const stakingRewardsRate = await stakingRewards
-            .rewardData(rewardTokenAddress)
-            .then((val) => toBigNumber(val.rewardRate))
-            .catch(() => 0);
-          const priceOfRewardAsset = (await getPrice(rewardTokenAddress, [
-            "usd",
-          ])) ?? { usd: 0 };
-          const tokenRewardApr = SecondsInYear.times(stakingRewardsRate)
-            .times(priceOfRewardAsset.usd)
-            .div(
-              poolVirtualPrice
-                .times(stakingRewardsTotalSupply)
-                .times(priceOfBaseAsset.usd)
-            );
-          rewardTokenAddress = await stakingRewards.rewardTokens(++i);
-          tokenRewardsApr = tokenRewardsApr.plus(tokenRewardApr);
-        }
+        rewardTokenAddress = await stakingRewards
+          .rewardTokens(++i)
+          .catch(() => NullAddress);
+        tokenRewardsApr = tokenRewardsApr.plus(tokenRewardApr);
       }
     }
   }
