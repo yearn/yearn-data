@@ -23,5 +23,6 @@ export async function fetchHarvestCalls(
     })
   );
   const harvests = Array.prototype.concat(...all);
-  return harvests.sort((a, b) => a.block - b.block);
+  const sortedHarvests = harvests.sort((a, b) => a - b);
+  return sortedHarvests;
 }
