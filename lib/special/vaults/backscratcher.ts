@@ -25,10 +25,13 @@ const BackScratcherMetadata: Vault = {
   },
   address: "0xc5bDdf9843308380375a611c18B50Fb9341f502A",
   strategies: [],
-  endorsed: false,
   name: "veCRV-DAO yVault (yveCRV-DAO)",
   decimals: 18,
   type: "v1",
+  fees: {
+    general: { performanceFee: 0, withdrawalFee: 0 },
+    special: {},
+  },
 };
 
 export async function backscratcher(ctx: Context): Promise<Vault> {

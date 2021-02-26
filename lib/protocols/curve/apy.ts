@@ -13,9 +13,8 @@ import { estimateBlockPrecise, fetchLatestBlock } from "@utils/block";
 import { NullAddress } from "@utils/constants";
 import { seconds } from "@utils/time";
 
-import { getPoolFromLpToken } from "./registry";
+import { CurveRegistryAddress, getPoolFromLpToken } from "./registry";
 
-const CurveRegistryAddress = "0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c";
 const CrvAddress = "0xD533a949740bb3306d119CC777fa900bA034cd52";
 
 const WbtcAddress = "0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599";
@@ -137,6 +136,11 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     }
   } else {
     currentBoost = new BigNumber(MaxBoost);
+  }
+
+  // FIXME: crvSTETH is reporting a wrong boost because it's not using VoterProxy
+  if (vault.address === "0xdCD90C7f6324cfa40d7169ef80b12031770B4325") {
+    currentBoost = new BigNumber(1);
   }
 
   const rewardAddress = await gauge.reward_contract().catch(() => null);

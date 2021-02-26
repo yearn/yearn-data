@@ -61,3 +61,7 @@ export async function scan<T>(table: string): Promise<T[]> {
     .promise();
   return items as T[];
 }
+
+export async function remove(table: string, key: Key): Promise<void> {
+  await client.delete({ Key: key, TableName: table }).promise();
+}

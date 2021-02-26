@@ -3,6 +3,7 @@ service: yearn-data
 # Create an optimized package for our functions
 package:
   individually: true
+  excludeDevDependencies: true
 
 plugins:
   - serverless-webpack
@@ -10,6 +11,7 @@ plugins:
   - serverless-dotenv-plugin # Load .env as environment variables
   - serverless-domain-manager # Use vaults.finance
   - serverless-api-gateway-caching # Cache api responses
+  # - serverless-plugin-aws-alerts # Alerts and alams
 
 custom:
   webpack:
@@ -23,6 +25,15 @@ custom:
   apiGatewayCaching:
     enabled: true
     ttlInSeconds: 600
+  # alerts:
+  #   stages:
+  #     - prod
+  #   topics:
+  #     alarm:
+  #       topic: ${self:service}-${opt:stage}-alerts-alarm
+  #   alarms:
+  #     - functionErrors
+  #     - functionThrottles
   dev:
     domain: dev.vaults.finance
     jobs-schedule:
@@ -38,6 +49,7 @@ provider:
   stage: ${opt:stage, 'dev'}
   region: us-east-1
   lambdaHashingVersion: 20201221
+  logRetentionInDays: 3
   apiGateway:
     shouldStartNameWithService: true
   environment:

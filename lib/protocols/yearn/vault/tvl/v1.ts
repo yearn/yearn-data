@@ -1,18 +1,18 @@
-import { VaultV2Contract__factory } from "@contracts/index";
+import { VaultV1Contract__factory } from "@contracts/index";
 import { Context } from "@data/context";
 import { toBigNumber } from "@utils/bignumber";
 
-import { VaultV2 } from "../interfaces";
+import { VaultV1 } from "../interfaces";
 
 export async function calculateTvl(
-  vault: VaultV2,
+  vault: VaultV1,
   ctx: Context
 ): Promise<number> {
-  const contract = VaultV2Contract__factory.connect(
+  const contract = VaultV1Contract__factory.connect(
     vault.address,
     ctx.provider
   );
-  return contract.totalAssets().then((num) =>
+  return contract.balance().then((num) =>
     toBigNumber(num)
       .div(10 ** vault.decimals)
       .toNumber()

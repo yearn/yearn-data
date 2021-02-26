@@ -1,12 +1,12 @@
 import fromEntries from "fromentries";
 import fetch from "node-fetch";
 
-const GhRawURL = "https://rawcdn.githack.com";
-const GhApiURL = "https://api.github.com/repos";
+const GhRawURL = "https://raw.githack.com";
+const GhApiURL = "https://api.github.com";
 
 const YearnAliasesURL = `${GhRawURL}/iearn-finance/yearn-assets/master/icons/aliases.json`;
 
-const YearnAssetsDirURL = `${GhApiURL}/iearn-finance/yearn-assets/contents/icons/tokens`;
+const YearnAssetsDirURL = `${GhApiURL}/repos/iearn-finance/yearn-assets/contents/icons/tokens`;
 const YearnAssetsURL = `${GhRawURL}/iearn-finance/yearn-assets/master/icons/tokens/`;
 const YearnAssetImageSuffix = "/logo-128.png";
 

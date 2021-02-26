@@ -1,6 +1,6 @@
-const decoder = require("abi-decoder");
-const path = require("path");
-const fs = require("fs");
+import decoder from "abi-decoder";
+import path from "path";
+import fs from "fs";
 
 const abidir = path.join("abi", "full");
 
@@ -13,7 +13,7 @@ if (rest.length !== 1) {
 
 const data = rest[0];
 
-function loadAbis(dir) {
+function loadAbis(dir: string) {
   fs.readdirSync(dir).forEach((file) => {
     const fullpath = path.join(dir, file);
     const lstat = fs.lstatSync(fullpath);

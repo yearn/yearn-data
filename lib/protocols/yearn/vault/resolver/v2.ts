@@ -10,7 +10,7 @@ import { objectAll } from "@utils/promise";
 import { FeesV2, SpecialFeesV2, Strategy, VaultV2 } from "../interfaces";
 import { resolveBasic } from "./common";
 
-export async function resolveStrategyV2(
+export async function resolveStrategy(
   address: string,
   ctx: Context
 ): Promise<Strategy> {
@@ -22,7 +22,7 @@ export async function resolveStrategyV2(
   };
 }
 
-export async function resolveTagsV2(
+export async function resolveTags(
   address: string,
   ctx: Context
 ): Promise<string[]> {
@@ -34,7 +34,7 @@ export async function resolveTagsV2(
     .map((event) => event.args && event.args.tag);
 }
 
-export async function resolveFeesV2(
+export async function resolveFees(
   address: string,
   strategyAddresses: string[],
   ctx: Context
@@ -52,7 +52,7 @@ export async function resolveFeesV2(
 
   const general = { performanceFee, managementFee };
 
-  if (strategyAddresses.length > 1) {
+  if (strategyAddresses.length !== 1) {
     return { general, special: {} };
   }
 
@@ -64,12 +64,12 @@ export async function resolveFeesV2(
   const keepCrv = await strategy
     .keepCRV()
     .then((val) => val && val.toNumber())
-    .catch(() => 0);
+    .catch(() => undefined);
 
   return { general, special: { keepCrv } };
 }
 
-export async function resolveSpecialFeesV2(
+export async function resolveSpecialFees(
   strategyAddresses: string[],
   ctx: Context
 ): Promise<SpecialFeesV2> {
@@ -86,7 +86,7 @@ export async function resolveSpecialFeesV2(
   return {};
 }
 
-export async function resolveV2(
+export async function resolveVault(
   address: string,
   ctx: Context
 ): Promise<VaultV2> {
@@ -102,22 +102,21 @@ export async function resolveV2(
 
   const strategyAddresses: string[] = [];
 
-  let strategyAddress: string,
-    i = 0;
-  do {
-    strategyAddress = await vault.withdrawalQueue(i++);
-    strategyAddresses.push(strategyAddress);
-  } while (strategyAddress !== NullAddress);
+  let i = 0;
+  let strategyAddress = await vault.withdrawalQueue(i++);
 
-  strategyAddresses.pop(); // Remove NullAddresses
+  while (strategyAddress !== NullAddress) {
+    strategyAddresses.push(strategyAddress);
+    strategyAddress = await vault.withdrawalQueue(i++);
+  }
 
   const strategies = await Promise.all(
-    strategyAddresses.map((address) => resolveStrategyV2(address, ctx))
+    strategyAddresses.map((address) => resolveStrategy(address, ctx))
   );
 
-  const tags = await resolveTagsV2(address, ctx);
+  const tags = await resolveTags(address, ctx);
 
-  const fees = await resolveFeesV2(address, strategyAddresses, ctx);
+  const fees = await resolveFees(address, strategyAddresses, ctx);
 
   return { ...basic, ...specific, strategies, tags, fees, type: "v2" };
 }

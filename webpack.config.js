@@ -1,8 +1,8 @@
 const path = require("path");
 const slsw = require("serverless-webpack");
-const nodeExternals = require("webpack-node-externals");
 
 const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
+const NodeExternals = require("webpack-node-externals");
 
 module.exports = {
   context: __dirname,
@@ -30,7 +30,7 @@ module.exports = {
     concatenateModules: false,
   },
   target: "node",
-  externals: [nodeExternals()],
+  externals: [NodeExternals()],
   module: {
     rules: [
       {

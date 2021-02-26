@@ -5,7 +5,7 @@ import {
 import { Context } from "@data/context";
 
 import { FeesV1, Strategy, VaultV1 } from "../interfaces";
-import { RegistryV1 } from "../registry/v1";
+import { Registry } from "../registry/v1";
 import { resolveBasic } from "./common";
 
 export const DefaultStrategyV1Name = "StrategyUnnamedV1";
@@ -18,18 +18,15 @@ export interface VaultV1Info {
   isDelegated: boolean;
 }
 
-export async function resolveInfoV1(
+export async function resolveInfo(
   address: string,
   ctx: Context
 ): Promise<VaultV1Info> {
-  const registry = RegistryV1Contract__factory.connect(
-    RegistryV1,
-    ctx.provider
-  );
+  const registry = RegistryV1Contract__factory.connect(Registry, ctx.provider);
   return await registry.getVaultInfo(address);
 }
 
-export async function resolveStrategyV1(
+export async function resolveStrategy(
   address: string,
   ctx: Context
 ): Promise<Strategy> {
@@ -42,7 +39,7 @@ export async function resolveStrategyV1(
   }
 }
 
-export async function resolveFeesV1(
+export async function resolveFees(
   address: string,
   ctx: Context
 ): Promise<FeesV1> {
@@ -79,14 +76,14 @@ export async function resolveFeesV1(
   };
 }
 
-export async function resolveV1(
+export async function resolveVault(
   address: string,
   ctx: Context
 ): Promise<VaultV1> {
   const basic = await resolveBasic(address, ctx);
-  const info = await resolveInfoV1(address, ctx);
-  const fees = await resolveFeesV1(info.strategy, ctx);
-  const strategy = await resolveStrategyV1(info.strategy, ctx);
+  const info = await resolveInfo(address, ctx);
+  const fees = await resolveFees(info.strategy, ctx);
+  const strategy = await resolveStrategy(info.strategy, ctx);
   return {
     ...basic,
     fees,
