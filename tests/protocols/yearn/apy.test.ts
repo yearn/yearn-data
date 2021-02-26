@@ -58,7 +58,7 @@ describe("vault apy", () => {
   });
 
   it("calculate apy v1 (network)", async () => {
-    const vault = await resolver.resolveV1(vaults.v1.address, ctx);
+    const vault = await resolver.v1.resolveVault(vaults.v1.address, ctx);
     const inception = apy.calculateApy(vault, ctx);
     return expect(inception).resolves.toEqual({
       composite: expect.any(Boolean),
@@ -80,7 +80,7 @@ describe("vault apy", () => {
   }, 3e4);
 
   it("calculate apy v2 (network)", async () => {
-    const vault = await resolver.resolveV2(vaults.v2.address, ctx);
+    const vault = await resolver.v2.resolveVault(vaults.v2.address, ctx);
     const inception = apy.calculateApy(vault, ctx);
     return expect(inception).resolves.toEqual({
       composite: expect.any(Boolean),

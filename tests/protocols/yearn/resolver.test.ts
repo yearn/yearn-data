@@ -16,12 +16,12 @@ describe("resolver", () => {
   });
 
   it("should resolve a v1 vault (network)", async () => {
-    const vault = resolver.resolveV1(vaults.v1.address, ctx);
+    const vault = resolver.v1.resolveVault(vaults.v1.address, ctx);
     return expect(vault).resolves.toMatchObject(vaults.v1.object);
   }, 1e4);
 
   it("should resolve a v2 vault (network)", () => {
-    const vault = resolver.resolveV2(vaults.v2.address, ctx);
+    const vault = resolver.v2.resolveVault(vaults.v2.address, ctx);
     return expect(vault).resolves.toMatchObject(vaults.v2.object);
   }, 1e4);
 

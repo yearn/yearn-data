@@ -17,7 +17,7 @@ describe("", () => {
   });
 
   it("calculate apy (network)", async () => {
-    const vault = await yearn.vault.resolver.resolveV1(CurveVault, ctx);
+    const vault = await yearn.vault.resolver.v1.resolveVault(CurveVault, ctx);
     const apy = await curve.calculateApy(vault, ctx);
     return expect(apy).toEqual({
       recommended: expect.any(Number),

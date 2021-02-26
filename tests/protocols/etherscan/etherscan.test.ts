@@ -11,7 +11,7 @@ describe("etherscan integration", () => {
   });
 
   it("should fetch tx list (network)", () => {
-    const address = "0x0000000000000000000000000000000000000000";
+    const address = "0x5f18C75AbDAe578b483E5F43f12a39cF75b973a9";
     const request = fetchTransactionList({ address, offset: 1 }, ctx);
     return expect(request).resolves.toEqual(
       expect.arrayContaining([
@@ -21,5 +21,5 @@ describe("etherscan integration", () => {
         }),
       ])
     );
-  }, 2e4);
+  }, 3e4);
 });

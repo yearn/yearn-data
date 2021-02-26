@@ -16,7 +16,7 @@ describe("tvl", () => {
   });
 
   it("should calculate tvl for a v2 vault (network)", () => {
-    const valueLocked = tvl.calculateTvlV2(vaults.v2.object, ctx);
+    const valueLocked = tvl.v2.calculateTvl(vaults.v2.object, ctx);
     return expect(valueLocked).resolves.toStrictEqual(expect.any(Number));
   }, 1e4);
 
