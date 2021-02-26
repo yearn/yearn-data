@@ -1,4 +1,4 @@
-import { Apy, yearn } from "..";
+import { Apy, common, yearn } from "..";
 
 export type FetchedVault =
   | yearn.vault.VaultV1
@@ -10,12 +10,12 @@ export type Vault = FetchedVault & {
   apy: Apy | null;
 };
 
-export type CachedToken = WithAssets<yearn.vault.Token>;
+export type CachedToken = WithAssets<common.Token>;
 
 export type CachedVault = WithAssets<Vault> & {
   token: CachedToken;
   updated: number;
-  tvl: number | null;
+  tvl: string | null;
 };
 
 export type WithAssets<T> = T & {

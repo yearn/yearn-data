@@ -1,14 +1,11 @@
 import { calculateApy, calculatePoolApr } from "./apy";
-import {
-  CurveRegistryAddress,
-  getPoolFromLpToken,
-  hasCurvePool,
-} from "./registry";
+import { price } from "./price";
+import { CurveRegistryAddress, hasCurvePool } from "./registry";
 
 export {
   calculateApy,
   calculatePoolApr,
   CurveRegistryAddress,
-  getPoolFromLpToken,
   hasCurvePool,
+  price,
 };

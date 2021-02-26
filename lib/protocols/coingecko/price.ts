@@ -10,17 +10,17 @@ export type PriceMap<A extends string, T extends string> = {
 const TokenPriceUrl =
   "https://api.coingecko.com/api/v3/simple/token_price/ethereum";
 
-export async function getPrice<A extends string, T extends string>(
+export async function price<A extends string, T extends string>(
   tokenAddresses: A[],
   vsCurrencies: T[]
 ): Promise<PriceMap<A, T>>;
 
-export async function getPrice<A extends string, T extends string>(
+export async function price<A extends string, T extends string>(
   tokenAddresses: A,
   vsCurrencies: T[]
 ): Promise<Price<T>>;
 
-export async function getPrice<A extends string, T extends string>(
+export async function price<A extends string, T extends string>(
   query: A[] | A,
   vsCurrencies: T[]
 ): Promise<Price<T> | PriceMap<A, T>> {

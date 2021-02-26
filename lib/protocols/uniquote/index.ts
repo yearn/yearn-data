@@ -3,6 +3,7 @@ import { Context } from "@data/context";
 import { toBigNumber } from "@utils/bignumber";
 import BigNumber from "bignumber.js";
 
+import aliases from "./aliases.json";
 import pairs from "./pairs.json";
 
 export const SushiOracleAddress = "0xf67Ab1c914deE06Ba0F264031885Ea7B276a7cDa";
@@ -20,7 +21,6 @@ const graph: Record<string, string[]> = ((pairs) => {
     graph[t0].push(t1);
     graph[t1].push(t0);
   }
-  console.log(graph);
   return graph;
 })(pairs);
 
@@ -55,6 +55,22 @@ function pairwise<T>(arr: T[]): [T, T][] {
   return result;
 }
 
+export function supported(token: string): boolean {
+  const alias = aliases[token];
+  if (alias) {
+    return Object.keys(graph).includes(alias);
+  }
+  return Object.keys(graph).includes(token);
+}
+
+export function aliased(token: string): string {
+  const alias = aliases[token];
+  if (alias) {
+    return alias;
+  }
+  return token;
+}
+
 export async function price(
   start: string,
   end: string,
@@ -65,6 +81,9 @@ export async function price(
     SushiOracleAddress,
     ctx.provider
   );
+
+  const alias = aliases[start];
+  if (alias) start = alias;
 
   const jumps = shortestPath(start, end);
   if (!jumps) {

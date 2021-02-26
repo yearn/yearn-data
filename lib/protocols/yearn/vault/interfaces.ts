@@ -1,9 +1,4 @@
-export interface Token {
-  symbol: string;
-  address: string;
-  decimals: number;
-  name: string;
-}
+import { Token } from "@protocols/common/token";
 
 export interface Strategy {
   name: string;

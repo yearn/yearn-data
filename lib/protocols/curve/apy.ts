@@ -5,7 +5,7 @@ import {
   CurveStakingRewards__factory,
 } from "@contracts/index";
 import { Context } from "@data/context";
-import { getPrice } from "@protocols/coingecko";
+import { price } from "@protocols/coingecko";
 import { Apy, calculateFromPps } from "@protocols/common/apy";
 import { Vault } from "@protocols/yearn/vault/interfaces";
 import { BigNumber, toBigNumber } from "@utils/bignumber";
@@ -13,7 +13,7 @@ import { estimateBlockPrecise, fetchLatestBlock } from "@utils/block";
 import { NullAddress } from "@utils/constants";
 import { seconds } from "@utils/time";
 
-import { CurveRegistryAddress, getPoolFromLpToken } from "./registry";
+import { CurveRegistryAddress } from "./registry";
 
 const CrvAddress = "0xD533a949740bb3306d119CC777fa900bA034cd52";
 
@@ -68,7 +68,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     CurveRegistryAddress,
     ctx.provider
   );
-  const poolAddress = await getPoolFromLpToken(lpToken, ctx);
+  const poolAddress = await registry.get_pool_from_lp_token(lpToken);
   const gauges = await registry.get_gauges(poolAddress);
   const gaugeAddress = gauges[0][0]; // first gauge
 
@@ -101,15 +101,15 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
 
   let priceOfBaseAsset;
   if (btcMatch) {
-    priceOfBaseAsset = await getPrice(WbtcAddress, ["usd"]);
+    priceOfBaseAsset = await price(WbtcAddress, ["usd"]);
   } else if (ethMatch) {
-    priceOfBaseAsset = await getPrice(WethAddress, ["usd"]);
+    priceOfBaseAsset = await price(WethAddress, ["usd"]);
   } else {
-    priceOfBaseAsset = await getPrice(firstUnderlyingCoinAddress, ["usd"]);
+    priceOfBaseAsset = await price(firstUnderlyingCoinAddress, ["usd"]);
     priceOfBaseAsset = priceOfBaseAsset ?? { usd: 1 };
   }
 
-  const priceOfCrv = await getPrice(CrvAddress, ["usd"]);
+  const priceOfCrv = await price(CrvAddress, ["usd"]);
 
   const yearnWorkingBalance = toBigNumber(
     await gauge.working_balances(YearnVeCrvvoterAddress)
@@ -180,7 +180,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
       stakingRewardsSnxAddress;
 
     const priceOfRewardAsset = (rewardTokenAddress &&
-      (await getPrice(rewardTokenAddress, ["usd"]))) || { usd: 0 };
+      (await price(rewardTokenAddress, ["usd"]))) || { usd: 0 };
 
     const singleRewardToken = priceOfRewardAsset.usd && stakingRewardsRate;
     if (singleRewardToken) {
@@ -203,7 +203,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
             .rewardData(rewardTokenAddress)
             .then((val) => toBigNumber(val.rewardRate).div(EthConstant))
             .catch(() => 0);
-          const priceOfRewardAsset = (await getPrice(rewardTokenAddress, [
+          const priceOfRewardAsset = (await price(rewardTokenAddress, [
             "usd",
           ])) ?? { usd: 0 };
           const tokenRewardApr = SecondsInYear.times(stakingRewardsRate)
