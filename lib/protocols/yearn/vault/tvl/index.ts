@@ -1,5 +1,6 @@
 import { Context } from "@data/context";
-import { curve, uniquote } from "@protocols/index";
+import { coingecko, curve, uniquote } from "@protocols/index";
+import { toBigNumber } from "@utils/bignumber";
 import BigNumber from "bignumber.js";
 
 import { Vault } from "../interfaces";
@@ -43,9 +44,19 @@ export async function calculateTvl(
       ctx
     );
   } else {
-    throw new Error(
-      "vault is not curve and both vault token and vault as token are not supported by uniquote"
-    );
+    // FIXME: 1inch is not supported by uniquote
+    const _1inch = "0x111111111117dC0aa78b770fA6A738034120C302";
+    if (vault.token.address === _1inch) {
+      decimals = vault.token.decimals;
+      price = await coingecko
+        .price(_1inch, ["usd"])
+        .then((price) => toBigNumber(price.usd))
+        .then((price) => price.times(10 ** 6));
+    } else {
+      throw new Error(
+        "vault is not curve and both vault token and vault as token are not supported by uniquote"
+      );
+    }
   }
   return totalAssets
     .times(price)

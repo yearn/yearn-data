@@ -106,7 +106,7 @@ export const handler = wrap(async () => {
     )
   );
 
-  console.log("Calculating tvl");
+  console.log("Calculating TVL");
 
   await Promise.all(
     vaults.map((vault) =>

@@ -13,18 +13,24 @@ export const USDC = {
   decimals: 6,
 };
 
-const graph: Record<string, string[]> = ((pairs) => {
+const oracles = Object.keys(pairs);
+const graph: Record<string, Record<string, string[]>> = ((pairs) => {
   const graph = {};
-  for (const [t0, t1] of pairs) {
-    if (!graph[t0]) graph[t0] = [];
-    if (!graph[t1]) graph[t1] = [];
-    graph[t0].push(t1);
-    graph[t1].push(t0);
+  for (const oracle of oracles) {
+    const subgraph = {};
+    for (const [t0, t1] of pairs[oracle]) {
+      if (!subgraph[t0]) subgraph[t0] = [];
+      if (!subgraph[t1]) subgraph[t1] = [];
+      subgraph[t0].push(t1);
+      subgraph[t1].push(t0);
+    }
+    graph[oracle] = subgraph;
   }
   return graph;
 })(pairs);
 
 function shortestPath(
+  graph: Record<string, string[]>,
   start: string,
   end: string,
   path: string[] = []
@@ -35,7 +41,7 @@ function shortestPath(
   let shortest: string[] | null = null;
   for (const node of graph[start]) {
     if (!path.includes(node)) {
-      const newpath = shortestPath(node, end, [...path]);
+      const newpath = shortestPath(graph, node, end, [...path]);
       if (newpath) {
         if (!shortest || newpath.length < shortest.length) {
           shortest = newpath;
@@ -57,10 +63,11 @@ function pairwise<T>(arr: T[]): [T, T][] {
 
 export function supported(token: string): boolean {
   const alias = aliases[token];
-  if (alias) {
-    return Object.keys(graph).includes(alias);
-  }
-  return Object.keys(graph).includes(token);
+  if (alias) return supported(alias);
+  return Object.values(graph)
+    .map((a) => Object.keys(a))
+    .reduce((a, b) => a.concat(b))
+    .includes(token);
 }
 
 export function aliased(token: string): string {
@@ -77,20 +84,27 @@ export async function price(
   amount: BigNumber,
   ctx: Context
 ): Promise<BigNumber> {
-  const oracle = UniquoteOracle__factory.connect(
-    SushiOracleAddress,
-    ctx.provider
-  );
-
   const alias = aliases[start];
   if (alias) start = alias;
 
-  const jumps = shortestPath(start, end);
-  if (!jumps) {
+  const paths = oracles.map((oracle) => ({
+    oracle,
+    path: shortestPath(graph[oracle], start, end),
+  }));
+
+  const short = paths.reduce((prev, next) => {
+    if (prev.path === null) return next;
+    else if (next.path === null) return prev;
+    return prev.path.length > next.path.length ? next : prev;
+  });
+
+  if (!short.path) {
     throw new Error("no direct path from start to end");
   }
 
-  for (const [token0, token1] of pairwise(jumps)) {
+  const oracle = UniquoteOracle__factory.connect(short.oracle, ctx.provider);
+
+  for (const [token0, token1] of pairwise(short.path)) {
     amount = toBigNumber(
       await oracle.current(token0, amount.toString(), token1)
     );
