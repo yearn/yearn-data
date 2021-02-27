@@ -42,7 +42,8 @@ export async function resolveFees(
   const vault = VaultV2Contract__factory.connect(address, ctx.provider);
   const performanceFee = await vault
     .performanceFee()
-    .then((val) => val && val.toNumber())
+    // For v2, 1x performanceFee goes to strategists, and 1x goes to treasury
+    .then((val) => val && val.mul(2).toNumber())
     .catch(() => 0);
 
   const managementFee = await vault
