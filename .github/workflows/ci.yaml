@@ -24,5 +24,8 @@ jobs:
       - name: Lint
         run: yarn lint
 
+      - name: Generate typechain types
+        run: yarn abi
+
       - name: Test
         run: yarn test --ci --coverage --maxWorkers=2
