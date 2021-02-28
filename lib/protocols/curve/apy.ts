@@ -235,15 +235,15 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
 
   let keepCrv: number, totalPerformanceFee: number, managementFee: number;
   if (vault.type === "v1") {
+    // v1
     keepCrv = (vault.fees.special.keepCrv ?? 0) / FeeDenominator;
     managementFee = 0;
     totalPerformanceFee = vault.fees.general.performanceFee / FeeDenominator;
   } else {
     // v2
     keepCrv = (vault.fees.special.keepCrv ?? 0) / FeeDenominator;
-    const performanceFee = vault.fees.general.performanceFee / FeeDenominator;
     managementFee = vault.fees.general.managementFee / FeeDenominator;
-    totalPerformanceFee = performanceFee * 2;
+    totalPerformanceFee = vault.fees.general.performanceFee / FeeDenominator;
   }
 
   const grossFarmedApy = boostedApr
