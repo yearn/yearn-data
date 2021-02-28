@@ -9,9 +9,9 @@ module.exports = {
     "^.+\\.tsx?$": "ts-jest",
   },
   moduleNameMapper: {
-    "^@contracts/(.*)$": resolve(__dirname, "./lib/contracts/$1"),
-    "^@data/(.*)$": resolve(__dirname, "./lib/data/$1"),
-    "^@protocols/(.*)$": resolve(__dirname, "./lib/protocols/$1"),
-    "^@utils/(.*)$": resolve(__dirname, "./lib/utils/$1"),
+    "^@contracts/(.*)$": "<rootDir>/lib/contracts/$1",
+    "^@data/(.*)$": "<rootDir>/lib/data/$1",
+    "^@protocols/(.*)$": "<rootDir>/lib/protocols/$1",
+    "^@utils/(.*)$": "<rootDir>/lib/utils/$1",
   },
 };
