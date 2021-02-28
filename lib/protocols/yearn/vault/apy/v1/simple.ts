@@ -51,9 +51,9 @@ export async function calculateSimpleApy(
     ppsSampleData.oneWeekSample ?? 0
   );
 
-  const totalPerformanceFee = vault.fees.general.performanceFee / 10000;
+  const totalPerformanceFee = vault.fees.general.performanceFee / 1e4;
 
-  const withdrawalFee = vault.fees.general.withdrawalFee / 10000;
+  const withdrawalFee = vault.fees.general.withdrawalFee / 1e4;
 
   const grossApy = netApy / (1 - totalPerformanceFee);
 
@@ -62,7 +62,6 @@ export async function calculateSimpleApy(
     grossApy,
     netApy,
     withdrawalFee,
-    performanceFee: totalPerformanceFee,
   };
 
   const apy = {
