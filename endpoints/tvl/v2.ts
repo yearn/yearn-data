@@ -36,12 +36,12 @@ export const handler = wrap(async () => {
   vaults = vaults.filter(
     (vault) => !!prices[vault.token.address.toLowerCase()]
   );
+  console.log(vaults);
 
   const tvl = vaults.reduce(
     (value: number, vault) =>
       value +
       new BigNumber(vault.tvl ?? 0)
-        .multipliedBy(prices[vault.token.address.toLowerCase()].usd)
         .toNumber(),
     0
   );
