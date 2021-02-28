@@ -3,6 +3,7 @@ import "dotenv/config";
 import { Context } from "@data/context";
 import { WebSocketProvider } from "@ethersproject/providers";
 import { tvl } from "@protocols/yearn/vault";
+import BigNumber from "bignumber.js";
 
 import { vaults } from "./testdata";
 
@@ -17,7 +18,7 @@ describe("tvl", () => {
 
   it("should calculate tvl for a v2 vault (network)", () => {
     const valueLocked = tvl.v2.calculateTotalAssets(vaults.v2.object, ctx);
-    return expect(valueLocked).resolves.toStrictEqual(expect.any(Number));
+    return expect(valueLocked).resolves.toStrictEqual(expect.any(BigNumber));
   }, 1e4);
 
   afterAll(() => {
