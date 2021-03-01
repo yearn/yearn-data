@@ -138,11 +138,6 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     currentBoost = new BigNumber(MaxBoost);
   }
 
-  // FIXME: crvSTETH is reporting a wrong boost because it's not using VoterProxy
-  if (vault.address === "0xdCD90C7f6324cfa40d7169ef80b12031770B4325") {
-    currentBoost = new BigNumber(1);
-  }
-
   const rewardAddress = await gauge.reward_contract().catch(() => null);
 
   let tokenRewardsApr = new BigNumber(0);
