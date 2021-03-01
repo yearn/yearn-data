@@ -39,7 +39,8 @@ export const handler = wrap(async () => {
   console.log(vaults);
 
   const tvl = vaults.reduce(
-    (value: number, vault) => value + new BigNumber(vault.tvl ?? 0).toNumber(),
+    (value: number, vault) =>
+      value + new BigNumber(vault.tvl ? vault.tvl.value : 0).toNumber(),
     0
   );
 

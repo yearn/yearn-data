@@ -9,10 +9,16 @@ import * as v2 from "./v2";
 
 export { v1, v2 };
 
+export interface Tvl {
+  value: string;
+  price: number;
+  totalAssets: number;
+}
+
 export async function calculateTvl(
   vault: Vault,
   ctx: Context
-): Promise<string | null> {
+): Promise<Tvl | null> {
   let totalAssets: BigNumber;
   if (vault.type == "v1") {
     totalAssets = await v1.calculateTotalAssets(vault, ctx);
@@ -58,9 +64,13 @@ export async function calculateTvl(
       );
     }
   }
-  return totalAssets
-    .times(price)
-    .div(10 ** (decimals + uniquote.USDC.decimals))
-    .decimalPlaces(uniquote.USDC.decimals)
-    .toString();
+  return {
+    value: totalAssets
+      .times(price)
+      .div(10 ** (decimals + uniquote.USDC.decimals))
+      .decimalPlaces(uniquote.USDC.decimals)
+      .toString(),
+    price: price.div(10 ** uniquote.USDC.decimals).toNumber(),
+    totalAssets: totalAssets.toNumber(),
+  };
 }

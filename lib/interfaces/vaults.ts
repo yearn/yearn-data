@@ -15,7 +15,7 @@ export type CachedToken = WithAssets<common.Token>;
 export type CachedVault = WithAssets<Vault> & {
   token: CachedToken;
   updated: number;
-  tvl: string | null;
+  tvl: yearn.vault.tvl.Tvl | null;
 };
 
 export type WithAssets<T> = T & {

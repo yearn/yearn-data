@@ -4,10 +4,10 @@ import fetch from "node-fetch";
 const GhRawURL = "https://raw.githack.com";
 const GhApiURL = "https://api.github.com";
 
-const YearnAliasesURL = `${GhRawURL}/iearn-finance/yearn-assets/master/icons/aliases.json`;
+const YearnAliasesURL = `${GhRawURL}/yearn/yearn-assets/master/icons/aliases.json`;
 
-const YearnAssetsDirURL = `${GhApiURL}/repos/iearn-finance/yearn-assets/contents/icons/tokens`;
-const YearnAssetsURL = `${GhRawURL}/iearn-finance/yearn-assets/master/icons/tokens/`;
+const YearnAssetsDirURL = `${GhApiURL}/repos/yearn/yearn-assets/contents/icons/tokens`;
+const YearnAssetsURL = `${GhRawURL}/yearn/yearn-assets/master/icons/tokens/`;
 const YearnAssetImageSuffix = "/logo-128.png";
 
 const TrustAssetsURL = `${GhRawURL}/trustwallet/assets/master/blockchains/ethereum/tokenlist.json`;
