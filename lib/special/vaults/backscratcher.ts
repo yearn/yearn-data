@@ -17,7 +17,7 @@ const BackScratcherMetadata: Vault = {
   },
   symbol: "yveCRV",
   apy: {
-    recommended: 0.5,
+    recommended: 0,
     composite: true,
     description: "yveCRV Admin Fees",
     type: "curve",
@@ -33,6 +33,8 @@ const BackScratcherMetadata: Vault = {
     special: {},
   },
 };
+
+// 7 day farm = raccomended
 
 export async function backscratcher(ctx: Context): Promise<Vault> {
   const Curve3pool = new ethers.Contract(
@@ -87,8 +89,11 @@ export async function backscratcher(ctx: Context): Promise<Vault> {
     baseApy: apy,
   };
 
-  const vault = { ...BackScratcherMetadata };
-  if (vault.apy) vault.apy.data = data;
+  const vault = JSON.parse(JSON.stringify(BackScratcherMetadata));
+  if (vault.apy) {
+    vault.apy.recommended = data.totalApy;
+    vault.apy.data = data;
+  }
 
-  return BackScratcherMetadata;
+  return vault;
 }
