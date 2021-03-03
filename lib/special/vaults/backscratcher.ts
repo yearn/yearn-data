@@ -32,6 +32,7 @@ const BackScratcherMetadata: Vault = {
     general: { performanceFee: 0, withdrawalFee: 0 },
     special: {},
   },
+  endorsed: true,
 };
 
 // 7 day farm = raccomended

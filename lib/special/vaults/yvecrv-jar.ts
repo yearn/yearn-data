@@ -4,11 +4,12 @@ import fetch from "node-fetch";
 
 import { Vault } from "../../interfaces/vaults";
 
-const YveCRVJar: Vault = {
+const YveCRVJar = {
   token: {
     name: "SushiSwap LP Token",
     symbol: "SLP",
-    address: "0x10B47177E92Ef9D5C6059055d92DdF6290848991",
+    address: "0x5Eff6d166D66BacBC1BF52E2C54dD391AE6b1f48",
+    displayAddress: "0x10B47177E92Ef9D5C6059055d92DdF6290848991",
     decimals: 18,
   },
   symbol: "pSLP",
@@ -19,7 +20,8 @@ const YveCRVJar: Vault = {
     type: "curve",
     data: {},
   },
-  address: "0x5Eff6d166D66BacBC1BF52E2C54dD391AE6b1f48",
+  address: "0xbD17B1ce622d73bD438b9E658acA5996dc394b0d",
+  displayAddress: "0x5Eff6d166D66BacBC1BF52E2C54dD391AE6b1f48",
   strategies: [],
   name: "pickling SushiSwap LP Token",
   decimals: 18,
@@ -28,6 +30,7 @@ const YveCRVJar: Vault = {
     general: { performanceFee: 0, withdrawalFee: 0 },
     special: {},
   },
+  tags: ["picklejar"],
   endorsed: true,
 };
 

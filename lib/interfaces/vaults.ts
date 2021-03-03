@@ -1,10 +1,8 @@
 import { Apy, common, yearn } from "..";
 
-export type FetchedVault =
-  | yearn.vault.VaultV1
-  | (yearn.vault.VaultV2 & {
-      endorsed: boolean;
-    });
+export type FetchedVault = yearn.vault.Vault & {
+  endorsed: boolean;
+};
 
 export type Vault = FetchedVault & {
   apy: Apy | null;
