@@ -1,4 +1,5 @@
 import { providers } from "ethers";
+import { yveCRVJar } from "lib/special/vaults/yvecrv-jar";
 import plimit from "p-limit";
 import { DDBVaultsCache, EtherscanApiKey, Web3ProviderWss } from "settings/env";
 
@@ -127,6 +128,8 @@ export const handler = wrap(async () => {
   console.log("Adding custom vaults");
   const backscratcherVault = await backscratcher(ctx);
   vaults.push(backscratcherVault as CachedVault);
+  const yveCRVJarVault = await yveCRVJar();
+  vaults.push(yveCRVJarVault as CachedVault);
 
   console.log("Injecting assets in all vaults");
 
