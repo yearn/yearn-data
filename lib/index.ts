@@ -2,8 +2,8 @@ import * as contracts from "./contracts";
 import * as data from "./data";
 import {
   Apy,
+  coingecko,
   common,
-  congecko,
   curve,
   etherscan,
   uniquote,
@@ -13,8 +13,8 @@ import {
 export { Context } from "./data/context";
 export {
   Apy,
+  coingecko,
   common,
-  congecko,
   contracts,
   curve,
   data,

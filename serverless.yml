@@ -36,12 +36,8 @@ custom:
   #     - functionThrottles
   dev:
     domain: dev.vaults.finance
-    jobs-schedule:
-      enabled: false
   prod:
     domain: vaults.finance
-    jobs-schedule:
-      enabled: true
 
 provider:
   name: aws
@@ -114,7 +110,6 @@ functions:
     events:
       - schedule:
           rate: rate(10 minutes)
-          enabled: ${self:custom.${self:provider.stage}.jobs-schedule.enabled}
 
 resources:
   Resources:

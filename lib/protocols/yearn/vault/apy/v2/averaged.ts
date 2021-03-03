@@ -13,6 +13,7 @@ import { VaultV2 } from "../../interfaces";
 import { fetchHarvestCalls } from "../../reader";
 
 const AveragedFromVersion = "0.3.2";
+const MinHarvests = 10;
 
 export function shouldBeAveraged(vault: VaultV2): boolean {
   return semver.gte(vault.apiVersion, AveragedFromVersion);
@@ -27,7 +28,7 @@ export async function calculateAveragedApy(
     ctx.provider
   );
   const harvests = await fetchHarvestCalls(vault, ctx);
-  if (harvests.length < 4) {
+  if (harvests.length < MinHarvests) {
     return {
       recommended: 0,
       composite: false,
