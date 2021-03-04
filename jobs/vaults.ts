@@ -44,7 +44,7 @@ async function fetchAllVaults(ctx: Context): Promise<FetchedVault[]> {
     addrV1.map((address) =>
       limit(async () => {
         const vault = await yearn.vault.resolver.v1.resolveVault(address, ctx);
-        return vault;
+        return { ...vault, endorsed: true };
       }).catch((err) => {
         console.error(`Could not fetch v1 (${address})`);
         console.error(err);
