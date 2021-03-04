@@ -1,12 +1,12 @@
 import { providers } from "ethers";
 import { yveCRVJar } from "lib/special/vaults/yvecrv-jar";
 import plimit from "p-limit";
-import { DDBVaultsCache, EtherscanApiKey, Web3ProviderWss } from "settings/env";
 
 import { Context, data, yearn } from "../lib";
 import { CachedVault, FetchedVault } from "../lib/interfaces/vaults";
 import { backscratcher } from "../lib/special/vaults/backscratcher";
 import { unix } from "../lib/utils/time";
+import { DDBVaultsCache, EtherscanApiKey, Web3ProviderWss } from "../settings/env";
 import excluded from "../static/vaults/excluded.json";
 import { batchSet, scan } from "../utils/ddb";
 import wrap from "../utils/wrap";
