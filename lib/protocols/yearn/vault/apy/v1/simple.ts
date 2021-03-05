@@ -15,7 +15,7 @@ export async function calculateSimpleApy(
     vault.address,
     ctx.provider
   );
-  const inception = await fetchInceptionBlock(vault, ctx);
+  const inception = await fetchInceptionBlock(vault.address, ctx);
   if (!inception) {
     return {
       recommended: 0,

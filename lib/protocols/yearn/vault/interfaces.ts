@@ -41,6 +41,7 @@ export interface VaultBase {
   symbol: string;
   decimals: number;
   token: Token;
+  inception: number;
 }
 
 export interface VaultV1 extends VaultBase {
