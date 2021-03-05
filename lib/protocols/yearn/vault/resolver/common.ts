@@ -16,9 +16,9 @@ export async function resolveBasic(
     symbol: vault.symbol(),
     decimals: vault.decimals(),
     token: vault.token().then((address) => resolveToken(address, ctx)),
-    inception: fetchInceptionBlock(address, ctx).then((block) =>
-      block ? block.block : -1
-    ),
+    inception: fetchInceptionBlock(address, ctx)
+      .then((block) => (block ? block.block : -1))
+      .catch(() => -1),
   };
   const result = await objectAll(structure);
   return {
