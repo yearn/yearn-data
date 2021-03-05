@@ -70,7 +70,12 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   );
   const poolAddress = await registry.get_pool_from_lp_token(lpToken);
   const gauges = await registry.get_gauges(poolAddress);
-  const gaugeAddress = gauges[0][0]; // first gauge
+  let gaugeAddress = gauges[0][0]; // first gauge
+
+  // FIXME: crvUSDP doesn't have a gauge connected in the registry
+  if (vault.address === "0x1B5eb1173D2Bf770e50F10410C9a96F7a8eB6e75") {
+    gaugeAddress = "0x055be5DDB7A925BfEF3417FC157f53CA77cA7222";
+  }
 
   const gauge = CurveGaugeContract__factory.connect(gaugeAddress, ctx.provider);
   const gaugeControllerAddress = await gauge.controller();
