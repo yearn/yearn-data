@@ -55,7 +55,7 @@ export async function yveCRVJar(): Promise<Vault> {
           val / 100,
         ])
       );
-      vault.apy.recommended = data.sevenDay;
+      vault.apy.recommended = data.sevenDayFarm;
       vault.apy.data = data;
     } else {
       vault.apy.type = "error";
