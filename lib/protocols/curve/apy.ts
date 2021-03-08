@@ -143,9 +143,15 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     currentBoost = new BigNumber(MaxBoost);
   }
 
-  const rewardAddress = await gauge.reward_contract().catch(() => null);
+  let rewardAddress = await gauge.reward_contract().catch(() => null);
 
   let tokenRewardsApr = new BigNumber(0);
+
+  // FIXME: crvEURS vault stopped rewards
+  if (vault.address === "0x98B058b2CBacF5E99bC7012DF757ea7CFEbd35BC") {
+    rewardAddress = NullAddress;
+  }
+
   if (rewardAddress && rewardAddress !== NullAddress) {
     const stakingRewards = CurveStakingRewards__factory.connect(
       rewardAddress,
