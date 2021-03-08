@@ -25,7 +25,7 @@ const YveCRVJar = {
   strategies: [],
   name: "pickling SushiSwap LP Token",
   decimals: 18,
-  type: "v1",
+  type: "zap",
   fees: {
     general: { performanceFee: 0, withdrawalFee: 0 },
     special: {},
