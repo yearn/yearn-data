@@ -8,7 +8,7 @@ import CurveVotingEscrowAbi from "../../../static/abi/curve.voting.escrow.abi.js
 import veCurveVaultAbi from "../../../static/abi/ve.curve.vault.abi.json";
 import { Vault } from "../../interfaces/vaults";
 
-const BackScratcherMetadata: Vault = {
+const BackScratcherMetadata = {
   token: {
     name: "Curve DAO Token",
     symbol: "CRV",
@@ -33,6 +33,7 @@ const BackScratcherMetadata: Vault = {
     special: {},
   },
   endorsed: true,
+  inception: -1,
 };
 
 // 7 day farm = raccomended
