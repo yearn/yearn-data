@@ -65,8 +65,8 @@ export async function calculateSimpleApy(
 
   // Default to higher sample as the result is largely dependent on number of harvests (usually one week sample is sufficient)
   const netApy = Math.max(
-    ppsSampleData.oneMonthSample ?? 0,
-    ppsSampleData.oneWeekSample ?? 0
+    ppsSampleData.oneMonthSample || 0,
+    ppsSampleData.oneWeekSample || 0
   );
 
   const v2PerformanceFee = vault.fees.general.performanceFee / 1e4;
@@ -74,14 +74,15 @@ export async function calculateSimpleApy(
   const grossApy = netApy / (1 - v2PerformanceFee) + v2ManagementFee;
 
   const data = {
-    ...ppsSampleData,
+    oneMonthSample: ppsSampleData.oneMonthSample || 0,
+    oneWeekSample: ppsSampleData.oneWeekSample || 0,
     grossApy,
     netApy,
     performanceFee: v2PerformanceFee,
     managementFee: v2ManagementFee,
   };
   const apy = {
-    recommended: grossApy,
+    recommended: grossApy || 0,
     composite: true,
     type: "pricePerShareV2OneMonth",
     description: "Price per share - One month sample",

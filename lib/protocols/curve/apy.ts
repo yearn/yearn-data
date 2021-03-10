@@ -291,7 +291,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   };
 
   const apy = {
-    recommended: totalApy.toNumber(),
+    recommended: totalApy.toNumber() || 0,
     type: "curve",
     composite: true,
     description: "Pool APY + Boosted CRV APY",

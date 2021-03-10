@@ -47,8 +47,8 @@ export async function calculateSimpleApy(
   );
 
   const netApy = Math.max(
-    ppsSampleData.oneMonthSample ?? 0,
-    ppsSampleData.oneWeekSample ?? 0
+    ppsSampleData.oneMonthSample || 0,
+    ppsSampleData.oneWeekSample || 0
   );
 
   const totalPerformanceFee = vault.fees.general.performanceFee / 1e4;
@@ -58,14 +58,15 @@ export async function calculateSimpleApy(
   const grossApy = netApy / (1 - totalPerformanceFee);
 
   const data = {
-    ...ppsSampleData,
+    oneMonthSample: ppsSampleData.oneMonthSample || 0,
+    oneWeekSample: ppsSampleData.oneWeekSample || 0,
     grossApy,
     netApy,
     withdrawalFee,
   };
 
   const apy = {
-    recommended: data.grossApy,
+    recommended: data.grossApy || 0,
     type: "pricePerShareV1OneMonth",
     composite: false,
     description: "Price per share - One month sample",

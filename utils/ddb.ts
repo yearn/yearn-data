@@ -37,7 +37,7 @@ export async function batchGet<T>(
 export async function batchSet<T>(
   table: string,
   items: T[],
-  batchSize = 25
+  batchSize = 5
 ): Promise<void> {
   await Promise.all(
     chunk(items, batchSize).map(async (chunk) => {
@@ -48,7 +48,11 @@ export async function batchSet<T>(
           })),
         },
       };
-      await client.batchWrite(params).promise();
+      try {
+        await client.batchWrite(params).promise();
+      } catch (err) {
+        console.log(JSON.stringify(chunk), err);
+      }
     })
   );
 }

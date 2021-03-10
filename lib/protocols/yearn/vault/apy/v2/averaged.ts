@@ -68,15 +68,16 @@ export async function calculateAveragedApy(
   );
 
   const netApy = Math.max(
-    ppsSampleData.oneMonthSample ?? 0,
-    ppsSampleData.oneWeekSample ?? 0
+    ppsSampleData.oneMonthSample || 0,
+    ppsSampleData.oneWeekSample || 0
   );
   const v2PerformanceFee = vault.fees.general.performanceFee / 1e4;
   const v2ManagementFee = vault.fees.general.managementFee / 1e4;
   const grossApy = netApy / (1 - v2PerformanceFee) + v2ManagementFee;
 
   const data = {
-    ...ppsSampleData,
+    oneMonthSample: ppsSampleData.oneMonthSample || 0,
+    oneWeekSample: ppsSampleData.oneWeekSample || 0,
     grossApy,
     netApy,
     performanceFee: v2PerformanceFee,
@@ -84,7 +85,7 @@ export async function calculateAveragedApy(
   };
 
   const apy = {
-    recommended: grossApy,
+    recommended: grossApy || 0,
     type: "pricePerShareV2OneMonth",
     composite: false,
     description: "Price per share - One month sample",
