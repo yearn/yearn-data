@@ -67,22 +67,26 @@ functions:
           method: get
           caching:
             enabled: true
-  all:
-    handler: endpoints/all.handler
+  vaults:
+    handler: endpoints/vaults/index.handler
     events:
       - http:
-          path: all
+          path: /vaults
           method: get
           caching:
             enabled: true
-  tvl-v2:
-    handler: endpoints/tvl/v2.handler
+
+  vaultByAddress:
+    handler: endpoints/vaults/address/index.handler
     events:
       - http:
-          path: tvl/v2
+          path: /vaults/{address}
           method: get
           caching:
             enabled: true
+            cacheKeyParameters:
+              - name: request.path.address
+
   integrations-coingecko-pools:
     handler: endpoints/integrations/coingecko/pools.handler
     events:
@@ -91,14 +95,7 @@ functions:
           method: get
           caching:
             enabled: true
-  integrations-cream-tvl:
-    handler: endpoints/integrations/cream/ironbank/tvl.handler
-    events:
-      - http:
-          path: integrations/cream/ironbank/tvl
-          method: get
-          caching:
-            enabled: true
+
   job-vaults:
     timeout: 300
     handler: jobs/vaults.handler
