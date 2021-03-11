@@ -11,7 +11,6 @@ plugins:
   - serverless-dotenv-plugin # Load .env as environment variables
   - serverless-domain-manager # Use vaults.finance
   - serverless-api-gateway-caching # Cache api responses
-  # - serverless-plugin-aws-alerts # Alerts and alams
 
 custom:
   webpack:
@@ -25,19 +24,15 @@ custom:
   apiGatewayCaching:
     enabled: true
     ttlInSeconds: 600
-  # alerts:
-  #   stages:
-  #     - prod
-  #   topics:
-  #     alarm:
-  #       topic: ${self:service}-${opt:stage}-alerts-alarm
-  #   alarms:
-  #     - functionErrors
-  #     - functionThrottles
+  experimental:
+    domain: experimental.vaults.finance
+    rate: rate(1 day)
   dev:
     domain: dev.vaults.finance
+    rate: rate(10 minutes)
   prod:
     domain: vaults.finance
+    rate: rate(10 minutes)
 
 provider:
   name: aws
@@ -109,7 +104,7 @@ functions:
     handler: jobs/vaults.handler
     events:
       - schedule:
-          rate: rate(10 minutes)
+          rate: ${self:custom.${opt:stage, self:provider.stage}.rate}
 
 resources:
   Resources:
