@@ -25,6 +25,8 @@ export async function price(
   end: string,
   ctx: Context
 ): Promise<BigNumber> {
+  start = aliased(start);
+  end = aliased(end);
   if (start === end && end == USDC.address)
     return toBigNumber(10 ** USDC.decimals);
   const quote = Quote__factory.connect(QuoteAddress, ctx.provider);
