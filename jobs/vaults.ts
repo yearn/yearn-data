@@ -1,10 +1,10 @@
 import { providers } from "ethers";
-import { yveCRVJar } from "lib/special/vaults/yvecrv-jar";
 import plimit from "p-limit";
 
 import { Context, data, yearn } from "../lib";
 import { CachedVault, FetchedVault } from "../lib/interfaces/vaults";
 import { backscratcher } from "../lib/special/vaults/backscratcher";
+import { yveCRVJar } from "../lib/special/vaults/yvecrv-jar";
 import { unix } from "../lib/utils/time";
 import {
   DDBVaultsCache,
@@ -13,7 +13,7 @@ import {
 } from "../settings/env";
 import excluded from "../static/vaults/excluded.json";
 import { batchSet, scan } from "../utils/ddb";
-import wrap from "../utils/wrap";
+import wrap, { handlerPath } from "../utils/wrap";
 
 const limit = plimit(4);
 
@@ -178,3 +178,15 @@ export const handler = wrap(async () => {
     message: "Job executed correctly",
   };
 });
+
+export default {
+  handler: handlerPath(__dirname, "vaults.handler"),
+  timeout: 300,
+  events: [
+    {
+      schedule: {
+        rate: "${self:custom.${opt:stage, self:provider.stage}.rate}",
+      },
+    },
+  ],
+};

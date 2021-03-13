@@ -3,7 +3,7 @@ import BigNumber from "bignumber.js";
 import { CachedVault } from "../../../lib/interfaces/vaults";
 import { DDBVaultsCache } from "../../../settings/env";
 import { scan } from "../../../utils/ddb";
-import wrap from "../../../utils/wrap";
+import wrap, { handlerPath } from "../../../utils/wrap";
 
 function filter(vault: CachedVault) {
   return (
@@ -32,3 +32,18 @@ export const handler = wrap(async () => {
     liquidity_locked: new BigNumber(vault.tvl ? vault.tvl.value : 0).toNumber(),
   }));
 });
+
+export default {
+  handler: handlerPath(__dirname, "pools.handler"),
+  events: [
+    {
+      http: {
+        path: "integrations/coingecko/pools",
+        method: "get",
+        caching: {
+          enabled: true,
+        },
+      },
+    },
+  ],
+};

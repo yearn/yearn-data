@@ -1,4 +1,4 @@
-import { handler } from "../endpoints/index";
+import { handler } from "../endpoints/welcome";
 
 test("index", async () => {
   const event = "event";

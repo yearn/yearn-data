@@ -1,22 +1,42 @@
 {
   "extends": "./tsconfig.paths.json",
   "compilerOptions": {
-    "preserveConstEnums": true,
-    "strictNullChecks": true,
-    "sourceMap": true,
-    "allowJs": true,
-    "target": "es5",
-    "outDir": ".build",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
+    "lib": ["ESNext", "DOM"],
     "esModuleInterop": true,
-    "lib": ["es2019", "DOM"]
+    "resolveJsonModule": true,
+    "moduleResolution": "node",
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "rootDirs": [
+      "endpoint",
+      "jobs",
+      "lib",
+      "settings",
+      "static",
+      "tools",
+      "serverless"
+    ],
+    "target": "ES2020"
   },
+  "include": [
+    "endpoints/**/*.ts",
+    "jobs/**/*.ts",
+    "lib/**/*.ts",
+    "settings/**/*.ts",
+    "static/**/*.ts",
+    "tools/**/*.ts",
+    "serverless.ts"
+  ],
   "exclude": [
     "node_modules/**/*",
     ".serverless/**/*",
     ".webpack/**/*",
     "_warmup/**/*",
     ".vscode/**/*"
-  ]
+  ],
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  }
 }

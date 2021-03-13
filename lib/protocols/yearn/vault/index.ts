@@ -1,5 +1,5 @@
 import * as apy from "./apy";
-import { Vault, VaultBase, VaultV1, VaultV2 } from "./interfaces";
+import type { Vault, VaultBase, VaultV1, VaultV2 } from "./interfaces";
 import * as reader from "./reader";
 import * as registry from "./registry";
 import * as resolver from "./resolver";

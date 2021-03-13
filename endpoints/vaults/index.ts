@@ -1,13 +1,7 @@
-import { DDBVaultsCache } from "../../settings/env";
-import { scan } from "../../utils/ddb";
-import wrap from "../../utils/wrap";
+import address from "./address";
+import list from "./list";
 
-export const handler = wrap(async () => {
-  const cached = await scan(DDBVaultsCache, [
-    "address",
-    "displayName",
-    "token.address",
-    "token.displayName",
-  ]);
-  return cached;
-});
+export default {
+  address,
+  list,
+};

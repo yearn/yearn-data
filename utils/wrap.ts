@@ -1,13 +1,22 @@
+// LambdaError when thrown will contain correct format for the #wrap() fn
 export class LambdaError extends Error {
   name = "LambdaError";
   statusCode: number;
   constructor(message?: string, statusCode?: number) {
-    super(message ?? "Unexpected error.");
-    this.statusCode = statusCode ?? 500;
+    super(message || "Unexpected error.");
+    this.statusCode = statusCode || 500;
   }
 }
 
-// Handler wrapper for AWS lambda functions
+// handlerPath resolver for handlers
+export function handlerPath(context: string, name: string): string {
+  return `${context
+    .split(process.cwd())[1]
+    .substring(1)
+    .replace(/\\/g, "/")}/${name}`;
+}
+
+// wrap for AWS lambda functions
 export default function wrap(
   lambda: (event: unknown, context: unknown, callback: unknown) => unknown
 ) {
