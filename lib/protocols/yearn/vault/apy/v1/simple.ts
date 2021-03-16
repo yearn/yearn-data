@@ -66,7 +66,7 @@ export async function calculateSimpleApy(
   };
 
   const apy = {
-    recommended: data.grossApy || 0,
+    recommended: data.netApy || 0,
     type: "pricePerShareV1OneMonth",
     composite: false,
     description: "Price per share - One month sample",

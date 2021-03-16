@@ -82,7 +82,7 @@ export async function calculateSimpleApy(
     managementFee: v2ManagementFee,
   };
   const apy = {
-    recommended: grossApy || 0,
+    recommended: netApy || 0,
     composite: true,
     type: "pricePerShareV2OneMonth",
     description: "Price per share - One month sample",

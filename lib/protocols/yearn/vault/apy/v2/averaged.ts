@@ -85,7 +85,7 @@ export async function calculateAveragedApy(
   };
 
   const apy = {
-    recommended: grossApy || 0,
+    recommended: netApy || 0,
     type: "pricePerShareV2OneMonth",
     composite: false,
     description: "Price per share - One month sample",
