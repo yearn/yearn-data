@@ -91,6 +91,7 @@ export const handler = wrap(async () => {
   const etherscan = EtherscanApiKey;
   const ctx = new Context({ provider, etherscan });
 
+  console.log("Starting job...");
   const vaults = (await fetchAllVaults(ctx)) as CachedVault[];
 
   console.log("Calculating APY");

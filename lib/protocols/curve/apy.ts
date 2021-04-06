@@ -1,6 +1,7 @@
 import {
   CurveGaugeContract__factory,
   CurveGaugeControllerContract__factory,
+  CurveMultiRewards__factory,
   CurveRegistryContract__factory,
   CurveStakingRewards__factory,
 } from "@contracts/index";
@@ -33,6 +34,9 @@ const SecondsInYear = new BigNumber(seconds("1 year"));
 const FeeDenominator = 1e4;
 const EthConstant = 1e18;
 
+const BtcLikeAddresses = [RenBtcAddress, WbtcAddress, SBtcAddress];
+const EthLikeAddresses = [SEthAddress, EthAddress, WethAddress, StEthAddress];
+
 export async function calculatePoolApr(
   vault: Vault,
   ctx: Context
@@ -58,9 +62,165 @@ export async function calculatePoolApr(
   return poolApr;
 }
 
-const btcLikeAddresses = [RenBtcAddress, WbtcAddress, SBtcAddress];
+export async function calculateMultiRewards(
+  rewardsAddress: string,
+  poolVirtualPrice: BigNumber,
+  priceOfBaseAsset: { usd: number },
+  ctx: Context
+): Promise<BigNumber> {
+  const multiRewards = CurveMultiRewards__factory.connect(
+    rewardsAddress,
+    ctx.provider
+  );
 
-const ethLikeAddresses = [SEthAddress, EthAddress, WethAddress, StEthAddress];
+  let i = 0;
+  let tokenRewardsApr = new BigNumber(0);
+  let rewardTokenAddress = await multiRewards.rewardTokens(0);
+
+  const stakingRewardsTotalSupply = await multiRewards
+    .totalSupply()
+    .then((val) => toBigNumber(val))
+    .catch(() => toBigNumber(0));
+
+  while (rewardTokenAddress !== NullAddress) {
+    try {
+      rewardTokenAddress = await multiRewards.rewardTokens(i++);
+      if (rewardTokenAddress === NullAddress) break;
+      const rewardData = await multiRewards.rewardData(rewardTokenAddress);
+
+      if (rewardData.periodFinish.lt(unix())) {
+        continue;
+      }
+
+      const stakingRewardsRate = await multiRewards
+        .rewardData(rewardTokenAddress)
+        .then((val) => toBigNumber(val.rewardRate).div(EthConstant))
+        .catch(() => 0);
+
+      const priceOfRewardAsset = (await price(rewardTokenAddress, ["usd"])) ?? {
+        usd: 0,
+      };
+      const tokenRewardApr = SecondsInYear.times(stakingRewardsRate)
+        .times(priceOfRewardAsset.usd)
+        .div(
+          poolVirtualPrice
+            .div(EthConstant)
+            .times(stakingRewardsTotalSupply)
+            .div(EthConstant)
+            .times(priceOfBaseAsset.usd)
+        );
+
+      tokenRewardsApr = tokenRewardsApr.plus(tokenRewardApr);
+    } catch {
+      break;
+    }
+  }
+
+  return tokenRewardsApr;
+}
+
+export async function calculateRewards(
+  rewardsAddress: string,
+  poolVirtualPrice: BigNumber,
+  priceOfBaseAsset: { usd: number },
+  ctx: Context
+): Promise<BigNumber> {
+  const stakingRewards = CurveStakingRewards__factory.connect(
+    rewardsAddress,
+    ctx.provider
+  );
+
+  let periodFinish: BigNumber;
+  try {
+    periodFinish = await stakingRewards.periodFinish().then(toBigNumber);
+  } catch {
+    // ... then it's a multi-reward contract
+    return await calculateMultiRewards(
+      rewardsAddress,
+      poolVirtualPrice,
+      priceOfBaseAsset,
+      ctx
+    );
+  }
+
+  if (periodFinish.lt(unix())) {
+    return new BigNumber(0);
+  }
+
+  const stakingRewardsRewardsTokenAddress = await stakingRewards
+    .rewardsToken()
+    .catch(() => null);
+
+  const stakingRewardsRewardTokenAddress = await stakingRewards
+    .rewardToken()
+    .catch(() => null);
+
+  const stakingRewardsSnxAddress = await stakingRewards.snx().catch(() => null);
+
+  const stakingRewardsRate = await stakingRewards
+    .rewardRate()
+    .then((val) => toBigNumber(val))
+    .catch(() => toBigNumber(0));
+
+  const stakingRewardsTotalSupply = await stakingRewards
+    .totalSupply()
+    .then((val) => toBigNumber(val))
+    .catch(() => toBigNumber(0));
+
+  const rewardTokenAddress =
+    stakingRewardsRewardTokenAddress ??
+    stakingRewardsRewardsTokenAddress ??
+    stakingRewardsSnxAddress;
+
+  const priceOfRewardAsset = (rewardTokenAddress &&
+    (await price(rewardTokenAddress, ["usd"]))) || { usd: 0 };
+
+  const singleRewardToken = priceOfRewardAsset.usd && stakingRewardsRate;
+
+  if (singleRewardToken) {
+    // Single rewards token
+    return SecondsInYear.times(stakingRewardsRate.div(EthConstant))
+      .times(priceOfRewardAsset.usd)
+      .div(
+        poolVirtualPrice
+          .div(EthConstant)
+          .times(stakingRewardsTotalSupply.div(EthConstant))
+          .times(priceOfBaseAsset.usd)
+      );
+  } else {
+    try {
+      // Multiple reward tokens
+      let i = 0;
+      let rewardTokenAddress = await stakingRewards.rewardTokens(i);
+      let tokenRewardsApr = new BigNumber(0);
+      while (rewardTokenAddress !== NullAddress) {
+        const stakingRewardsRate = await stakingRewards
+          .rewardData(rewardTokenAddress)
+          .then((val) => toBigNumber(val.rewardRate).div(EthConstant))
+          .catch(() => 0);
+        const priceOfRewardAsset = (await price(rewardTokenAddress, [
+          "usd",
+        ])) ?? { usd: 0 };
+        const tokenRewardApr = SecondsInYear.times(stakingRewardsRate)
+          .times(priceOfRewardAsset.usd)
+          .div(
+            poolVirtualPrice
+              .div(EthConstant)
+              .times(stakingRewardsTotalSupply)
+              .div(EthConstant)
+              .times(priceOfBaseAsset.usd)
+          );
+        rewardTokenAddress = await stakingRewards
+          .rewardTokens(++i)
+          .catch(() => NullAddress);
+        tokenRewardsApr = tokenRewardsApr.plus(tokenRewardApr);
+      }
+      return tokenRewardsApr;
+    } catch {
+      return new BigNumber(0);
+    }
+  }
+}
 
 export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   const lpToken = vault.token.address;
@@ -99,8 +259,8 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   let btcMatch = false;
   let ethMatch = false;
   underlyingCoins.every((tokenAddress) => {
-    btcMatch = btcLikeAddresses.includes(tokenAddress);
-    ethMatch = ethLikeAddresses.includes(tokenAddress);
+    btcMatch = BtcLikeAddresses.includes(tokenAddress);
+    ethMatch = EthLikeAddresses.includes(tokenAddress);
     return !(btcMatch || ethMatch);
   });
 
@@ -153,96 +313,23 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   let tokenRewardsApr = new BigNumber(0);
 
   if (rewardAddress && rewardAddress !== NullAddress) {
-    const stakingRewards = CurveStakingRewards__factory.connect(
+    tokenRewardsApr = await calculateRewards(
       rewardAddress,
-      ctx.provider
+      poolVirtualPrice,
+      priceOfBaseAsset,
+      ctx
     );
-
-    const periodFinish = await stakingRewards.periodFinish();
-
-    if (periodFinish.gte(unix())) {
-      const stakingRewardsRewardsTokenAddress = await stakingRewards
-        .rewardsToken()
-        .catch(() => null);
-
-      const stakingRewardsRewardTokenAddress = await stakingRewards
-        .rewardToken()
-        .catch(() => null);
-
-      const stakingRewardsSnxAddress = await stakingRewards
-        .snx()
-        .catch(() => null);
-
-      const stakingRewardsRate = await stakingRewards
-        .rewardRate()
-        .then((val) => toBigNumber(val))
-        .catch(() => toBigNumber(0));
-
-      const stakingRewardsTotalSupply = await stakingRewards
-        .totalSupply()
-        .then((val) => toBigNumber(val))
-        .catch(() => toBigNumber(0));
-
-      const rewardTokenAddress =
-        stakingRewardsRewardTokenAddress ??
-        stakingRewardsRewardsTokenAddress ??
-        stakingRewardsSnxAddress;
-
-      const priceOfRewardAsset = (rewardTokenAddress &&
-        (await price(rewardTokenAddress, ["usd"]))) || { usd: 0 };
-
-      const singleRewardToken = priceOfRewardAsset.usd && stakingRewardsRate;
-
-      if (singleRewardToken) {
-        // Single rewards token
-        tokenRewardsApr = SecondsInYear.times(
-          stakingRewardsRate.div(EthConstant)
-        )
-          .times(priceOfRewardAsset.usd)
-          .div(
-            poolVirtualPrice
-              .div(EthConstant)
-              .times(stakingRewardsTotalSupply.div(EthConstant))
-              .times(priceOfBaseAsset.usd)
-          );
-      } else {
-        try {
-          // Multiple reward tokens
-          let i = 0;
-          let rewardTokenAddress = await stakingRewards.rewardTokens(i);
-          while (rewardTokenAddress !== NullAddress) {
-            const stakingRewardsRate = await stakingRewards
-              .rewardData(rewardTokenAddress)
-              .then((val) => toBigNumber(val.rewardRate).div(EthConstant))
-              .catch(() => 0);
-            const priceOfRewardAsset = (await price(rewardTokenAddress, [
-              "usd",
-            ])) ?? { usd: 0 };
-            const tokenRewardApr = SecondsInYear.times(stakingRewardsRate)
-              .times(priceOfRewardAsset.usd)
-              .div(
-                poolVirtualPrice
-                  .div(EthConstant)
-                  .times(stakingRewardsTotalSupply)
-                  .div(EthConstant)
-                  .times(priceOfBaseAsset.usd)
-              );
-            rewardTokenAddress = await stakingRewards
-              .rewardTokens(++i)
-              .catch(() => NullAddress);
-            tokenRewardsApr = tokenRewardsApr.plus(tokenRewardApr);
-          }
-        } catch {
-          tokenRewardsApr = new BigNumber(0);
-        }
-      }
-    }
   }
 
   const compoundingEvents = 52; // TODO: investigate
 
   const poolApr = new BigNumber((await calculatePoolApr(vault, ctx)) ?? 0);
-  const poolApy = poolApr.div(365).plus(1).pow(365).minus(1);
+  let poolApy = poolApr.div(365).plus(1).pow(365).minus(1);
+
+  // FIXME: crvANKR's pool apy going crazy
+  if (vault.address === "0xE625F5923303f1CE7A43ACFEFd11fd12f30DbcA4") {
+    poolApy = new BigNumber(0);
+  }
 
   const boostedApr = baseApr.times(currentBoost);
 
