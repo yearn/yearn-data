@@ -13,3 +13,4 @@ export const EtherscanApiKey = process.env.ETHERSCAN_API_KEY;
 export const Web3ProviderWss = process.env.WEB3_PROVIDER_WSS;
 
 export const DDBVaultsCache = process.env.DDB_VAULTS_CACHE;
+export const SubGraphUrl = process.env.SUBGRAPH_ENDPOINT || '';
