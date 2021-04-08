@@ -59,18 +59,22 @@ const buildEarningsPerVaultData = (accountVaultPositions) => {
       tokensReceived: new BigNumber(0)
     });
     balanceTokens = new BigNumber(balanceTokens);
-    
-    const totalEarnings = new BigNumber(balanceTokens - deposits + withdrawals - tokensReceived + tokensSent);
-    
+
     return {
       vault: {
         id: id
       },
-      totalEarnings: totalEarnings,
-      deposits: deposits,
-      withdrawals: withdrawals,
-      transfersIn: tokensReceived,
-      transfersOut: tokensSent
+      currentHoldings: balanceTokens.toFixed(0),
+      deposits: deposits.toFixed(0),
+      totalEarnings: balanceTokens
+        .minus(deposits)
+        .plus(withdrawals)
+        .minus(tokensReceived)
+        .plus(tokensSent)
+        .toFixed(0),
+      withdrawals: withdrawals.toFixed(0),
+      transfersIn: tokensReceived.toFixed(0),
+      transfersOut: tokensSent.toFixed(0)
     }
   });
 }
