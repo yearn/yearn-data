@@ -142,6 +142,18 @@ export const handler = wrap(async () => {
   const aliases = await data.assets.fetchAliases();
 
   for (const vault of vaults) {
+    if (vault.address === "0x9d409a0A012CFbA9B15F6D4B36Ac57A46966Ab9a") {
+      // FIXME: hardcoded name & icon for yvBOOST
+      vault.displayName = "yvBOOST";
+      vault.token.icon = assets[vault.address];
+      continue;
+    } else if (vault.address === "0xc5bDdf9843308380375a611c18B50Fb9341f502A") {
+      // FIXME: hardcoded name & icon for yveCRV
+      vault.displayName = "yveCRV";
+      vault.token.icon = assets[vault.address];
+      continue;
+    }
+
     const alias = aliases[vault.token.address];
     vault.token.displayName = alias ? alias.symbol : vault.token.symbol;
     vault.displayName = vault.token.displayName;

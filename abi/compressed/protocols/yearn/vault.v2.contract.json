@@ -56,8 +56,7 @@
     "outputs": [{ "type": "string", "name": "" }],
     "inputs": [],
     "stateMutability": "pure",
-    "type": "function",
-    "gas": "4519"
+    "type": "function"
   },
   {
     "name": "withdrawalQueue",
