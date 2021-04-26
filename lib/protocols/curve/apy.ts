@@ -14,7 +14,7 @@ import { estimateBlockPrecise, fetchLatestBlock } from "@utils/block";
 import { NullAddress } from "@utils/constants";
 import { seconds, unix } from "@utils/time";
 
-import { CurveRegistryAddress } from "./registry";
+import { CurveRegistryAddress, getPool, getUnderlyingCoins } from "./registry";
 
 const CrvAddress = "0xD533a949740bb3306d119CC777fa900bA034cd52";
 
@@ -228,7 +228,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     CurveRegistryAddress,
     ctx.provider
   );
-  const poolAddress = await registry.get_pool_from_lp_token(lpToken);
+  const poolAddress = await getPool(lpToken, ctx);
   const gauges = await registry.get_gauges(poolAddress);
   let gaugeAddress = gauges[0][0]; // first gauge
 
@@ -253,7 +253,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     await registry.get_virtual_price_from_lp_token(lpToken)
   );
 
-  const underlyingCoins = await registry.get_underlying_coins(poolAddress);
+  const underlyingCoins = await getUnderlyingCoins(lpToken, ctx);
   const firstUnderlyingCoinAddress = underlyingCoins[0];
 
   let btcMatch = false;
