@@ -132,13 +132,19 @@ function calculateEarningsForVaultAddress(
     accountEvents.vaultPositions,
     vaultAddress
   );
-  return vaultPositions
-    .minus(deposits)
-    .plus(withdrawals)
-    .minus(sharesReceived)
-    .plus(sharesSent)
+
+  let positiveValues = vaultPositions.plus(withdrawals).plus(sharesSent)
+  let negativeValues = deposits.plus(sharesReceived)
+
+  if (positiveValues.isGreaterThan(negativeValues)) {
+    return positiveValues
+    .minus(negativeValues)
     .div(10 ** 18)
     .toNumber();
+  } else {
+    // likedly completely withdrawn and erronously slightly negative
+    return 0
+  } 
 }
 
 function sumTokensUsedForEvents(events: VaultEvent[], vaultAddress: string) {
