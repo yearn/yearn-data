@@ -3,7 +3,7 @@ import { Context } from "@data/context";
 import { NullAddress } from "@utils/constants";
 
 export const CurveRegistryAddress =
-  "0x7D86446dDb609eD0F5f8684AcF30380a356b2B4c";
+  "0x90E00ACe148ca3b23Ac1bC8C240C2a7Dd9c2d7f5";
 
 export const CurveMetaPoolAddress =
   "0x0959158b6040D32d04c301A72CBFD6b39E21c9AE";
@@ -13,7 +13,8 @@ export async function getPool(lpToken: string, ctx: Context): Promise<string> {
     CurveMetaPoolAddress,
     ctx.provider
   );
-  if ((await metapool.get_underlying_coins(lpToken)) !== [NullAddress]) {
+  const coins = await metapool.get_underlying_coins(lpToken);
+  if (coins.some((coin) => coin !== NullAddress)) {
     return lpToken;
   }
   const registry = CurveRegistryContract__factory.connect(
@@ -41,7 +42,7 @@ export async function getUnderlyingCoins(
     );
     coins = await metapool.get_underlying_coins(pool);
   }
-  return coins.filter((coin) => coin !== NullAddress);
+  return coins;
 }
 
 export async function hasCurvePool(

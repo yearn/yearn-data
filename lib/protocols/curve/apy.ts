@@ -47,18 +47,18 @@ export async function calculatePoolApr(
     ctx.provider
   );
   const latest = await fetchLatestBlock(ctx);
-  const oneMonth = await estimateBlockPrecise(
+  const oneDay = await estimateBlockPrecise(
     latest.timestamp - seconds("1 day"),
     ctx
   );
 
   const poolAprSamples = await calculateFromPps(
     latest.block,
-    oneMonth,
-    { oneMonthSample: oneMonth },
+    oneDay,
+    { oneDaySample: oneDay },
     (overrides) => registry.get_virtual_price_from_lp_token(lpToken, overrides)
   );
-  const poolApr = poolAprSamples.oneMonthSample;
+  const poolApr = poolAprSamples.oneDaySample;
   return poolApr;
 }
 

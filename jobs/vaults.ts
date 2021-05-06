@@ -131,10 +131,18 @@ export const handler = wrap(async () => {
   );
 
   console.log("Adding custom vaults");
-  const backscratcherVault = await backscratcher(ctx);
-  vaults.push(backscratcherVault as CachedVault);
-  const yveCRVJarVault = await yveCRVJar();
-  vaults.push(yveCRVJarVault as CachedVault);
+  try {
+    const backscratcherVault = await backscratcher(ctx);
+    vaults.push(backscratcherVault as CachedVault);
+  } catch (error) {
+    console.error("backscratcher", error);
+  }
+  try {
+    const yveCRVJarVault = await yveCRVJar();
+    vaults.push(yveCRVJarVault as CachedVault);
+  } catch (error) {
+    console.error("yveCRV", error);
+  }
 
   console.log("Injecting assets in all vaults");
 
