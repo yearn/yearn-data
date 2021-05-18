@@ -75,7 +75,12 @@ export async function calculateMultiRewards(
 
   let i = 0;
   let tokenRewardsApr = new BigNumber(0);
-  let rewardTokenAddress = await multiRewards.rewardTokens(0);
+  let rewardTokenAddress: string;
+  try {
+    rewardTokenAddress = await multiRewards.rewardTokens(0);
+  } catch (err) {
+    return tokenRewardsApr;
+  }
 
   const stakingRewardsTotalSupply = await multiRewards
     .totalSupply()
