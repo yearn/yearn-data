@@ -32,7 +32,9 @@ export async function price(
   for (const address of addresses) {
     try {
       price = await quote.price(address, to, ctx);
-      break;
+      if (price.gt(0)) {
+        break;
+      }
     } catch {
       continue;
     }

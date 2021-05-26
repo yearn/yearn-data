@@ -5,7 +5,7 @@ import BigNumber from "bignumber.js";
 
 import aliases from "./aliases.json";
 
-export const QuoteAddress = "0x9b8b9F6146B29CC32208f42b995E70F0Eb2807F3";
+export const QuoteAddress = "0x83d95e0D5f402511dB06817Aff3f9eA88224B030";
 
 export const USDC = {
   address: "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
@@ -27,8 +27,11 @@ export async function price(
 ): Promise<BigNumber> {
   start = aliased(start);
   end = aliased(end);
-  if (start === end && end == USDC.address)
+  if (start === end && end === USDC.address)
     return toBigNumber(10 ** USDC.decimals);
   const quote = Quote__factory.connect(QuoteAddress, ctx.provider);
+  if (end === USDC.address) {
+    return quote.getPriceUsdcRecommended(start).then(toBigNumber);
+  }
   return quote.getPriceFromRouter(start, end).then(toBigNumber);
 }

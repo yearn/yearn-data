@@ -89,7 +89,6 @@ describe("vault apy", () => {
         managementFee: expect.any(Number),
         performanceFee: expect.any(Number),
         netApy: expect.any(Number),
-        inceptionSample: expect.any(Number),
         oneMonthSample: expect.any(Number),
         oneWeekSample: expect.any(Number),
       },
