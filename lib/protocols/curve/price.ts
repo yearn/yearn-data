@@ -1,30 +1,20 @@
-import { CurveRegistryContract__factory } from "@contracts/index";
 import { Context } from "@data/context";
 import * as quote from "@protocols/quote";
-import { toBigNumber } from "@utils/bignumber";
 import BigNumber from "bignumber.js";
 
-import { CurveRegistryAddress } from "./registry";
+import { getPool, getUnderlyingCoins, getVirtualPrice } from "./registry";
 
 export async function price(
   lpToken: string,
   to: string,
   ctx: Context
 ): Promise<BigNumber> {
-  const registry = CurveRegistryContract__factory.connect(
-    CurveRegistryAddress,
-    ctx.provider
-  );
-  const virtualPrice = await registry
-    .get_virtual_price_from_lp_token(lpToken)
-    .then(toBigNumber);
-  const pool = await registry.get_pool_from_lp_token(lpToken);
-  const coins = await registry.get_underlying_coins(pool);
+  const virtualPrice = await getVirtualPrice(lpToken, ctx);
+  const coins = await getUnderlyingCoins(lpToken, ctx);
 
   const addresses = coins.map(quote.aliased);
 
   if (addresses.length === 0) {
-    console.error(coins);
     throw new Error("no underlying_coins are supported by quote");
   }
 
@@ -41,7 +31,7 @@ export async function price(
   }
 
   if (price.isEqualTo(0)) {
-    throw new Error("no underlying_coins have valid quotes on quote");
+    throw new Error("oracle price for underlying_coins is zero");
   }
 
   return virtualPrice.div(10 ** 18).times(price);

@@ -9,12 +9,17 @@ import { Context } from "@data/context";
 import { price } from "@protocols/coingecko";
 import { Apy, calculateFromPps } from "@protocols/common/apy";
 import { Vault } from "@protocols/yearn/vault/interfaces";
-import { BigNumber, toBigNumber } from "@utils/bignumber";
+import { BigNumber, EthersBigNumber, toBigNumber } from "@utils/bignumber";
 import { estimateBlockPrecise, fetchLatestBlock } from "@utils/block";
 import { NullAddress } from "@utils/constants";
 import { seconds, unix } from "@utils/time";
 
-import { CurveRegistryAddress, getPool, getUnderlyingCoins } from "./registry";
+import {
+  CurveRegistryAddress,
+  getPool,
+  getUnderlyingCoins,
+  getVirtualPrice,
+} from "./registry";
 
 const CrvAddress = "0xD533a949740bb3306d119CC777fa900bA034cd52";
 
@@ -42,10 +47,6 @@ export async function calculatePoolApr(
   ctx: Context
 ): Promise<number | null> {
   const lpToken = vault.token.address;
-  const registry = CurveRegistryContract__factory.connect(
-    CurveRegistryAddress,
-    ctx.provider
-  );
   const latest = await fetchLatestBlock(ctx);
   const oneDay = await estimateBlockPrecise(
     latest.timestamp - seconds("1 day"),
@@ -56,7 +57,10 @@ export async function calculatePoolApr(
     latest.block,
     oneDay,
     { oneDaySample: oneDay },
-    (overrides) => registry.get_virtual_price_from_lp_token(lpToken, overrides)
+    (overrides) =>
+      getVirtualPrice(lpToken, ctx, overrides).then((bn) => {
+        return EthersBigNumber.from(bn.toFixed());
+      })
   );
   const poolApr = poolAprSamples.oneDaySample;
   return poolApr;
@@ -242,6 +246,16 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     gaugeAddress = "0x055be5DDB7A925BfEF3417FC157f53CA77cA7222";
   }
 
+  // FIXME: crvRETH doesn't have a gauge connected in the registry
+  if (vault.address === "0xBfedbcbe27171C418CDabC2477042554b1904857") {
+    gaugeAddress = "0x824f13f1a2f29cfeea81154b46c0fc820677a637";
+  }
+
+  // FIXME: crvALUSD doesn't have a gauge connected in the registry
+  if (vault.address === "0xA74d4B67b3368E83797a35382AFB776bAAE4F5C8") {
+    gaugeAddress = "0x9582c4adacb3bce56fea3e590f05c3ca2fb9c477";
+  }
+
   const gauge = CurveGaugeContract__factory.connect(gaugeAddress, ctx.provider);
   const gaugeControllerAddress = await gauge.controller();
   const gaugeController = CurveGaugeControllerContract__factory.connect(
@@ -254,9 +268,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     await gaugeController.gauge_relative_weight(gaugeAddress)
   );
   const gaugeInflationRate = toBigNumber(await gauge.inflation_rate());
-  const poolVirtualPrice = toBigNumber(
-    await registry.get_virtual_price_from_lp_token(lpToken)
-  );
+  const poolVirtualPrice = await getVirtualPrice(lpToken, ctx);
 
   const underlyingCoins = await getUnderlyingCoins(lpToken, ctx);
   const firstUnderlyingCoinAddress = underlyingCoins[0];
@@ -378,6 +390,24 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     .minus(1);
 
   const netCurveApy = netFarmedApy.plus(1).times(poolApy.plus(1)).minus(1);
+
+  if (netCurveApy.lt(0)) {
+    return {
+      recommended: 0,
+      composite: false,
+      type: "error",
+      description: "no harvests",
+      data: {
+        oneWeekSample: null,
+        oneMonthSample: null,
+        inceptionSample: null,
+        grossApy: null,
+        netApy: null,
+        performanceFee: null,
+        managementFee: null,
+      },
+    };
+  }
 
   const data = {
     currentBoost: currentBoost.toNumber(),

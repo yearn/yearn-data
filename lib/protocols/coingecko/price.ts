@@ -9,7 +9,7 @@ export type PriceMap<A extends string, T extends string> = {
 };
 
 const throttle = PromiseThrottle({
-  limit: 80,
+  limit: 50,
   interval: 1000 * 60, // minute
 });
 

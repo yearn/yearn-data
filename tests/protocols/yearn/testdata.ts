@@ -3,7 +3,7 @@ import { VaultV1, VaultV2 } from "@protocols/yearn/vault";
 export const vaults = {
   v1: {
     address: "0x5dbcF33D8c2E976c6b560249878e6F1491Bca25c",
-    object: ({
+    object: {
       address: "0x5dbcF33D8c2E976c6b560249878e6F1491Bca25c",
       name: "yearn Curve.fi yDAI/yUSDC/yUSDT/yTUSD",
       symbol: "yyDAI+yUSDC+yUSDT+yTUSD",
@@ -15,12 +15,12 @@ export const vaults = {
         decimals: 18,
       },
       type: "v1",
-    } as unknown) as VaultV1,
+    } as unknown as VaultV1,
     inception: 10559471,
   },
   v2: {
     address: "0x33bd0f9618cf38fea8f7f01e1514ab63b9bde64b",
-    object: ({
+    object: {
       address: "0x33bd0f9618cf38fea8f7f01e1514ab63b9bde64b",
       name: "yearn USD Coin IdleStrategies Test",
       symbol: "yUSDCIdleTest",
@@ -35,7 +35,7 @@ export const vaults = {
       },
       apiVersion: "0.2.2",
       type: "v2",
-    } as unknown) as VaultV2,
+    } as unknown as VaultV2,
     inception: 11421976,
   },
 };

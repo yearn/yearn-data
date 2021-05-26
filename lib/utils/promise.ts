@@ -9,7 +9,7 @@ export async function objectAll<T>(object: PromiseValues<T>): Promise<T> {
   const promises = entries.map<Promise<[string, unknown]>>(([name, promise]) =>
     promise.then((result) => [name, result])
   );
-  return (fromEntries(await Promise.all(promises)) as unknown) as T;
+  return fromEntries(await Promise.all(promises)) as unknown as T;
 }
 
 export function notEmpty<TValue>(
