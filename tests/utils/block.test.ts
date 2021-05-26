@@ -24,8 +24,8 @@ describe("block estimation", () => {
 
   it("precise estimation (network)", async () => {
     const estimation = await estimateBlockPrecise(Timestamp, ctx);
-    expect(estimation).toBeGreaterThanOrEqual(ActualBlock - 50);
-    return expect(estimation).toBeLessThanOrEqual(ActualBlock + 50);
+    expect(estimation).toBeGreaterThanOrEqual(ActualBlock - 100);
+    return expect(estimation).toBeLessThanOrEqual(ActualBlock + 100);
   }, 6e4);
 
   afterAll(() => {
