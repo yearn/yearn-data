@@ -40,9 +40,7 @@
     "constant": true,
     "inputs": [],
     "name": "SWAP",
-    "outputs": [
-      { "internalType": "contract ICurveFi", "name": "", "type": "address" }
-    ],
+    "outputs": [{ "internalType": "contract ICurveFi", "name": "", "type": "address" }],
     "payable": false,
     "stateMutability": "view",
     "type": "function"
@@ -105,9 +103,7 @@
     "constant": true,
     "inputs": [],
     "name": "curveDeposit",
-    "outputs": [
-      { "internalType": "contract CurveDeposit", "name": "", "type": "address" }
-    ],
+    "outputs": [{ "internalType": "contract CurveDeposit", "name": "", "type": "address" }],
     "payable": false,
     "stateMutability": "view",
     "type": "function"
@@ -213,9 +209,7 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "address", "name": "_controller", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_controller", "type": "address" }],
     "name": "setController",
     "outputs": [],
     "payable": false,
@@ -224,9 +218,7 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "address", "name": "_governance", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_governance", "type": "address" }],
     "name": "setGovernance",
     "outputs": [],
     "payable": false,
@@ -235,9 +227,7 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "uint256", "name": "_keepCRV", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_keepCRV", "type": "uint256" }],
     "name": "setKeepCRV",
     "outputs": [],
     "payable": false,
@@ -261,9 +251,7 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "address", "name": "_proxy", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_proxy", "type": "address" }],
     "name": "setProxy",
     "outputs": [],
     "payable": false,
@@ -272,9 +260,7 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "address", "name": "_strategist", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_strategist", "type": "address" }],
     "name": "setStrategist",
     "outputs": [],
     "payable": false,
@@ -298,9 +284,7 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "uint256", "name": "_withdrawalFee", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_withdrawalFee", "type": "uint256" }],
     "name": "setWithdrawalFee",
     "outputs": [],
     "payable": false,
@@ -363,9 +347,7 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "uint256", "name": "_amount", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }],
     "name": "withdraw",
     "outputs": [],
     "payable": false,
@@ -374,13 +356,9 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "contract IERC20", "name": "_asset", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "contract IERC20", "name": "_asset", "type": "address" }],
     "name": "withdraw",
-    "outputs": [
-      { "internalType": "uint256", "name": "balance", "type": "uint256" }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "balance", "type": "uint256" }],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
@@ -389,9 +367,7 @@
     "constant": false,
     "inputs": [],
     "name": "withdrawAll",
-    "outputs": [
-      { "internalType": "uint256", "name": "balance", "type": "uint256" }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "balance", "type": "uint256" }],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"

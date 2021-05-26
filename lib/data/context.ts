@@ -32,9 +32,7 @@ export class Context implements ContextConnectors {
 
   get provider(): Provider {
     if (!this.providerRef) {
-      throw new ReferenceError(
-        "this operations requires a valid provider in the sdk context"
-      );
+      throw new ReferenceError("this operations requires a valid provider in the sdk context");
     }
     return this.providerRef;
   }
@@ -45,9 +43,7 @@ export class Context implements ContextConnectors {
 
   get etherscan(): string {
     if (!this.etherscanKey) {
-      throw new ReferenceError(
-        "this operations requires a valid etherscan key in the sdk context"
-      );
+      throw new ReferenceError("this operations requires a valid etherscan key in the sdk context");
     }
     return this.etherscanKey;
   }

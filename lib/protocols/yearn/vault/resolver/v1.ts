@@ -1,7 +1,4 @@
-import {
-  RegistryV1Contract__factory,
-  StrategyV1Contract__factory,
-} from "@contracts/index";
+import { RegistryV1Contract__factory, StrategyV1Contract__factory } from "@contracts/index";
 import { Context } from "@data/context";
 
 import { FeesV1, Strategy, VaultV1 } from "../interfaces";
@@ -18,18 +15,12 @@ export interface VaultV1Info {
   isDelegated: boolean;
 }
 
-export async function resolveInfo(
-  address: string,
-  ctx: Context
-): Promise<VaultV1Info> {
+export async function resolveInfo(address: string, ctx: Context): Promise<VaultV1Info> {
   const registry = RegistryV1Contract__factory.connect(Registry, ctx.provider);
   return await registry.getVaultInfo(address);
 }
 
-export async function resolveStrategy(
-  address: string,
-  ctx: Context
-): Promise<Strategy> {
+export async function resolveStrategy(address: string, ctx: Context): Promise<Strategy> {
   const strategy = StrategyV1Contract__factory.connect(address, ctx.provider);
   try {
     const name = await strategy.getName();
@@ -39,10 +30,7 @@ export async function resolveStrategy(
   }
 }
 
-export async function resolveFees(
-  address: string,
-  ctx: Context
-): Promise<FeesV1> {
+export async function resolveFees(address: string, ctx: Context): Promise<FeesV1> {
   const strategy = StrategyV1Contract__factory.connect(address, ctx.provider);
   const strategistReward = await strategy
     .strategistReward()
@@ -65,8 +53,7 @@ export async function resolveFees(
     .then((val) => val.toNumber())
     .catch(() => 0);
 
-  const performanceFee =
-    strategistReward + treasuryFee + strategyPerformanceFee;
+  const performanceFee = strategistReward + treasuryFee + strategyPerformanceFee;
   return {
     general: {
       performanceFee,
@@ -76,10 +63,7 @@ export async function resolveFees(
   };
 }
 
-export async function resolveVault(
-  address: string,
-  ctx: Context
-): Promise<VaultV1> {
+export async function resolveVault(address: string, ctx: Context): Promise<VaultV1> {
   const basic = await resolveBasic(address, ctx);
   const info = await resolveInfo(address, ctx);
   const fees = await resolveFees(info.strategy, ctx);

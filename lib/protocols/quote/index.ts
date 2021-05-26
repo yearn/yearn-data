@@ -20,15 +20,10 @@ export function aliased(token: string): string {
   return token;
 }
 
-export async function price(
-  start: string,
-  end: string,
-  ctx: Context
-): Promise<BigNumber> {
+export async function price(start: string, end: string, ctx: Context): Promise<BigNumber> {
   start = aliased(start);
   end = aliased(end);
-  if (start === end && end === USDC.address)
-    return toBigNumber(10 ** USDC.decimals);
+  if (start === end && end === USDC.address) return toBigNumber(10 ** USDC.decimals);
   const quote = Quote__factory.connect(QuoteAddress, ctx.provider);
   if (end === USDC.address) {
     return quote.getPriceUsdcRecommended(start).then(toBigNumber);

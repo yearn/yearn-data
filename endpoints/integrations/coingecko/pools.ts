@@ -24,11 +24,7 @@ export const handler = wrap(async () => {
 
   return vaults.map((vault) => ({
     identifier: vault.displayName ?? vault.name,
-    apy:
-      vault.apy &&
-      vault.apy.data &&
-      vault.apy.recommended &&
-      Number(vault.apy.recommended) * 100,
+    apy: vault.apy && vault.apy.data && vault.apy.recommended && Number(vault.apy.recommended) * 100,
     liquidity_locked: new BigNumber(vault.tvl ? vault.tvl.value : 0).toNumber(),
   }));
 });

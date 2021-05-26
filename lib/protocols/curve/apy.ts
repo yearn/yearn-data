@@ -14,12 +14,7 @@ import { estimateBlockPrecise, fetchLatestBlock } from "@utils/block";
 import { NullAddress } from "@utils/constants";
 import { seconds, unix } from "@utils/time";
 
-import {
-  CurveRegistryAddress,
-  getPool,
-  getUnderlyingCoins,
-  getVirtualPrice,
-} from "./registry";
+import { CurveRegistryAddress, getPool, getUnderlyingCoins, getVirtualPrice } from "./registry";
 
 const CrvAddress = "0xD533a949740bb3306d119CC777fa900bA034cd52";
 
@@ -42,25 +37,15 @@ const EthConstant = 1e18;
 const BtcLikeAddresses = [RenBtcAddress, WbtcAddress, SBtcAddress];
 const EthLikeAddresses = [SEthAddress, EthAddress, WethAddress, StEthAddress];
 
-export async function calculatePoolApr(
-  vault: Vault,
-  ctx: Context
-): Promise<number | null> {
+export async function calculatePoolApr(vault: Vault, ctx: Context): Promise<number | null> {
   const lpToken = vault.token.address;
   const latest = await fetchLatestBlock(ctx);
-  const oneDay = await estimateBlockPrecise(
-    latest.timestamp - seconds("1 day"),
-    ctx
-  );
+  const oneDay = await estimateBlockPrecise(latest.timestamp - seconds("1 day"), ctx);
 
-  const poolAprSamples = await calculateFromPps(
-    latest.block,
-    oneDay,
-    { oneDaySample: oneDay },
-    (overrides) =>
-      getVirtualPrice(lpToken, ctx, overrides).then((bn) => {
-        return EthersBigNumber.from(bn.toFixed());
-      })
+  const poolAprSamples = await calculateFromPps(latest.block, oneDay, { oneDaySample: oneDay }, (overrides) =>
+    getVirtualPrice(lpToken, ctx, overrides).then((bn) => {
+      return EthersBigNumber.from(bn.toFixed());
+    })
   );
   const poolApr = poolAprSamples.oneDaySample;
   return poolApr;
@@ -72,10 +57,7 @@ export async function calculateMultiRewards(
   priceOfBaseAsset: { usd: number },
   ctx: Context
 ): Promise<BigNumber> {
-  const multiRewards = CurveMultiRewards__factory.connect(
-    rewardsAddress,
-    ctx.provider
-  );
+  const multiRewards = CurveMultiRewards__factory.connect(rewardsAddress, ctx.provider);
 
   let i = 0;
   let tokenRewardsApr = new BigNumber(0);
@@ -134,35 +116,23 @@ export async function calculateRewards(
   priceOfBaseAsset: { usd: number },
   ctx: Context
 ): Promise<BigNumber> {
-  const stakingRewards = CurveStakingRewards__factory.connect(
-    rewardsAddress,
-    ctx.provider
-  );
+  const stakingRewards = CurveStakingRewards__factory.connect(rewardsAddress, ctx.provider);
 
   let periodFinish: BigNumber;
   try {
     periodFinish = await stakingRewards.periodFinish().then(toBigNumber);
   } catch {
     // ... then it's a multi-reward contract
-    return await calculateMultiRewards(
-      rewardsAddress,
-      poolVirtualPrice,
-      priceOfBaseAsset,
-      ctx
-    );
+    return await calculateMultiRewards(rewardsAddress, poolVirtualPrice, priceOfBaseAsset, ctx);
   }
 
   if (periodFinish.lt(unix())) {
     return new BigNumber(0);
   }
 
-  const stakingRewardsRewardsTokenAddress = await stakingRewards
-    .rewardsToken()
-    .catch(() => null);
+  const stakingRewardsRewardsTokenAddress = await stakingRewards.rewardsToken().catch(() => null);
 
-  const stakingRewardsRewardTokenAddress = await stakingRewards
-    .rewardToken()
-    .catch(() => null);
+  const stakingRewardsRewardTokenAddress = await stakingRewards.rewardToken().catch(() => null);
 
   const stakingRewardsSnxAddress = await stakingRewards.snx().catch(() => null);
 
@@ -177,12 +147,9 @@ export async function calculateRewards(
     .catch(() => toBigNumber(0));
 
   const rewardTokenAddress =
-    stakingRewardsRewardTokenAddress ??
-    stakingRewardsRewardsTokenAddress ??
-    stakingRewardsSnxAddress;
+    stakingRewardsRewardTokenAddress ?? stakingRewardsRewardsTokenAddress ?? stakingRewardsSnxAddress;
 
-  const priceOfRewardAsset = (rewardTokenAddress &&
-    (await price(rewardTokenAddress, ["usd"]))) || { usd: 0 };
+  const priceOfRewardAsset = (rewardTokenAddress && (await price(rewardTokenAddress, ["usd"]))) || { usd: 0 };
 
   const singleRewardToken = priceOfRewardAsset.usd && stakingRewardsRate;
 
@@ -191,10 +158,7 @@ export async function calculateRewards(
     return SecondsInYear.times(stakingRewardsRate.div(EthConstant))
       .times(priceOfRewardAsset.usd)
       .div(
-        poolVirtualPrice
-          .div(EthConstant)
-          .times(stakingRewardsTotalSupply.div(EthConstant))
-          .times(priceOfBaseAsset.usd)
+        poolVirtualPrice.div(EthConstant).times(stakingRewardsTotalSupply.div(EthConstant)).times(priceOfBaseAsset.usd)
       );
   } else {
     try {
@@ -207,9 +171,7 @@ export async function calculateRewards(
           .rewardData(rewardTokenAddress)
           .then((val) => toBigNumber(val.rewardRate).div(EthConstant))
           .catch(() => 0);
-        const priceOfRewardAsset = (await price(rewardTokenAddress, [
-          "usd",
-        ])) ?? { usd: 0 };
+        const priceOfRewardAsset = (await price(rewardTokenAddress, ["usd"])) ?? { usd: 0 };
         const tokenRewardApr = SecondsInYear.times(stakingRewardsRate)
           .times(priceOfRewardAsset.usd)
           .div(
@@ -219,9 +181,7 @@ export async function calculateRewards(
               .div(EthConstant)
               .times(priceOfBaseAsset.usd)
           );
-        rewardTokenAddress = await stakingRewards
-          .rewardTokens(++i)
-          .catch(() => NullAddress);
+        rewardTokenAddress = await stakingRewards.rewardTokens(++i).catch(() => NullAddress);
         tokenRewardsApr = tokenRewardsApr.plus(tokenRewardApr);
       }
       return tokenRewardsApr;
@@ -233,10 +193,7 @@ export async function calculateRewards(
 
 export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   const lpToken = vault.token.address;
-  const registry = CurveRegistryContract__factory.connect(
-    CurveRegistryAddress,
-    ctx.provider
-  );
+  const registry = CurveRegistryContract__factory.connect(CurveRegistryAddress, ctx.provider);
   const poolAddress = await getPool(lpToken, ctx);
   const gauges = await registry.get_gauges(poolAddress);
   let gaugeAddress = gauges[0][0]; // first gauge
@@ -258,15 +215,10 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
 
   const gauge = CurveGaugeContract__factory.connect(gaugeAddress, ctx.provider);
   const gaugeControllerAddress = await gauge.controller();
-  const gaugeController = CurveGaugeControllerContract__factory.connect(
-    gaugeControllerAddress,
-    ctx.provider
-  );
+  const gaugeController = CurveGaugeControllerContract__factory.connect(gaugeControllerAddress, ctx.provider);
 
   const gaugeWorkingSupply = toBigNumber(await gauge.working_supply());
-  const gaugeRelativeWeight = toBigNumber(
-    await gaugeController.gauge_relative_weight(gaugeAddress)
-  );
+  const gaugeRelativeWeight = toBigNumber(await gaugeController.gauge_relative_weight(gaugeAddress));
   const gaugeInflationRate = toBigNumber(await gauge.inflation_rate());
   const poolVirtualPrice = await getVirtualPrice(lpToken, ctx);
 
@@ -293,12 +245,8 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
 
   const priceOfCrv = await price(CrvAddress, ["usd"]);
 
-  const yearnWorkingBalance = toBigNumber(
-    await gauge.working_balances(YearnVeCrvvoterAddress)
-  );
-  const yearnGaugeBalance = toBigNumber(
-    await gauge.balanceOf(YearnVeCrvvoterAddress)
-  );
+  const yearnWorkingBalance = toBigNumber(await gauge.working_balances(YearnVeCrvvoterAddress));
+  const yearnGaugeBalance = toBigNumber(await gauge.balanceOf(YearnVeCrvvoterAddress));
 
   const baseApr = gaugeInflationRate
     .times(gaugeRelativeWeight)
@@ -310,9 +258,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   let currentBoost: BigNumber;
 
   if (yearnGaugeBalance.isGreaterThan(0)) {
-    currentBoost = yearnWorkingBalance.div(
-      InverseMaxBoost.times(yearnGaugeBalance)
-    );
+    currentBoost = yearnWorkingBalance.div(InverseMaxBoost.times(yearnGaugeBalance));
     if (currentBoost.isNaN()) {
       currentBoost = new BigNumber(1);
     }
@@ -330,12 +276,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
   let tokenRewardsApr = new BigNumber(0);
 
   if (rewardAddress && rewardAddress !== NullAddress) {
-    tokenRewardsApr = await calculateRewards(
-      rewardAddress,
-      poolVirtualPrice,
-      priceOfBaseAsset,
-      ctx
-    );
+    tokenRewardsApr = await calculateRewards(rewardAddress, poolVirtualPrice, priceOfBaseAsset, ctx);
   }
 
   const compoundingEvents = 52; // TODO: investigate
@@ -383,11 +324,7 @@ export async function calculateApy(vault: Vault, ctx: Context): Promise<Apy> {
     .times(1 - totalPerformanceFee)
     .minus(managementFee);
 
-  const netFarmedApy = netCurveApr
-    .div(compoundingEvents)
-    .plus(1)
-    .pow(compoundingEvents)
-    .minus(1);
+  const netFarmedApy = netCurveApr.div(compoundingEvents).plus(1).pow(compoundingEvents).minus(1);
 
   const netCurveApy = netFarmedApy.plus(1).times(poolApy.plus(1)).minus(1);
 

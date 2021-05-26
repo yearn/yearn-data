@@ -24,9 +24,7 @@ describe("registry", () => {
   }, 1e4);
 
   it("should fetch a list of v2 experimental addresses (network)", () => {
-    const length = registry.v2
-      .fetchAddressesExperimental(ctx)
-      .then(({ length }) => length);
+    const length = registry.v2.fetchAddressesExperimental(ctx).then(({ length }) => length);
     return expect(length).resolves.toBeGreaterThan(0);
   }, 1e4);
 

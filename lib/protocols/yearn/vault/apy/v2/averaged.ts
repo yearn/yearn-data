@@ -1,11 +1,7 @@
 import { VaultV2Contract__factory } from "@contracts/index";
 import { Context } from "@data/context";
 import { Apy, calculateFromPps } from "@protocols/common/apy";
-import {
-  createTimedBlock,
-  estimateBlockPrecise,
-  fetchLatestBlock,
-} from "@utils/block";
+import { createTimedBlock, estimateBlockPrecise, fetchLatestBlock } from "@utils/block";
 import { seconds } from "@utils/time";
 import semver from "semver";
 
@@ -19,14 +15,8 @@ export function shouldBeAveraged(vault: VaultV2): boolean {
   return semver.gte(vault.apiVersion, AveragedFromVersion);
 }
 
-export async function calculateAveragedApy(
-  vault: VaultV2,
-  ctx: Context
-): Promise<Apy> {
-  const contract = VaultV2Contract__factory.connect(
-    vault.address,
-    ctx.provider
-  );
+export async function calculateAveragedApy(vault: VaultV2, ctx: Context): Promise<Apy> {
+  const contract = VaultV2Contract__factory.connect(vault.address, ctx.provider);
   const harvests = await fetchHarvestCalls(vault, ctx);
   if (harvests.length < MinHarvests) {
     return {
@@ -48,14 +38,8 @@ export async function calculateAveragedApy(
 
   const latest = await fetchLatestBlock(ctx);
   const inception = await createTimedBlock(harvests[2], ctx);
-  const oneWeek = await estimateBlockPrecise(
-    latest.timestamp - seconds("1 week"),
-    ctx
-  );
-  const oneMonth = await estimateBlockPrecise(
-    latest.timestamp - seconds("4 weeks"),
-    ctx
-  );
+  const oneWeek = await estimateBlockPrecise(latest.timestamp - seconds("1 week"), ctx);
+  const oneMonth = await estimateBlockPrecise(latest.timestamp - seconds("4 weeks"), ctx);
   const ppsSampleData = await calculateFromPps(
     latest.block,
     inception.block,
@@ -67,10 +51,7 @@ export async function calculateAveragedApy(
     contract.pricePerShare
   );
 
-  const netApy = Math.max(
-    ppsSampleData.oneMonthSample || 0,
-    ppsSampleData.oneWeekSample || 0
-  );
+  const netApy = Math.max(ppsSampleData.oneMonthSample || 0, ppsSampleData.oneWeekSample || 0);
   const v2PerformanceFee = vault.fees.general.performanceFee / 1e4;
   const v2ManagementFee = vault.fees.general.managementFee / 1e4;
   const grossApy = netApy / (1 - v2PerformanceFee) + v2ManagementFee;

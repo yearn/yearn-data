@@ -1,8 +1,4 @@
-import {
-  RegistryV2Contract__factory,
-  StrategyV2Contract__factory,
-  VaultV2Contract__factory,
-} from "@contracts/index";
+import { RegistryV2Contract__factory, StrategyV2Contract__factory, VaultV2Contract__factory } from "@contracts/index";
 import { Context } from "@data/context";
 import { NullAddress } from "@utils/constants";
 import { objectAll } from "@utils/promise";
@@ -10,10 +6,7 @@ import { objectAll } from "@utils/promise";
 import { FeesV2, SpecialFeesV2, Strategy, VaultV2 } from "../interfaces";
 import { resolveBasic } from "./common";
 
-export async function resolveStrategy(
-  address: string,
-  ctx: Context
-): Promise<Strategy> {
+export async function resolveStrategy(address: string, ctx: Context): Promise<Strategy> {
   const strategy = StrategyV2Contract__factory.connect(address, ctx.provider);
   const name = await strategy.name();
   return {
@@ -22,10 +15,7 @@ export async function resolveStrategy(
   };
 }
 
-export async function resolveTags(
-  address: string,
-  ctx: Context
-): Promise<string[]> {
+export async function resolveTags(address: string, ctx: Context): Promise<string[]> {
   const registry = RegistryV2Contract__factory.connect(address, ctx.provider);
   const tagFilter = registry.filters.VaultTagged(null, null);
   const tags = await registry.queryFilter(tagFilter);
@@ -34,11 +24,7 @@ export async function resolveTags(
     .map((event) => event.args && event.args.tag);
 }
 
-export async function resolveFees(
-  address: string,
-  strategyAddresses: string[],
-  ctx: Context
-): Promise<FeesV2> {
+export async function resolveFees(address: string, strategyAddresses: string[], ctx: Context): Promise<FeesV2> {
   const vault = VaultV2Contract__factory.connect(address, ctx.provider);
   const performanceFee = await vault
     .performanceFee()
@@ -60,10 +46,7 @@ export async function resolveFees(
   let keepCrv: number | undefined;
 
   for (const strategyAddress of strategyAddresses) {
-    const strategy = StrategyV2Contract__factory.connect(
-      strategyAddress,
-      ctx.provider
-    );
+    const strategy = StrategyV2Contract__factory.connect(strategyAddress, ctx.provider);
     const fee = await strategy
       .keepCRV()
       .then((val) => val && val.toNumber())
@@ -77,10 +60,7 @@ export async function resolveFees(
   return { general, special: { keepCrv } };
 }
 
-export async function resolveSpecialFees(
-  strategyAddresses: string[],
-  ctx: Context
-): Promise<SpecialFeesV2> {
+export async function resolveSpecialFees(strategyAddresses: string[], ctx: Context): Promise<SpecialFeesV2> {
   if (strategyAddresses.length === 0) {
     const [address] = strategyAddresses;
     const strategy = StrategyV2Contract__factory.connect(address, ctx.provider);
@@ -94,10 +74,7 @@ export async function resolveSpecialFees(
   return {};
 }
 
-export async function resolveVault(
-  address: string,
-  ctx: Context
-): Promise<VaultV2> {
+export async function resolveVault(address: string, ctx: Context): Promise<VaultV2> {
   const basic = await resolveBasic(address, ctx);
   const vault = VaultV2Contract__factory.connect(address, ctx.provider);
 
@@ -124,9 +101,7 @@ export async function resolveVault(
     strategyAddresses.push("0x683b5C88D48FcCfB3e778FF0fA954F84cA7Ce9DF");
   }
 
-  const strategies = await Promise.all(
-    strategyAddresses.map((address) => resolveStrategy(address, ctx))
-  );
+  const strategies = await Promise.all(strategyAddresses.map((address) => resolveStrategy(address, ctx)));
 
   const tags = await resolveTags(address, ctx);
 

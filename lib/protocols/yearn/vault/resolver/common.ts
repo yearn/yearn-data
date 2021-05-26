@@ -6,10 +6,7 @@ import { objectAll } from "@utils/promise";
 import { VaultBase } from "../interfaces";
 import { fetchInceptionBlock } from "../reader";
 
-export async function resolveBasic(
-  address: string,
-  ctx: Context
-): Promise<VaultBase> {
+export async function resolveBasic(address: string, ctx: Context): Promise<VaultBase> {
   const vault = VaultV1Contract__factory.connect(address, ctx.provider);
   const structure = {
     name: vault.name(),

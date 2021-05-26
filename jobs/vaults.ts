@@ -6,11 +6,7 @@ import { Context, data, yearn } from "../lib";
 import { CachedVault, FetchedVault } from "../lib/interfaces/vaults";
 import { backscratcher } from "../lib/special/vaults/backscratcher";
 import { unix } from "../lib/utils/time";
-import {
-  DDBVaultsCache,
-  EtherscanApiKey,
-  Web3ProviderWss,
-} from "../settings/env";
+import { DDBVaultsCache, EtherscanApiKey, Web3ProviderWss } from "../settings/env";
 import excluded from "../static/vaults/excluded.json";
 import { batchSet, scan } from "../utils/ddb";
 import wrap from "../utils/wrap";
@@ -26,9 +22,7 @@ function notEmpty<T>(value: T | null | undefined): value is T {
 async function fetchAllVaults(ctx: Context): Promise<FetchedVault[]> {
   let addrV1 = await yearn.vault.registry.v1.fetchAddresses(ctx);
   let addrV2Prod = await yearn.vault.registry.v2.fetchAddresses(ctx);
-  let addrV2Test = await yearn.vault.registry.v2.fetchAddressesExperimental(
-    ctx
-  );
+  let addrV2Test = await yearn.vault.registry.v2.fetchAddressesExperimental(ctx);
 
   addrV1 = addrV1.filter((address) => !excluded.includes(address));
   addrV2Prod = addrV2Prod.filter((address) => !excluded.includes(address));
@@ -102,9 +96,7 @@ export const handler = wrap(async () => {
         try {
           vault.apy = await yearn.vault.apy.calculateApy(vault, ctx);
         } catch (err) {
-          console.error(
-            `Could not fetch apy for ${vault.name} (${vault.address})`
-          );
+          console.error(`Could not fetch apy for ${vault.name} (${vault.address})`);
           console.error(err);
           vault.apy = null;
         }
@@ -120,9 +112,7 @@ export const handler = wrap(async () => {
         try {
           vault.tvl = await yearn.vault.tvl.calculateTvl(vault, ctx);
         } catch (err) {
-          console.error(
-            `Could not fetch tvl for ${vault.name} (${vault.address})`
-          );
+          console.error(`Could not fetch tvl for ${vault.name} (${vault.address})`);
           console.error(err);
           vault.tvl = null;
         }

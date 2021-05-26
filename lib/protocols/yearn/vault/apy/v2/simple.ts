@@ -8,19 +8,11 @@ import { VaultV2 } from "../../interfaces";
 import { fetchHarvestCalls } from "../../reader";
 
 function findNearestBlock(needle: Block, haystack: Block[]) {
-  return haystack.reduce((a, b) =>
-    Math.abs(b - needle) < Math.abs(a - needle) ? b : a
-  );
+  return haystack.reduce((a, b) => (Math.abs(b - needle) < Math.abs(a - needle) ? b : a));
 }
 
-export async function calculateSimpleApy(
-  vault: VaultV2,
-  ctx: Context
-): Promise<Apy> {
-  const contract = VaultV2Contract__factory.connect(
-    vault.address,
-    ctx.provider
-  );
+export async function calculateSimpleApy(vault: VaultV2, ctx: Context): Promise<Apy> {
+  const contract = VaultV2Contract__factory.connect(vault.address, ctx.provider);
   const harvests = await fetchHarvestCalls(vault, ctx);
   if (harvests.length < 2) {
     return {
@@ -41,14 +33,8 @@ export async function calculateSimpleApy(
   }
   const latest = await createTimedBlock(harvests[harvests.length - 1], ctx);
   const inception = await createTimedBlock(harvests[0], ctx);
-  const oneWeek = await estimateBlockPrecise(
-    latest.timestamp - seconds("1 week"),
-    ctx
-  );
-  const oneMonth = await estimateBlockPrecise(
-    latest.timestamp - seconds("4 weeks"),
-    ctx
-  );
+  const oneWeek = await estimateBlockPrecise(latest.timestamp - seconds("1 week"), ctx);
+  const oneMonth = await estimateBlockPrecise(latest.timestamp - seconds("4 weeks"), ctx);
 
   const oneWeekHarvest = findNearestBlock(oneWeek, harvests);
   const oneMonthHarvest = findNearestBlock(oneMonth, harvests);
@@ -64,10 +50,7 @@ export async function calculateSimpleApy(
   );
 
   // Default to higher sample as the result is largely dependent on number of harvests (usually one week sample is sufficient)
-  const netApy = Math.max(
-    ppsSampleData.oneMonthSample || 0,
-    ppsSampleData.oneWeekSample || 0
-  );
+  const netApy = Math.max(ppsSampleData.oneMonthSample || 0, ppsSampleData.oneWeekSample || 0);
 
   const v2PerformanceFee = vault.fees.general.performanceFee / 1e4;
   const v2ManagementFee = vault.fees.general.managementFee / 1e4;

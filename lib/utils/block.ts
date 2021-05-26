@@ -31,10 +31,7 @@ function findLeftRight(id: number, ctx: Context): number[] | false {
   return [ctx.blocks.ids[max - 1], ctx.blocks.ids[min - 1]];
 }
 
-async function fetchBlockTimestamp(
-  block: number,
-  ctx: Context
-): Promise<number> {
+async function fetchBlockTimestamp(block: number, ctx: Context): Promise<number> {
   const { timestamp } = await ctx.provider.getBlock(block);
   ctx.blocks.cache[block] = timestamp;
   return timestamp;
@@ -62,9 +59,7 @@ async function estimateTimestamp(id: number, ctx: Context): Promise<number> {
       }
       // optimize estimations
       if (max - min <= CloseEnoughBlocks) {
-        fetchBlockTimestamp(id, ctx).then(() =>
-          ctx.blocks.ids.splice(min, 0, id)
-        );
+        fetchBlockTimestamp(id, ctx).then(() => ctx.blocks.ids.splice(min, 0, id));
         const time = (id - min) / (max - min);
         return linearInterpolation(vmin, vmax, time);
       }
@@ -91,10 +86,7 @@ export function estimateBlock(timestamp: number, currentBlock: Block): Block {
   return Math.floor(currentBlock - (now - timestamp) * BlocksPerSecond);
 }
 
-export async function estimateBlockPrecise(
-  timestamp: number,
-  ctx: Context
-): Promise<Block> {
+export async function estimateBlockPrecise(timestamp: number, ctx: Context): Promise<Block> {
   const current = await ctx.provider.getBlockNumber();
   let last = estimateBlock(timestamp, current);
   let high = last + SearchRange;
@@ -115,10 +107,7 @@ export async function estimateBlockPrecise(
   return last;
 }
 
-export async function createTimedBlock(
-  block: number,
-  ctx: Context
-): Promise<TimedBlock> {
+export async function createTimedBlock(block: number, ctx: Context): Promise<TimedBlock> {
   const timestamp = await fetchBlockTimestamp(block, ctx);
   return { block, timestamp };
 }

@@ -103,9 +103,7 @@
   {
     "inputs": [],
     "name": "CRV",
-    "outputs": [
-      { "internalType": "contract IERC20", "name": "", "type": "address" }
-    ],
+    "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -179,9 +177,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "account", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
     "name": "balanceOf",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
@@ -208,9 +204,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "recipient", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }],
     "name": "claimFor",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -231,9 +225,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "delegatee", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "delegatee", "type": "address" }],
     "name": "delegate",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -261,9 +253,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "_amount", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }],
     "name": "deposit",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -284,9 +274,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "account", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "account", "type": "address" }],
     "name": "getCurrentVotes",
     "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
     "stateMutability": "view",
@@ -369,9 +357,7 @@
   {
     "inputs": [],
     "name": "rewards",
-    "outputs": [
-      { "internalType": "contract IERC20", "name": "", "type": "address" }
-    ],
+    "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -389,18 +375,14 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "_governance", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_governance", "type": "address" }],
     "name": "setGovernance",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "_proxy", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_proxy", "type": "address" }],
     "name": "setProxy",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -456,9 +438,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "recipient", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "recipient", "type": "address" }],
     "name": "updateFor",
     "outputs": [],
     "stateMutability": "nonpayable",

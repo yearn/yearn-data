@@ -34,12 +34,7 @@ interface YearnAssets {
 export async function fetchYearnAssets(): Promise<Record<string, string>> {
   const res = await fetch(YearnAssetsDirURL).then((res) => res.json());
   const assets = Array.isArray(res) ? res : [];
-  return fromEntries(
-    assets.map(({ name: address }: YearnAssets) => [
-      address,
-      yearnAssetUrl(address),
-    ])
-  );
+  return fromEntries(assets.map(({ name: address }: YearnAssets) => [address, yearnAssetUrl(address)]));
 }
 
 interface TrustAssets {
@@ -49,9 +44,7 @@ interface TrustAssets {
 
 export async function fetchTrustAssets(): Promise<Record<string, string>> {
   const { tokens } = await fetch(TrustAssetsURL).then((res) => res.json());
-  return fromEntries(
-    tokens.map(({ address, logoURI }: TrustAssets) => [address, logoURI])
-  );
+  return fromEntries(tokens.map(({ address, logoURI }: TrustAssets) => [address, logoURI]));
 }
 
 export async function fetchAssets(): Promise<Record<string, string>> {

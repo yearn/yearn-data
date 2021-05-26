@@ -13,8 +13,7 @@ const throttle = PromiseThrottle({
   interval: 1000 * 60, // minute
 });
 
-const TokenPriceUrl =
-  "https://api.coingecko.com/api/v3/simple/token_price/ethereum";
+const TokenPriceUrl = "https://api.coingecko.com/api/v3/simple/token_price/ethereum";
 
 export async function price<A extends string, T extends string>(
   tokenAddresses: A[],

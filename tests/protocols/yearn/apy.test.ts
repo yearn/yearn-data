@@ -11,39 +11,19 @@ import { vaults } from "./testdata";
 describe("yearn yearly roi", () => {
   it("should calculate yearly roi", () => {
     expect(
-      calculateYearlyRoi(
-        { block: 366, value: new BigNumber(100) },
-        { block: 1, value: new BigNumber(50) },
-        1
-      )
+      calculateYearlyRoi({ block: 366, value: new BigNumber(100) }, { block: 1, value: new BigNumber(50) }, 1)
     ).toBe(1);
+    expect(calculateYearlyRoi({ block: 366, value: new BigNumber(0) }, { block: 1, value: new BigNumber(50) }, 1)).toBe(
+      -1
+    );
     expect(
-      calculateYearlyRoi(
-        { block: 366, value: new BigNumber(0) },
-        { block: 1, value: new BigNumber(50) },
-        1
-      )
-    ).toBe(-1);
-    expect(
-      calculateYearlyRoi(
-        { block: 366, value: new BigNumber(50) },
-        { block: 1, value: new BigNumber(50) },
-        1
-      )
+      calculateYearlyRoi({ block: 366, value: new BigNumber(50) }, { block: 1, value: new BigNumber(50) }, 1)
     ).toBe(0);
     expect(
-      calculateYearlyRoi(
-        { block: 366, value: new BigNumber(75) },
-        { block: 1, value: new BigNumber(50) },
-        1
-      )
+      calculateYearlyRoi({ block: 366, value: new BigNumber(75) }, { block: 1, value: new BigNumber(50) }, 1)
     ).toBe(0.5);
     expect(
-      calculateYearlyRoi(
-        { block: 366, value: new BigNumber(25) },
-        { block: 1, value: new BigNumber(50) },
-        1
-      )
+      calculateYearlyRoi({ block: 366, value: new BigNumber(25) }, { block: 1, value: new BigNumber(50) }, 1)
     ).toBe(-0.5);
   });
 });

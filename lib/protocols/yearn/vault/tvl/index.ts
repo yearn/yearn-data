@@ -14,10 +14,7 @@ export interface Tvl {
   totalAssets: number;
 }
 
-export async function calculateTvl(
-  vault: Vault,
-  ctx: Context
-): Promise<Tvl | null> {
+export async function calculateTvl(vault: Vault, ctx: Context): Promise<Tvl | null> {
   let totalAssets: BigNumber;
   if (vault.type == "v1") {
     totalAssets = await v1.calculateTotalAssets(vault, ctx);
@@ -39,9 +36,7 @@ export async function calculateTvl(
         decimals = vault.decimals;
         price = await quote.price(vault.address, quote.USDC.address, ctx);
       } catch {
-        throw new Error(
-          "vault is not curve and both vault token and vault as token are not supported by quote"
-        );
+        throw new Error("vault is not curve and both vault token and vault as token are not supported by quote");
       }
     }
   }

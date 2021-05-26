@@ -4,11 +4,7 @@ import BigNumber from "bignumber.js";
 
 import { getPool, getUnderlyingCoins, getVirtualPrice } from "./registry";
 
-export async function price(
-  lpToken: string,
-  to: string,
-  ctx: Context
-): Promise<BigNumber> {
+export async function price(lpToken: string, to: string, ctx: Context): Promise<BigNumber> {
   const virtualPrice = await getVirtualPrice(lpToken, ctx);
   const coins = await getUnderlyingCoins(lpToken, ctx);
 

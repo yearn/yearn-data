@@ -7,14 +7,8 @@ import { seconds } from "@utils/time";
 import { VaultV1 } from "../../interfaces";
 import { fetchInceptionBlock } from "../../reader";
 
-export async function calculateSimpleApy(
-  vault: VaultV1,
-  ctx: Context
-): Promise<Apy> {
-  const contract = VaultV1Contract__factory.connect(
-    vault.address,
-    ctx.provider
-  );
+export async function calculateSimpleApy(vault: VaultV1, ctx: Context): Promise<Apy> {
+  const contract = VaultV1Contract__factory.connect(vault.address, ctx.provider);
   const inception = await fetchInceptionBlock(vault.address, ctx);
   if (!inception) {
     return {
@@ -26,14 +20,8 @@ export async function calculateSimpleApy(
     };
   }
   const latest = await fetchLatestBlock(ctx);
-  const oneWeek = await estimateBlockPrecise(
-    latest.timestamp - seconds("1 week"),
-    ctx
-  );
-  const oneMonth = await estimateBlockPrecise(
-    latest.timestamp - seconds("4 weeks"),
-    ctx
-  );
+  const oneWeek = await estimateBlockPrecise(latest.timestamp - seconds("1 week"), ctx);
+  const oneMonth = await estimateBlockPrecise(latest.timestamp - seconds("4 weeks"), ctx);
 
   const ppsSampleData = await calculateFromPps(
     latest.block,
@@ -46,10 +34,7 @@ export async function calculateSimpleApy(
     contract.getPricePerFullShare
   );
 
-  const netApy = Math.max(
-    ppsSampleData.oneMonthSample || 0,
-    ppsSampleData.oneWeekSample || 0
-  );
+  const netApy = Math.max(ppsSampleData.oneMonthSample || 0, ppsSampleData.oneWeekSample || 0);
 
   const totalPerformanceFee = vault.fees.general.performanceFee / 1e4;
 

@@ -39,11 +39,7 @@ const BackScratcherMetadata = {
 // 7 day farm = raccomended
 
 export async function backscratcher(ctx: Context): Promise<Vault> {
-  const Curve3pool = new ethers.Contract(
-    "0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7",
-    CurveSwapAbi,
-    ctx.provider
-  );
+  const Curve3pool = new ethers.Contract("0xbEbc44782C7dB0a1A60Cb6fe97d0b483032FF1C7", CurveSwapAbi, ctx.provider);
   const CurveRewardDistribution = new ethers.Contract(
     "0xA464e6DCda8AC41e03616F95f4BC98a13b8922Dc",
     CurveRewardDistributionAbi,
@@ -54,11 +50,7 @@ export async function backscratcher(ctx: Context): Promise<Vault> {
     CurveVotingEscrowAbi,
     ctx.provider
   );
-  const veCurveVault = new ethers.Contract(
-    "0xc5bDdf9843308380375a611c18B50Fb9341f502A",
-    veCurveVaultAbi,
-    ctx.provider
-  );
+  const veCurveVault = new ethers.Contract("0xc5bDdf9843308380375a611c18B50Fb9341f502A", veCurveVaultAbi, ctx.provider);
 
   const voter = "0xF147b8125d2ef93FB6965Db97D6746952a133934";
 
@@ -75,11 +67,9 @@ export async function backscratcher(ctx: Context): Promise<Vault> {
 
   const week = 7 * 86400;
   const epoch = Math.floor(Date.now() / 1000 / week) * week - week;
-  const tokens_per_week =
-    (await CurveRewardDistribution.tokens_per_week(epoch)) / 1e18;
+  const tokens_per_week = (await CurveRewardDistribution.tokens_per_week(epoch)) / 1e18;
   const virtual_price = (await Curve3pool.get_virtual_price()) / 1e18;
-  const apy =
-    (tokens_per_week * virtual_price * 52) / ((total_vecrv / 1e18) * crv_price);
+  const apy = (tokens_per_week * virtual_price * 52) / ((total_vecrv / 1e18) * crv_price);
 
   const vault_boost = (yearn_vecrv / vault_supply) * (crv_price / yvecrv_price);
 

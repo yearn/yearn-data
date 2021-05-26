@@ -32,14 +32,8 @@ export type ApyType = {
 
 export type ApyEntry = [string, number | null];
 
-export function calculateYearlyRoi(
-  current: Snapshot,
-  previous: Snapshot,
-  blocksPerDay = BlocksPerDay
-): number {
-  const valueDelta = current.value
-    .minus(previous.value)
-    .dividedBy(previous.value);
+export function calculateYearlyRoi(current: Snapshot, previous: Snapshot, blocksPerDay = BlocksPerDay): number {
+  const valueDelta = current.value.minus(previous.value).dividedBy(previous.value);
   const blockDelta = new BigNumber(current.block - previous.block);
   const derivative = valueDelta.div(blockDelta);
   return derivative.toNumber() * blocksPerDay * 365;

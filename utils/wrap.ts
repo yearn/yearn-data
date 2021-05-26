@@ -1,12 +1,6 @@
 // Handler wrapper for AWS lambda functions
-export default function wrap(
-  lambda: (event: unknown, context: unknown, callback: unknown) => unknown
-) {
-  return async function (
-    event: unknown,
-    context: unknown,
-    callback: unknown
-  ): Promise<unknown> {
+export default function wrap(lambda: (event: unknown, context: unknown, callback: unknown) => unknown) {
+  return async function (event: unknown, context: unknown, callback: unknown): Promise<unknown> {
     let body: unknown;
     let statusCode: number;
 

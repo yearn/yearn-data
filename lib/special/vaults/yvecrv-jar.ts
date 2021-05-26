@@ -34,8 +34,7 @@ const YveCRVJar = {
   endorsed: true,
 };
 
-const PickleDataUrl =
-  "https://api.pickle-jar.info/protocol/jar/yvecrv-eth/performance";
+const PickleDataUrl = "https://api.pickle-jar.info/protocol/jar/yvecrv-eth/performance";
 
 const PickleJarId = "yvecrv-eth";
 const PickleTvlUrl = "https://api.pickle-jar.info/protocol/value";
@@ -49,12 +48,7 @@ export async function yveCRVJar(): Promise<Vault> {
   const vault = JSON.parse(JSON.stringify(YveCRVJar));
   if (vault.apy) {
     if (data && data.sevenDay) {
-      data = fromentries(
-        Object.entries(data).map(([key, val]: [string, number]) => [
-          key,
-          val / 100,
-        ])
-      );
+      data = fromentries(Object.entries(data).map(([key, val]: [string, number]) => [key, val / 100]));
       vault.apy.recommended = data.thirtyDayFarm;
       vault.apy.data = data;
     } else {

@@ -15,8 +15,6 @@ describe("assets", () => {
   }, 2e4);
   it("fetch assets (network)", async () => {
     const files = await assets.fetchAssets();
-    return expect(Object.values(files)).toEqual(
-      expect.arrayContaining([expect.any(String)])
-    );
+    return expect(Object.values(files)).toEqual(expect.arrayContaining([expect.any(String)]));
   }, 2e4);
 });

@@ -197,9 +197,7 @@
   {
     "inputs": [],
     "name": "cToken",
-    "outputs": [
-      { "internalType": "contract CErc20I", "name": "", "type": "address" }
-    ],
+    "outputs": [{ "internalType": "contract CErc20I", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -239,9 +237,7 @@
   {
     "inputs": [],
     "name": "compound",
-    "outputs": [
-      { "internalType": "contract ComptrollerI", "name": "", "type": "address" }
-    ],
+    "outputs": [{ "internalType": "contract ComptrollerI", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -334,9 +330,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "gasCost", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "gasCost", "type": "uint256" }],
     "name": "harvestTrigger",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
@@ -364,9 +358,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "_newStrategy", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_newStrategy", "type": "address" }],
     "name": "migrate",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -453,9 +445,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "_debtThreshold", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_debtThreshold", "type": "uint256" }],
     "name": "setDebtThreshold",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -476,63 +466,49 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "_keeper", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_keeper", "type": "address" }],
     "name": "setKeeper",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "_delay", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_delay", "type": "uint256" }],
     "name": "setMaxReportDelay",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "_minCompToSell", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_minCompToSell", "type": "uint256" }],
     "name": "setMinCompToSell",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "_minWant", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_minWant", "type": "uint256" }],
     "name": "setMinWant",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "_profitFactor", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_profitFactor", "type": "uint256" }],
     "name": "setProfitFactor",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "_rewards", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_rewards", "type": "address" }],
     "name": "setRewards",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "_strategist", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_strategist", "type": "address" }],
     "name": "setStrategist",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -541,9 +517,7 @@
   {
     "inputs": [],
     "name": "storedCollateralisation",
-    "outputs": [
-      { "internalType": "uint256", "name": "collat", "type": "uint256" }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "collat", "type": "uint256" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -555,9 +529,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "address", "name": "_token", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_token", "type": "address" }],
     "name": "sweep",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -571,9 +543,7 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "gasCost", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "gasCost", "type": "uint256" }],
     "name": "tendTrigger",
     "outputs": [{ "internalType": "bool", "name": "", "type": "bool" }],
     "stateMutability": "view",
@@ -596,18 +566,14 @@
   {
     "inputs": [],
     "name": "vault",
-    "outputs": [
-      { "internalType": "contract VaultAPI", "name": "", "type": "address" }
-    ],
+    "outputs": [{ "internalType": "contract VaultAPI", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   },
   {
     "inputs": [],
     "name": "want",
-    "outputs": [
-      { "internalType": "contract IERC20", "name": "", "type": "address" }
-    ],
+    "outputs": [{ "internalType": "contract IERC20", "name": "", "type": "address" }],
     "stateMutability": "view",
     "type": "function"
   },
@@ -619,13 +585,9 @@
     "type": "function"
   },
   {
-    "inputs": [
-      { "internalType": "uint256", "name": "_amountNeeded", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_amountNeeded", "type": "uint256" }],
     "name": "withdraw",
-    "outputs": [
-      { "internalType": "uint256", "name": "_loss", "type": "uint256" }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "_loss", "type": "uint256" }],
     "stateMutability": "nonpayable",
     "type": "function"
   },

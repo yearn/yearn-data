@@ -9,10 +9,7 @@ export interface Token {
   name: string;
 }
 
-export async function resolveToken(
-  address: string,
-  ctx: Context
-): Promise<Token> {
+export async function resolveToken(address: string, ctx: Context): Promise<Token> {
   const token = Erc20Contract__factory.connect(address, ctx.provider);
   const structure = {
     name: token.name(),

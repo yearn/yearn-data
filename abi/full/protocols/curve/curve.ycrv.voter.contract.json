@@ -107,9 +107,7 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "uint256", "name": "_value", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_value", "type": "uint256" }],
     "name": "increaseAmount",
     "outputs": [],
     "payable": false,
@@ -145,9 +143,7 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "address", "name": "_governance", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_governance", "type": "address" }],
     "name": "setGovernance",
     "outputs": [],
     "payable": false,
@@ -156,9 +152,7 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "address", "name": "_strategy", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "address", "name": "_strategy", "type": "address" }],
     "name": "setStrategy",
     "outputs": [],
     "payable": false,
@@ -185,9 +179,7 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "uint256", "name": "_amount", "type": "uint256" }
-    ],
+    "inputs": [{ "internalType": "uint256", "name": "_amount", "type": "uint256" }],
     "name": "withdraw",
     "outputs": [],
     "payable": false,
@@ -196,13 +188,9 @@
   },
   {
     "constant": false,
-    "inputs": [
-      { "internalType": "contract IERC20", "name": "_asset", "type": "address" }
-    ],
+    "inputs": [{ "internalType": "contract IERC20", "name": "_asset", "type": "address" }],
     "name": "withdraw",
-    "outputs": [
-      { "internalType": "uint256", "name": "balance", "type": "uint256" }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "balance", "type": "uint256" }],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"
@@ -211,9 +199,7 @@
     "constant": false,
     "inputs": [],
     "name": "withdrawAll",
-    "outputs": [
-      { "internalType": "uint256", "name": "balance", "type": "uint256" }
-    ],
+    "outputs": [{ "internalType": "uint256", "name": "balance", "type": "uint256" }],
     "payable": false,
     "stateMutability": "nonpayable",
     "type": "function"

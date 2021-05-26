@@ -50,11 +50,7 @@ export interface Transaction {
   confirmations: string;
 }
 
-function transformTransactions({
-  blockNumber,
-  timeStamp,
-  ...rest
-}: AllFieldString<Transaction>): Transaction {
+function transformTransactions({ blockNumber, timeStamp, ...rest }: AllFieldString<Transaction>): Transaction {
   return {
     ...rest,
     blockNumber: parseInt(blockNumber),
@@ -62,24 +58,22 @@ function transformTransactions({
   };
 }
 
-export const fetchTransactionList = wrap(
-  async (query: QueryTransactionList, ctx: Context): Promise<Transaction[]> => {
-    const params = new URLSearchParams();
+export const fetchTransactionList = wrap(async (query: QueryTransactionList, ctx: Context): Promise<Transaction[]> => {
+  const params = new URLSearchParams();
 
-    params.append("module", "account");
-    params.append("action", "txlist");
-    params.append("address", query.address);
-    query.startBlock && params.append("startBlock", String(query.startBlock));
-    query.endBlock && params.append("offset", String(query.endBlock));
-    query.page && params.append("page", String(query.page));
-    query.page && params.append("offset", String(query.offset));
-    params.append("sort", query.sort ?? "asc");
-    params.append("apikey", ctx.etherscan);
+  params.append("module", "account");
+  params.append("action", "txlist");
+  params.append("address", query.address);
+  query.startBlock && params.append("startBlock", String(query.startBlock));
+  query.endBlock && params.append("offset", String(query.endBlock));
+  query.page && params.append("page", String(query.page));
+  query.page && params.append("offset", String(query.offset));
+  params.append("sort", query.sort ?? "asc");
+  params.append("apikey", ctx.etherscan);
 
-    const url = `${EtherscanEndpoint}/api?${params.toString()}`;
-    const response = await fetch(url)
-      .then(handleHTTPError)
-      .then((res) => res.json());
-    return response.result.map(transformTransactions);
-  }
-);
+  const url = `${EtherscanEndpoint}/api?${params.toString()}`;
+  const response = await fetch(url)
+    .then(handleHTTPError)
+    .then((res) => res.json());
+  return response.result.map(transformTransactions);
+});
