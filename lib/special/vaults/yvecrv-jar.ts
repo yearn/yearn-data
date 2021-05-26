@@ -31,13 +31,14 @@ const YveCRVJar = {
     special: {},
   },
   tags: ["picklejar"],
+  special: true,
   endorsed: true,
 };
 
-const PickleDataUrl = "https://api.pickle-jar.info/protocol/jar/yvecrv-eth/performance";
+const PickleDataUrl = "https://stkpowy01i.execute-api.us-west-1.amazonaws.com/prod/protocol/jar/yvecrv-eth/performance";
 
 const PickleJarId = "yvecrv-eth";
-const PickleTvlUrl = "https://api.pickle-jar.info/protocol/value";
+const PickleTvlUrl = "https://stkpowy01i.execute-api.us-west-1.amazonaws.com/prod/protocol/value";
 
 export async function yveCRVJar(): Promise<Vault> {
   let data = await fetch(PickleDataUrl)

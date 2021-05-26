@@ -32,7 +32,9 @@ const BackScratcherMetadata = {
     general: { performanceFee: 0, withdrawalFee: 0 },
     special: {},
   },
+  tags: ["backscratcher"],
   endorsed: true,
+  special: true,
   inception: -1,
 };
 
