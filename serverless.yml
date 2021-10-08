@@ -105,6 +105,15 @@ functions:
     events:
       - schedule:
           rate: ${self:custom.${opt:stage, self:provider.stage}.rate}
+  earnings-per-vault:
+    timeout: 30
+    handler: endpoints/vault/earnings/index.handler
+    events:
+      - http:
+          path: /user/{userAddress}/vault/earnings
+          method: get
+          caching:
+            enabled: true
 
 resources:
   Resources:
