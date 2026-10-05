@@ -85,6 +85,8 @@ These outputs report gross contract fees. They do not measure receipts of the Ye
 Keep the contract family when you interpret or combine results.
 Do not treat the family subtotals as independent treasury revenue.
 
+For an explicitly scoped gross-fees-across-the-stack metric, a consumer can sum distinct accepted charges across families. Nesting alone does not make charges duplicates. Count each bound charge once; components and later distributions do not add another charge. Earnings recognized at multiple layers require a different consolidation policy. See the [Powerglove accounting contract](powerglove-accounting-contract.md).
+
 ## Recover fees from older V2 reports
 
 Some older V2 reports need receipt and historical state evidence to calculate fees.
