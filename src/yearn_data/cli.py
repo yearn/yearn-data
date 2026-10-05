@@ -9,6 +9,7 @@ from pathlib import Path
 
 from .analysis import run_lifetime_yield, run_vault_fees, run_vault_volume
 from .config import CHAINS, DEFAULT_CHAINS, get_event_source, load_environment, normalize_chain_key
+from .fees import index_canonical_fees, run_canonical_fees
 from .discovery import discover
 from .envio import discover_from_envio, import_reports_from_envio
 from .exports import export_analysis
@@ -55,6 +56,8 @@ def _run_analysis(conn, job: str, price_source: str | None = None, provider_fall
         return run_vault_volume(conn)
     if job == "vault-fees":
         return run_vault_fees(conn)
+    if job == "canonical-fees":
+        return run_canonical_fees(conn)
     raise ValueError(f"unsupported analysis job {job!r}")
 
 
@@ -126,6 +129,21 @@ def build_parser() -> argparse.ArgumentParser:
     fee_index_p = sub.add_parser("index-fees")
     fee_index_p.add_argument("--chains", nargs="+", help="Chains to index")
 
+    fee_index_p.add_argument("--canonical", action="store_true")
+    fee_index_p.add_argument("--limit", type=int)
+    fee_index_p.add_argument("--retry-unresolved", action="store_true")
+    fee_index_p.add_argument("--version", choices=["v2", "v3"])
+
+    tokenized_p = sub.add_parser("index-tokenized-fees", help="Import bounded Tokenized Strategy fee ranges")
+    tokenized_p.add_argument("--inventory", type=Path, help="Classified inventory JSON; defaults to packaged Yearn inventory")
+    tokenized_p.add_argument("--chain", required=True, choices=sorted(CHAINS))
+    tokenized_p.add_argument("--from-block", required=True, type=int)
+    tokenized_p.add_argument("--to-block", required=True, type=int)
+    tokenized_p.add_argument("--before-timestamp", required=True, type=int)
+    tokenized_p.add_argument("--chunk-size", type=int, default=2000)
+    tokenized_p.add_argument("--max-vaults", type=int, default=10)
+    tokenized_p.add_argument("--confirmations", type=int, help="Explicit latest-minus-N finality policy instead of finalized")
+
     price_p = sub.add_parser("price")
     price_p.add_argument("--limit", type=int, help="Maximum distinct token/timestamp prices to fetch")
     price_p.add_argument("--source", choices=sorted(SUPPORTED_SOURCES), default=DEFAULT_PRICE_SOURCE)
@@ -142,13 +160,13 @@ def build_parser() -> argparse.ArgumentParser:
     volume_price_p.add_argument("--no-onchain-fallbacks", action="store_true", help="Use only the selected offchain price source")
 
     analyze_p = sub.add_parser("analyze")
-    analyze_p.add_argument("job", choices=["lifetime-yield", "vault-volume", "vault-fees"])
+    analyze_p.add_argument("job", choices=["lifetime-yield", "vault-volume", "vault-fees", "canonical-fees"])
 
     analyze_p.add_argument("--price-source", choices=sorted(SUPPORTED_SOURCES))
     analyze_p.add_argument("--no-provider-fallback", action="store_true")
 
     export_p = sub.add_parser("export")
-    export_p.add_argument("job", choices=["lifetime-yield", "vault-volume", "vault-fees"])
+    export_p.add_argument("job", choices=["lifetime-yield", "vault-volume", "vault-fees", "canonical-fees"])
     export_p.add_argument("--out", default="exports")
 
     publish_p = sub.add_parser("publish")
@@ -264,7 +282,23 @@ def main(argv: list[str] | None = None) -> int:
         print(f"indexed {count} volume logs/rows")
         return 0
 
+    if args.command == "index-tokenized-fees":
+        from .tokenized_fees import index_tokenized_fees, load_inventory
+        inventory = json.loads(args.inventory.read_text()) if args.inventory else load_inventory()
+        result = index_tokenized_fees(conn, inventory, args.chain, args.from_block,
+            args.to_block, args.before_timestamp, args.chunk_size, args.max_vaults,
+            confirmations=args.confirmations)
+        print(result)
+        return 0
+
     if args.command == "index-fees":
+        if args.canonical:
+            count = index_canonical_fees(conn, _chains(args.chains) if args.chains else None,
+                limit=args.limit, retry_unresolved=args.retry_unresolved, version=args.version)
+            print(f"processed {count} canonical fee reports")
+            return 0
+        if args.limit is not None or args.retry_unresolved or args.version:
+            raise ValueError("Canonical fee options require --canonical")
         count = index_v2_fee_mints_from_reports(conn, _chains(args.chains), progress=progress)
         print(f"indexed {count} fee events")
         return 0

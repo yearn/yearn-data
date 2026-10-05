@@ -1,0 +1,662 @@
+[
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "0",
+      "lossRaw": "0",
+      "managementFeeRaw": "0",
+      "managerFeeRaw": null,
+      "nominalComponents": null,
+      "performanceFeeRaw": "0",
+      "protocolFeeRaw": null,
+      "reportKind": null,
+      "strategistFeeRaw": "0",
+      "totalFeesPaidRaw": "0",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 105890,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": "0",
+      "managerFeeUsd": null,
+      "performanceFeeUsd": "0",
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": "0",
+      "totalFeesPaidUsd": "0",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "derived-contract",
+      "grossGainRaw": "16019629",
+      "lossRaw": "0",
+      "totalFeesPaidRaw": "3811184"
+    },
+    "event_id": 129088,
+    "interval": null,
+    "method": "share-mint-report-block-pps",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": "3.80837824",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "derived-contract",
+      "grossGainRaw": "7011443464397819954",
+      "lossRaw": "0",
+      "totalFeesPaidRaw": "1758636993100812854"
+    },
+    "event_id": 129256,
+    "interval": null,
+    "method": "share-mint-report-block-pps",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": null,
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "derived-contract",
+      "grossGainRaw": "166444",
+      "lossRaw": "0",
+      "totalFeesPaidRaw": "65525"
+    },
+    "event_id": 82042,
+    "interval": {
+      "lowerRaw": "65525",
+      "upperRaw": "65525",
+      "widthRaw": "0"
+    },
+    "method": "contract-state-singleton",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": "24.41617122",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "derived-contract",
+      "grossGainRaw": "3851175612538",
+      "lossRaw": "0",
+      "totalFeesPaidRaw": "770256074361"
+    },
+    "event_id": 82049,
+    "interval": {
+      "lowerRaw": "770256074361",
+      "upperRaw": "770256074362",
+      "widthRaw": "1"
+    },
+    "method": "contract-state-lower-bound",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": "0.0014973",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "derived-contract",
+      "grossGainRaw": "10225275982768051656",
+      "lossRaw": "0",
+      "totalFeesPaidRaw": "2052017697345693123"
+    },
+    "event_id": 82067,
+    "interval": {
+      "lowerRaw": "2052017697345693123",
+      "upperRaw": "2052017697345693123",
+      "widthRaw": "0"
+    },
+    "method": "contract-state-singleton",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": "8.45177857",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "0",
+      "lossRaw": "0",
+      "managementFeeRaw": "0",
+      "managerFeeRaw": null,
+      "nominalComponents": null,
+      "performanceFeeRaw": "0",
+      "protocolFeeRaw": null,
+      "reportKind": null,
+      "strategistFeeRaw": "0",
+      "totalFeesPaidRaw": "0",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 51671,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": "0",
+      "managerFeeUsd": null,
+      "performanceFeeUsd": "0",
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": "0",
+      "totalFeesPaidUsd": "0",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "derived-contract",
+      "grossGainRaw": "6556363994901136854864",
+      "lossRaw": "0",
+      "totalFeesPaidRaw": "0"
+    },
+    "event_id": 84180,
+    "interval": null,
+    "method": "receipt-no-mint-zero",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": "0",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "0",
+      "lossRaw": "0",
+      "managementFeeRaw": "0",
+      "managerFeeRaw": null,
+      "nominalComponents": null,
+      "performanceFeeRaw": "0",
+      "protocolFeeRaw": null,
+      "reportKind": null,
+      "strategistFeeRaw": "0",
+      "totalFeesPaidRaw": "0",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 26925,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": "0",
+      "managerFeeUsd": null,
+      "performanceFeeUsd": "0",
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": "0",
+      "totalFeesPaidUsd": "0",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "111973363395686947",
+      "lossRaw": "0",
+      "managementFeeRaw": "0",
+      "managerFeeRaw": null,
+      "nominalComponents": null,
+      "performanceFeeRaw": "11197336339568694",
+      "protocolFeeRaw": null,
+      "reportKind": null,
+      "strategistFeeRaw": "0",
+      "totalFeesPaidRaw": "11197336339568694",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 26937,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-fee-log-and-stored-paired-gain-loss",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": "0",
+      "managerFeeUsd": null,
+      "performanceFeeUsd": "0.01118801",
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": "0",
+      "totalFeesPaidUsd": "0.01118801",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "unavailable",
+      "grossGainRaw": "10330175042151",
+      "lossRaw": "0",
+      "managementFeeRaw": null,
+      "managerFeeRaw": null,
+      "nominalComponents": {
+        "managementFeeRaw": "42069969241642",
+        "performanceFeeRaw": "1033017504215",
+        "strategistFeeRaw": "0"
+      },
+      "performanceFeeRaw": null,
+      "protocolFeeRaw": null,
+      "reportKind": null,
+      "strategistFeeRaw": null,
+      "totalFeesPaidRaw": "10330175042151",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 28015,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-fee-log-and-stored-paired-gain-loss",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": null,
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "23775005742593393440",
+      "lossRaw": "0",
+      "managementFeeRaw": null,
+      "managerFeeRaw": null,
+      "nominalComponents": null,
+      "performanceFeeRaw": "2377500574259339344",
+      "protocolFeeRaw": "0",
+      "reportKind": null,
+      "strategistFeeRaw": null,
+      "totalFeesPaidRaw": "2377500574259339344",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 315,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": "4.94066908",
+      "protocolFeeUsd": "0",
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": "4.94066908",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "19505",
+      "lossRaw": "0",
+      "managementFeeRaw": null,
+      "managerFeeRaw": null,
+      "nominalComponents": null,
+      "performanceFeeRaw": "1560",
+      "protocolFeeRaw": "390",
+      "reportKind": null,
+      "strategistFeeRaw": null,
+      "totalFeesPaidRaw": "1950",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 3155,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": null,
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "14389",
+      "lossRaw": "0",
+      "managementFeeRaw": null,
+      "managerFeeRaw": "1151",
+      "nominalComponents": null,
+      "performanceFeeRaw": null,
+      "protocolFeeRaw": "287",
+      "reportKind": "external-strategy",
+      "strategistFeeRaw": null,
+      "totalFeesPaidRaw": "1438",
+      "totalRefundsRaw": "0",
+      "yieldMechanism": "strategy-pnl"
+    },
+    "event_id": 3125,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": null,
+      "totalRefundsUsd": "0"
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "0",
+      "lossRaw": "1293890652721769",
+      "managementFeeRaw": null,
+      "managerFeeRaw": null,
+      "nominalComponents": null,
+      "performanceFeeRaw": "0",
+      "protocolFeeRaw": "0",
+      "reportKind": null,
+      "strategistFeeRaw": null,
+      "totalFeesPaidRaw": "0",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 3259,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": "0",
+      "protocolFeeUsd": "0",
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": "0",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "0",
+      "lossRaw": "0",
+      "managementFeeRaw": null,
+      "managerFeeRaw": "0",
+      "nominalComponents": null,
+      "performanceFeeRaw": null,
+      "protocolFeeRaw": "0",
+      "reportKind": "external-strategy",
+      "strategistFeeRaw": null,
+      "totalFeesPaidRaw": "0",
+      "totalRefundsRaw": "0",
+      "yieldMechanism": "strategy-pnl"
+    },
+    "event_id": 3115,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": "0",
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": "0",
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": "0",
+      "totalRefundsUsd": "0"
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "5817311193389551",
+      "lossRaw": "0",
+      "managementFeeRaw": null,
+      "managerFeeRaw": "4091219235795142",
+      "nominalComponents": null,
+      "performanceFeeRaw": null,
+      "protocolFeeRaw": "1022804808948784",
+      "reportKind": "external-strategy",
+      "strategistFeeRaw": null,
+      "totalFeesPaidRaw": "5114024044743926",
+      "totalRefundsRaw": "500000000000000000000",
+      "yieldMechanism": "strategy-pnl"
+    },
+    "event_id": 3412,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": "0.00334724",
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": "0.00083681",
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": "0.00418404",
+      "totalRefundsUsd": "409.0755"
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "0",
+      "lossRaw": "0",
+      "managementFeeRaw": "0",
+      "managerFeeRaw": null,
+      "nominalComponents": null,
+      "performanceFeeRaw": "0",
+      "protocolFeeRaw": null,
+      "reportKind": null,
+      "strategistFeeRaw": "0",
+      "totalFeesPaidRaw": "0",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 24073,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": "0",
+      "managerFeeUsd": null,
+      "performanceFeeUsd": "0",
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": "0",
+      "totalFeesPaidUsd": "0",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "0",
+      "lossRaw": "0",
+      "managementFeeRaw": "0",
+      "managerFeeRaw": null,
+      "nominalComponents": null,
+      "performanceFeeRaw": "0",
+      "protocolFeeRaw": null,
+      "reportKind": null,
+      "strategistFeeRaw": "0",
+      "totalFeesPaidRaw": "0",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 10394,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": "0",
+      "managerFeeUsd": null,
+      "performanceFeeUsd": "0",
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": "0",
+      "totalFeesPaidUsd": "0",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "0",
+      "lossRaw": "0",
+      "managementFeeRaw": "0",
+      "managerFeeRaw": null,
+      "nominalComponents": null,
+      "performanceFeeRaw": "0",
+      "protocolFeeRaw": null,
+      "reportKind": null,
+      "strategistFeeRaw": "0",
+      "totalFeesPaidRaw": "0",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 16142,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": "0",
+      "managerFeeUsd": null,
+      "performanceFeeUsd": "0",
+      "protocolFeeUsd": null,
+      "strategistFeeUsd": "0",
+      "totalFeesPaidUsd": "0",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "6060",
+      "lossRaw": "0",
+      "managementFeeRaw": null,
+      "managerFeeRaw": null,
+      "nominalComponents": null,
+      "performanceFeeRaw": "0",
+      "protocolFeeRaw": "0",
+      "reportKind": null,
+      "strategistFeeRaw": null,
+      "totalFeesPaidRaw": "0",
+      "totalRefundsRaw": null,
+      "yieldMechanism": null
+    },
+    "event_id": 422,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": null,
+      "performanceFeeUsd": "0",
+      "protocolFeeUsd": "0",
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": "0",
+      "totalRefundsUsd": null
+    }
+  },
+  {
+    "accounting": {
+      "amountSource": "observed-event",
+      "componentCoverage": "complete",
+      "grossGainRaw": "15627749981",
+      "lossRaw": "0",
+      "managementFeeRaw": null,
+      "managerFeeRaw": "0",
+      "nominalComponents": null,
+      "performanceFeeRaw": null,
+      "protocolFeeRaw": "0",
+      "reportKind": "self-report",
+      "strategistFeeRaw": null,
+      "totalFeesPaidRaw": "0",
+      "totalRefundsRaw": "0",
+      "yieldMechanism": "direct-asset-distribution"
+    },
+    "event_id": 1166,
+    "interval": null,
+    "method": "observed-event",
+    "normalization_basis": "raw-report-log-and-frozen-state",
+    "price_selection_basis": "frozen-selected-row; upstream selection is not replayed",
+    "valuation": {
+      "managementFeeUsd": null,
+      "managerFeeUsd": "0",
+      "performanceFeeUsd": null,
+      "protocolFeeUsd": "0",
+      "strategistFeeUsd": null,
+      "totalFeesPaidUsd": "0",
+      "totalRefundsUsd": "0"
+    }
+  }
+]
