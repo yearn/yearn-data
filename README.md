@@ -84,3 +84,5 @@ Event indexing uses resumable `eth_getLogs` block chunks and dedupes logs by `(c
 ## Historical report ingestion
 
 See [the Envio ingestion guide](docs/historical-envio-ingestion.md) for retired vault discovery, metadata and bounded replay.
+
+For explicit per-chain RPC/Envio windows, including Optimism and Fantom, see [bounded report catch-up](docs/bounded-report-catchup.md).
