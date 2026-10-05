@@ -134,6 +134,20 @@ def build_parser() -> argparse.ArgumentParser:
     fee_index_p.add_argument("--retry-unresolved", action="store_true")
     fee_index_p.add_argument("--version", choices=["v2", "v3"])
 
+    fee_index_p.add_argument("--verify-selective", action="store_true", help="Trace supported reconstructed fees when later vault logs are detected")
+    fee_index_p.add_argument("--trace-limit", type=int, help="Maximum new trace requests per run (default 10)")
+    fee_index_p.add_argument("--reconstruct-v2", action="store_true")
+    fee_index_p.add_argument("--filtered-evidence-only", action="store_true", help="Project retained direct V2 logs offline")
+    fee_index_p.add_argument("--refresh-evidence", action="store_true")
+    fee_index_p.add_argument("--verify-execution", action="store_true", help="Verify executed fee operands for explicitly selected reports")
+    fee_index_p.add_argument("--report-keys", type=Path, help="JSON array of [chain_id, tx_hash, report_log_index] triples")
+
+    fee_recompute_p = sub.add_parser("recompute-fees", help="Recompute retained evidence without RPC")
+    fee_recompute_p.add_argument("mode", choices=["policy", "formulas"])
+    fee_recompute_p.add_argument("--chains", nargs="+")
+    fee_recompute_p.add_argument("--limit", type=int)
+    fee_recompute_p.add_argument("--version", choices=["v2", "v3"])
+
     tokenized_p = sub.add_parser("index-tokenized-fees", help="Import bounded Tokenized Strategy fee ranges")
     tokenized_p.add_argument("--inventory", type=Path, help="Classified inventory JSON; defaults to packaged Yearn inventory")
     tokenized_p.add_argument("--chain", required=True, choices=sorted(CHAINS))
@@ -291,14 +305,34 @@ def main(argv: list[str] | None = None) -> int:
         print(result)
         return 0
 
+    if args.command == "recompute-fees":
+        from .fee_recompute import recompute_canonical_fees
+        result = recompute_canonical_fees(conn,args.mode,_chains(args.chains) if args.chains else None,args.limit,version=args.version)
+        print(result)
+        return 0
+
     if args.command == "index-fees":
+        if args.trace_limit is not None and not args.verify_selective:
+            raise ValueError("--trace-limit requires --verify-selective")
+        report_keys = None
+        if args.report_keys:
+            report_keys = json.loads(args.report_keys.read_text())
+            import re
+            if not isinstance(report_keys, list) or any(
+                not isinstance(key, list) or len(key) != 3 or
+                type(key[0]) is not int or key[0] <= 0 or
+                not isinstance(key[1], str) or not re.fullmatch(r'0x[0-9a-fA-F]{64}', key[1]) or
+                type(key[2]) is not int or key[2] < 0 for key in report_keys):
+                raise ValueError('report keys must be [chain_id, tx_hash, report_log_index] triples')
+            report_keys = [(key[0], key[1].lower(), key[2]) for key in report_keys]
         if args.canonical:
             count = index_canonical_fees(conn, _chains(args.chains) if args.chains else None,
-                limit=args.limit, retry_unresolved=args.retry_unresolved, version=args.version)
+                                         limit=args.limit, retry_unresolved=args.retry_unresolved, reconstruct_v2=args.reconstruct_v2,
+                                         verify_selective=args.verify_selective, trace_limit=args.trace_limit if args.trace_limit is not None else 10, refresh_evidence=args.refresh_evidence, filtered_evidence_only=args.filtered_evidence_only, version=args.version, report_keys=report_keys, verify_execution=args.verify_execution)
             print(f"processed {count} canonical fee reports")
             return 0
-        if args.limit is not None or args.retry_unresolved or args.version:
-            raise ValueError("Canonical fee options require --canonical")
+        if args.limit is not None or args.retry_unresolved or args.reconstruct_v2 or args.verify_selective or args.refresh_evidence or args.filtered_evidence_only or args.version or args.report_keys or args.verify_execution:
+            raise ValueError("Canonical fee options, including --version, require --canonical")
         count = index_v2_fee_mints_from_reports(conn, _chains(args.chains), progress=progress)
         print(f"indexed {count} fee events")
         return 0

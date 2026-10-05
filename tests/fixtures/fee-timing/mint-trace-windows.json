@@ -1,0 +1,167 @@
+[
+  {
+    "id": 31815,
+    "transaction_hash": "0xb116417b7b0252cfbbac17b11eda1a49c64313db1ab704114fdc7ad1fe6e5342",
+    "block_hash": "0xf6dc5beee77809bd6e527667fcf0d5325c488d11600b698f806acedd37f18999",
+    "vault": "0xa258c4606ca8206d8aa700ce2143d7db854d168c",
+    "api_version": "0.4.2",
+    "source": "debug_traceTransaction filtered to vault; full capture retained in local research artifact",
+    "trace_sha256": "7bb3350dc2411fff3c8ea1e05b48ff8c077ec694a567aadb287e4a87f0a459a7",
+    "minted_shares_raw": "53219060933363078574",
+    "ops": [
+      {
+        "a": "30838cefb75497a50",
+        "b": "84c1d8d4c18ba5dd75a",
+        "depth": 6,
+        "op": "MUL",
+        "pc": 17679
+      },
+      {
+        "a": "192890f02bc972479a76bba229f7809e3020",
+        "b": "30838cefb75497a50",
+        "depth": 6,
+        "op": "DIV",
+        "pc": 17685
+      },
+      {
+        "a": "192890f02bc972479a76bba229f7809e3020",
+        "b": "8b86c626f9ccb48a288",
+        "depth": 6,
+        "op": "DIV",
+        "pc": 17720
+      },
+      {
+        "a": "5",
+        "b": "84f001d620c7f576d08",
+        "depth": 6,
+        "op": "SSTORE",
+        "pc": 17791
+      },
+      {
+        "a": "a194a6804ba1015d1a9bd5a0198490ffaf5316cb2e4d92c5f2911b7b7eb56515",
+        "b": "2e29015f3c4f995ae",
+        "depth": 6,
+        "op": "SSTORE",
+        "pc": 17838
+      },
+      {
+        "data": "0x000000000000000000000000000000000000000000000002e29015f3c4f995ae",
+        "depth": 6,
+        "op": "LOG3",
+        "pc": 17892,
+        "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+      }
+    ],
+    "expected_fee_operand_raw": "55932683151527737936"
+  },
+  {
+    "id": 67740,
+    "transaction_hash": "0x008d4bc5be7e76bda9727697d993937a0899306bae030de8731e839ed655d661",
+    "block_hash": "0x37c02b211d59ded2ebf379d83a89c43c39f24f0076f24f99498d4e5a02998e25",
+    "vault": "0x5f18c75abdae578b483e5f43f12a39cf75b973a9",
+    "api_version": "0.3.0",
+    "source": "debug_traceTransaction filtered to vault; full capture retained in local research artifact",
+    "trace_sha256": "21c4e442e631ce75ac7ddacfd19c365fcaab2fea3c15a17dae6d5cd946a93dfb",
+    "minted_shares_raw": "32764641596",
+    "ops": [
+      {
+        "op": "MUL",
+        "pc": 6219,
+        "depth": 3,
+        "a": "80a99fa12",
+        "b": "d33a5573e938"
+      },
+      {
+        "op": "DIV",
+        "pc": 6225,
+        "depth": 3,
+        "a": "6a291ff28b4afc65f15f0",
+        "b": "80a99fa12"
+      },
+      {
+        "op": "DIV",
+        "pc": 6313,
+        "depth": 3,
+        "a": "6a291ff28b4afc65f15f0",
+        "b": "dea86752de5d"
+      },
+      {
+        "op": "SSTORE",
+        "pc": 6368,
+        "depth": 3,
+        "a": "5",
+        "b": "d341f660aa74"
+      },
+      {
+        "op": "SSTORE",
+        "pc": 6415,
+        "depth": 3,
+        "a": "24383c3257f20c321778bc5de008150fe7c16872d1d12dd281d901b5be36a6ee",
+        "b": "7a0ecc13c"
+      },
+      {
+        "op": "LOG3",
+        "pc": 6469,
+        "depth": 3,
+        "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+        "data": "0x00000000000000000000000000000000000000000000000000000007a0ecc13c"
+      }
+    ],
+    "expected_fee_operand_raw": "34537601554"
+  },
+  {
+    "id": 67842,
+    "transaction_hash": "0x028c75083ce97159e45da509cf00adcc2fba70264e88b74c75bf70140c5d4d7c",
+    "block_hash": "0x112be993cffef5e1d54140abf44ccd71deb298041c6352721b4ad4261ebf4e8f",
+    "vault": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+    "api_version": "0.3.0",
+    "source": "debug_traceTransaction filtered to vault; full capture retained in local research artifact",
+    "trace_sha256": "ca7b177c225bfbbf6dafe460a19da5aa15b45a6ce5052a68cbe7ae7b7e4383d1",
+    "minted_shares_raw": "6480251340343838433029",
+    "ops": [
+      {
+        "a": "16fa24449c463fddcca",
+        "b": "1c5c6e5ffdf48a7f616c090",
+        "depth": 5,
+        "op": "MUL",
+        "pc": 6219
+      },
+      {
+        "a": "28ba7c4a2f3f18809d3df2a3eb75d2b37b9bfb1a0",
+        "b": "16fa24449c463fddcca",
+        "depth": 5,
+        "op": "DIV",
+        "pc": 6225
+      },
+      {
+        "a": "28ba7c4a2f3f18809d3df2a3eb75d2b37b9bfb1a0",
+        "b": "1dae1d1363e55b451c0d4f3",
+        "depth": 5,
+        "op": "DIV",
+        "pc": 6313
+      },
+      {
+        "a": "5",
+        "b": "1c5c8454b6cdcdb118d9f95",
+        "depth": 5,
+        "op": "SSTORE",
+        "pc": 6368
+      },
+      {
+        "a": "aee9cc1b56432f97d6957dd40d0ad09650dd097d1a760bd3fbc187a3a335393e",
+        "b": "15f4b8d94331b76df05",
+        "depth": 5,
+        "op": "SSTORE",
+        "pc": 6415
+      },
+      {
+        "data": "0x00000000000000000000000000000000000000000000015f4b8d94331b76df05",
+        "depth": 5,
+        "op": "LOG3",
+        "pc": 6469,
+        "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+      }
+    ],
+    "expected_fee_operand_raw": "6781647626691806092490"
+  }
+]
