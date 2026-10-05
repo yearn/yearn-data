@@ -68,3 +68,36 @@ They also include amounts adjusted for known incidents, including the yRecoverer
 Summaries include priced and unpriced report counts.
 A completed analysis is a saved snapshot.
 Run the analysis again after you change relevant reports or prices.
+
+## Optional DefiLlama and onchain prices
+
+If you enable DefiLlama, the client selects the nearest valid price within 12 hours of the report timestamp.
+It rejects prices outside that window.
+
+Historical requests use the batch endpoint.
+HTTP 429 responses trigger a limited number of retries.
+The client follows `Retry-After`, with a maximum wait of 30 seconds.
+
+Local adapters can calculate prices from these sources:
+
+- Historical Yearn V1 share prices.
+- ERC-4626 conversions.
+- Balancer pools.
+- Additional Curve wrappers.
+
+These calculations can require archive RPC calls.
+Missing reserve prices or token decimals leave the asset unpriced.
+A zero reserve balance does not require a price.
+
+Use `--no-onchain-fallbacks` to disable these calculations when you use DefiLlama.
+The Yearn-only commands above do not call DefiLlama or these adapters.
+
+### Refresh prices after an adapter correction
+
+Run this command to replace saved adapter results:
+
+```bash
+yearn-data price --source defillama --refresh-onchain-fallbacks --limit 500
+```
+
+The `price-volume` command also accepts `--refresh-onchain-fallbacks`.
