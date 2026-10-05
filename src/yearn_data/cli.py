@@ -45,19 +45,41 @@ def _fallback_source(price_source: str) -> str | None:
     return DEFAULT_FALLBACK_PRICE_SOURCE if price_source == DEFAULT_PRICE_SOURCE else None
 
 
-def _run_analysis(conn, job: str, price_source: str | None = None, provider_fallback: bool = True) -> int:
+def _run_analysis(
+    conn,
+    job: str,
+    price_source: str | None = None,
+    provider_fallback: bool = True,
+    before_timestamp: int | None = None,
+    deferred_manifest: Path | None = None,
+) -> int:
+    if job == "fee-usd":
+        if price_source not in (None, "yearn-prices"):
+            raise ValueError("fee-usd supports Yearn Prices only")
+        from .fee_valuation import run_fee_usd
+        return run_fee_usd(conn, before_timestamp=before_timestamp, deferred_manifest=deferred_manifest)
+    if deferred_manifest is not None:
+        raise ValueError("deferred manifests are supported only for fee-usd")
+    if before_timestamp is not None and job != "lifetime-yield":
+        raise ValueError("valuation cutoff is supported only for fee-usd and lifetime-yield")
+    if job == "canonical-fees":
+        if price_source is not None:
+            raise ValueError("canonical-fees currently exports raw asset amounts without USD pricing")
+        return run_canonical_fees(conn)
     price_source = _job_price_source(job, price_source)
     if job == "lifetime-yield":
-        return run_lifetime_yield(conn, price_source=price_source,
-                                  fallback_price_source=_fallback_source(price_source) if provider_fallback else None)
+        return run_lifetime_yield(
+            conn,
+            price_source=price_source,
+            fallback_price_source=_fallback_source(price_source) if provider_fallback else None,
+            before_timestamp=before_timestamp,
+        )
     if price_source != "defillama":
         raise ValueError("--price-source yearn-prices is currently supported only for lifetime-yield")
     if job == "vault-volume":
         return run_vault_volume(conn)
     if job == "vault-fees":
         return run_vault_fees(conn)
-    if job == "canonical-fees":
-        return run_canonical_fees(conn)
     raise ValueError(f"unsupported analysis job {job!r}")
 
 
@@ -158,6 +180,12 @@ def build_parser() -> argparse.ArgumentParser:
     tokenized_p.add_argument("--max-vaults", type=int, default=10)
     tokenized_p.add_argument("--confirmations", type=int, help="Explicit latest-minus-N finality policy instead of finalized")
 
+    fee_price_p = sub.add_parser("price-fees", help="Cache Yearn Prices for accepted closed-day fee amounts")
+    fee_price_p.add_argument("--before-timestamp", type=int, help="Exclusive closed UTC midnight; defaults to today")
+    fee_price_p.add_argument("--limit", type=int, default=500, help="Maximum distinct asset-days per invocation")
+    fee_price_p.add_argument("--retry-missing", action="store_true")
+    fee_price_p.add_argument("--refresh", action="store_true", help="Refresh selected cached prices")
+
     price_p = sub.add_parser("price")
     price_p.add_argument("--limit", type=int, help="Maximum distinct token/timestamp prices to fetch")
     price_p.add_argument("--source", choices=sorted(SUPPORTED_SOURCES), default=DEFAULT_PRICE_SOURCE)
@@ -174,14 +202,17 @@ def build_parser() -> argparse.ArgumentParser:
     volume_price_p.add_argument("--no-onchain-fallbacks", action="store_true", help="Use only the selected offchain price source")
 
     analyze_p = sub.add_parser("analyze")
-    analyze_p.add_argument("job", choices=["lifetime-yield", "vault-volume", "vault-fees", "canonical-fees"])
+    analyze_p.add_argument("job", choices=["lifetime-yield", "vault-volume", "vault-fees", "canonical-fees", "fee-usd"])
 
+    analyze_p.add_argument("--before-timestamp", type=int, help="Exclusive closed UTC midnight for fee-usd or lifetime-yield")
+    analyze_p.add_argument("--deferred-manifest", type=Path, help="Optional validated accounting exclusions for fee-usd")
     analyze_p.add_argument("--price-source", choices=sorted(SUPPORTED_SOURCES))
     analyze_p.add_argument("--no-provider-fallback", action="store_true")
 
     export_p = sub.add_parser("export")
-    export_p.add_argument("job", choices=["lifetime-yield", "vault-volume", "vault-fees", "canonical-fees"])
+    export_p.add_argument("job", choices=["lifetime-yield", "vault-volume", "vault-fees", "canonical-fees", "fee-usd"])
     export_p.add_argument("--out", default="exports")
+    export_p.add_argument("--run-id", type=int, help="Export this completed run; defaults to latest")
 
     publish_p = sub.add_parser("publish")
     publish_sub = publish_p.add_subparsers(dest="publish_job", required=True)
@@ -337,6 +368,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"indexed {count} fee events")
         return 0
 
+    if args.command == "price-fees":
+        from .fee_valuation import price_fees
+        print(json.dumps(price_fees(conn, before_timestamp=args.before_timestamp, limit=args.limit,
+                                   retry_missing=args.retry_missing, refresh=args.refresh)))
+        return 0
+
     if args.command == "price":
         chain_ids = {CHAINS[chain].chain_id for chain in _chains(args.chains)} if args.chains else None
         count = price_unpriced_reports(
@@ -366,12 +403,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "analyze":
-        run_id = _run_analysis(conn, args.job, args.price_source, provider_fallback=not args.no_provider_fallback)
+        run_id = _run_analysis(conn, args.job, args.price_source,
+                               provider_fallback=not args.no_provider_fallback,
+                               before_timestamp=args.before_timestamp,
+                               deferred_manifest=args.deferred_manifest)
         print(f"analysis run {run_id} complete")
         return 0
 
     if args.command == "export":
-        paths = export_analysis(conn, args.job, args.out)
+        paths = export_analysis(conn, args.job, args.out, run_id=args.run_id)
         for path in paths:
             print(path)
         return 0
@@ -445,7 +485,7 @@ def main(argv: list[str] | None = None) -> int:
         print(f"priced/recorded {count} token timestamp rows")
         run_id = _run_analysis(conn, args.job, args.price_source, provider_fallback=not args.no_provider_fallback)
         print(f"analysis run {run_id} complete")
-        for path in export_analysis(conn, args.job, args.out):
+        for path in export_analysis(conn, args.job, args.out, run_id=run_id):
             print(path)
         return 0
 

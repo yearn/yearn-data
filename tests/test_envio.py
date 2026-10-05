@@ -528,7 +528,7 @@ def test_cli_combined_lifetime_yield_uses_envio(tmp_path, monkeypatch):
         "_run_analysis",
         lambda *args, **kwargs: calls.append(("analyze", kwargs)) or 4,
     )
-    monkeypatch.setattr(cli, "export_analysis", lambda *args: [])
+    monkeypatch.setattr(cli, "export_analysis", lambda *args, **kwargs: [])
 
     assert cli.main(
         [
@@ -565,7 +565,7 @@ def test_cli_combined_volume_keeps_rpc_path_when_envio_is_selected(tmp_path, mon
     monkeypatch.setattr(cli, "index_all_volume", lambda *args, **kwargs: calls.append("volume_rpc") or 2)
     monkeypatch.setattr(cli, "price_unpriced_volume", lambda *args, **kwargs: calls.append("price_volume") or 3)
     monkeypatch.setattr(cli, "_run_analysis", lambda *args, **kwargs: calls.append("analyze") or 4)
-    monkeypatch.setattr(cli, "export_analysis", lambda *args: [])
+    monkeypatch.setattr(cli, "export_analysis", lambda *args, **kwargs: [])
     monkeypatch.setattr(
         cli,
         "discover_from_envio",
