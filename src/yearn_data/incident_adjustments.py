@@ -67,6 +67,17 @@ INCIDENT_ADJUSTMENTS: dict[str, IncidentAdjustment] = {
         description="Patched StrategyMakerETHDAIDelegate harvest offset the prior paper loss.",
         disclosure_url="https://github.com/yearn/yearn-security/blob/master/disclosures/2021-05-20.md",
     ),
+    # 2021-10-28: yRecoverer intentionally reported recovered yPool LP tokens
+    # as a vault loss while transferring the tokens to the Yearn multisig.
+    "0x9cc9c42e2da1a2ae774a6ac393aff5974462c999773ea0b04cdd41aebdf5d650": IncidentAdjustment(
+        incident_id="yearn-2021-10-28-yrecover-accounting",
+        classification="intentional_recovery_accounting_loss",
+        description="yRecoverer transferred recovered yPool LP tokens to the Yearn multisig while reporting them as loss.",
+        disclosure_url=(
+            "https://github.com/yearn/chief-multisig-officer/blob/"
+            "1a139b7460f43e67dd2e88605a42ba72d0e0d701/scripts/ychad.py#L4596-L4625"
+        ),
+    ),
 }
 
 

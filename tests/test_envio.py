@@ -550,8 +550,8 @@ def test_cli_combined_lifetime_yield_uses_envio(tmp_path, monkeypatch):
     ]
     assert calls[0][1]["to_block"] == 100
     assert calls[1][1]["to_block"] == 100
-    assert calls[2][1]["source"] == "defillama"
-    assert calls[2][1]["fallback"] is None
+    assert calls[2][1]["source"] == "yearn-prices"
+    assert calls[2][1]["fallback"] == "defillama"
 
 
 def test_cli_combined_volume_keeps_rpc_path_when_envio_is_selected(tmp_path, monkeypatch):

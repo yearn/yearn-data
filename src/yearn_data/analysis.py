@@ -8,11 +8,18 @@ from decimal import Decimal
 from typing import Any
 
 from .incident_adjustments import adjustment_for_tx
-from .pricing import report_amount
+from .pricing import (
+    DEFAULT_FALLBACK_PRICE_SOURCE,
+    DEFAULT_PRICE_SOURCE,
+    SUPPORTED_SOURCES,
+    report_amount,
+)
 from .storage import from_json, to_json
 
 
 def _usd(raw_value: str, decimals: int | None, price: float | None) -> Decimal | None:
+    if int(raw_value) == 0:
+        return Decimal(0)
     if price is None:
         return None
     return report_amount(raw_value, decimals) * Decimal(str(price))
@@ -56,10 +63,42 @@ def _row_get(row: Any, key: str, default: Any = None) -> Any:
     return default if value is None else value
 
 
-def run_lifetime_yield(conn) -> int:
-    run_id = create_analysis_run(conn, "lifetime-yield")
+def _price_provenance(raw_json: str | None) -> dict[str, Any]:
+    if not raw_json:
+        return {}
+    try:
+        payload = from_json(raw_json)
+    except (TypeError, ValueError):
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def run_lifetime_yield(
+    conn,
+    price_source: str = DEFAULT_PRICE_SOURCE,
+    fallback_price_source: str | None = DEFAULT_FALLBACK_PRICE_SOURCE,
+) -> int:
+    if price_source not in SUPPORTED_SOURCES:
+        raise ValueError(f"unsupported price source {price_source!r}")
+    if fallback_price_source is not None and fallback_price_source not in SUPPORTED_SOURCES:
+        raise ValueError(f"unsupported fallback price source {fallback_price_source!r}")
+    price_sources = [price_source]
+    if fallback_price_source is not None and fallback_price_source != price_source:
+        price_sources.append(fallback_price_source)
+    source_placeholders = ",".join("?" for _ in price_sources)
+    priority = " ".join(
+        f"WHEN ? THEN {position}" for position, _ in enumerate(price_sources)
+    )
+    run_id = create_analysis_run(
+        conn,
+        "lifetime-yield",
+        {
+            "price_source": price_source,
+            "fallback_price_source": fallback_price_source,
+        },
+    )
     rows = conn.execute(
-        """
+        f"""
         SELECT
             r.*,
             v.asset_symbol,
@@ -67,12 +106,14 @@ def run_lifetime_yield(conn) -> int:
             v.management,
             v.protocol,
             p.price_usd,
-            p.status AS price_status
+            p.source AS selected_price_source,
+            p.status AS price_status,
+            p.raw_json AS price_raw_json
         FROM strategy_reports r
         LEFT JOIN vaults v
           ON v.chain_id = r.chain_id AND v.address = r.vault_address
         LEFT JOIN prices p
-          ON p.chain_id = r.chain_id
+         ON p.chain_id = r.chain_id
          AND p.token_address = r.asset
          AND p.timestamp = r.block_timestamp
          AND p.source = (
@@ -81,15 +122,19 @@ def run_lifetime_yield(conn) -> int:
             WHERE p2.chain_id = r.chain_id
               AND p2.token_address = r.asset
               AND p2.timestamp = r.block_timestamp
-              AND p2.status = 'ok'
-            ORDER BY CASE p2.source WHEN 'defillama' THEN 0 ELSE 1 END
+              AND p2.source IN ({source_placeholders})
+            ORDER BY
+                CASE WHEN p2.status = 'ok' THEN 0 ELSE 1 END,
+                CASE p2.source {priority} ELSE {len(price_sources)} END
             LIMIT 1
          )
-        """
+        """,
+        (*price_sources, *price_sources),
     ).fetchall()
 
     totals: dict[tuple[str, str], dict[str, Any]] = {}
     for row in rows:
+        price_provenance = _price_provenance(row["price_raw_json"])
         price = row["price_usd"]
         decimals = row["asset_decimals"]
         raw_gain_usd = _usd(row["gain_raw"], decimals, price)
@@ -103,6 +148,13 @@ def run_lifetime_yield(conn) -> int:
         loss_usd = _usd(adjusted_loss_raw, decimals, price)
         net_usd = _usd(adjusted_net_raw, decimals, price)
         priced = net_usd is not None
+        valuation_status = (
+            "priced"
+            if price is not None
+            else "zero_amount_no_price_required"
+            if int(row["gain_raw"]) == 0 and int(row["loss_raw"]) == 0
+            else "missing_price"
+        )
         report_row = {
             "chain_id": row["chain_id"],
             "version": row["version"],
@@ -124,7 +176,15 @@ def run_lifetime_yield(conn) -> int:
             "adjusted_loss_raw": adjusted_loss_raw,
             "adjusted_net_raw": adjusted_net_raw,
             "price_usd": price,
+            "price_source": row["selected_price_source"],
+            "primary_price_source": price_source,
+            "fallback_price_source": fallback_price_source,
             "price_status": row["price_status"] or "missing",
+            "price_evidence_timestamp": price_provenance.get("normalized_timestamp"),
+            "price_upstream_source": price_provenance.get("upstream_source"),
+            "price_confidence": price_provenance.get("confidence"),
+            "price_adapter": price_provenance.get("adapter"),
+            "valuation_status": valuation_status,
             "raw_gross_gain_usd": _decimal_or_none(raw_gain_usd),
             "raw_loss_usd": _decimal_or_none(raw_loss_usd),
             "raw_net_yield_usd": _decimal_or_none(raw_net_usd),
@@ -159,6 +219,8 @@ def run_lifetime_yield(conn) -> int:
                     "strategy_address": row["strategy_address"] if key[0] == "strategy" else None,
                     "management": row["management"] if key[0] in {"management", "protocol", "vault", "strategy"} else None,
                     "protocol": row["protocol"] if key[0] == "protocol" else None,
+                    "price_source": price_source,
+                    "fallback_price_source": fallback_price_source,
                     "reports": 0,
                     "priced_reports": 0,
                     "unpriced_reports": 0,
