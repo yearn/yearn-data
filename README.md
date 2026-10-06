@@ -53,6 +53,8 @@ The SQLite database stores raw event rows, normalized strategy reports, prices, 
 
 Lifetime earnings include stored history from both active and retired vaults. Retirement does not remove earlier reports. Unpriced reports remain counted with unavailable USD values. For the Powerglove integration scope and the different treatment of nested fees and earnings, see the [accounting contract](docs/powerglove-accounting-contract.md).
 
+For selecting completed results and serving the Powerglove fee/earnings views, see the [pairing operator guide](docs/powerglove-pairing.md).
+
 The `lifetime-yield` aggregate columns `gross_gain_usd`, `loss_usd`, and `net_yield_usd` are economic totals adjusted for known Yearn public incident disclosures where vault reports emitted paper losses or compensating phantom profits. The raw report-time accounting values remain available as `raw_gross_gain_usd`, `raw_loss_usd`, and `raw_net_yield_usd`.
 
 Rows changed by an incident adjustment are marked in `reports.csv` with `is_adjusted`, `incident_id`, `incident_classification`, `incident_description`, and `incident_disclosure_url`. Raw indexed `strategy_reports` rows in SQLite are not modified.

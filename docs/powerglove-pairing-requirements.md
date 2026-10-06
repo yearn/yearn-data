@@ -108,7 +108,7 @@ Retain normal loading, empty, HTTP error/retry and filter-change behavior. These
 
 ### R7. Preserve the separate TVL connection
 
-Use the existing fee-origin configuration for the new core views: `VITE_PUBLIC_YEARN_FEES_API_URL` in production and `VITE_YEARN_FEES_API_TARGET` for the local same-origin proxy. Verify the client-appended `/api/fees` paths in both modes. Configure the required same-origin proxy or CORS without exposing Yearn Prices/RPC credentials to the browser.
+Use a separate core origin through `VITE_PUBLIC_YEARN_DATA_API_URL` in production and `VITE_YEARN_DATA_API_TARGET` for the local proxy. Preserve the existing fee-origin variables for fee-stack/profitability; core views can fall back to that existing source when the new variables are unset. This split avoids moving existing analytics when the core source changes. Verify the client-appended `/api/fees` paths in both modes. Configure the required same-origin proxy or CORS without exposing Yearn Prices/RPC credentials to the browser.
 
 TVL requests and their provider must continue working independently. An unused required `tvlUsd` field in the old fee-row type must become optional rather than receive an invented zero. Preserve the existing fee-stack/profitability features on their current source while the core views move to yearn-data. These requests currently share the fee API origin, so inspect and separate their routing as needed; a blanket origin switch must not send them to a service that lacks them. Verify the existing source before cutover. If it cannot be retained, record a separate product/source decision before changing those features; this document does not prescribe removing or disabling them.
 
@@ -188,6 +188,7 @@ The first pairing is complete when A1–A10 pass for the agreed scope and the co
 
 ## Source references
 
+- Implementation and manual refresh: [Powerglove pairing operator guide](powerglove-pairing.md).
 - yearn-data: `src/yearn_data/analysis.py` (`run_lifetime_yield`, cutoff and incident handling); `fee_valuation.py` (accepted fee rows, Yearn EOD policy, family/completeness outputs); `fees.py` (charge binding/acceptance); `exports.py` (completed-run selection and context).
 - Maintained operators: [earnings and fees](earnings-and-fees.md), [earnings pricing](earnings-pricing.md), [fee accounting](fee-accounting.md).
 - Powerglove at the verified commit: `src/components/landing/native-stats/FeesPanel.tsx`, `canonical-fees.ts`, `fee-history.ts`, `hooks.tsx`, and `vite.config.ts` in `/home/dev/raaaws/worktrees/yearn-powerglove-qtov`.
