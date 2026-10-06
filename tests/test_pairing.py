@@ -134,7 +134,7 @@ def test_pin_survives_refresh_and_invalid_requests_are_rejected(publication):
     status, result = pairing_response(store, '/api/fees/history?datasetId='+first['datasetId'])
     assert status == 200 and result['datasetId'] == first['datasetId']
     assert store.get().id == second['datasetId']
-    for query in ('chainId=999','chainId=1.5','since=abc','since=20&until=10','interval=weekly','since=1&since=2','x=1'):
+    for query in ('chainId=999','chainId=1.5','since=abc','since=20&until=10','interval=daily','since=1&since=2','x=1'):
         assert pairing_response(store, '/api/fees?'+query)[0] == 400
     assert pairing_response(store, '/api/fees/stack')[0] == 404
 
@@ -166,3 +166,95 @@ def test_interrupted_activation_keeps_previous_dataset(publication, monkeypatch)
     with pytest.raises(OSError, match='interrupted activation'):
         select_pairing(path, *next_runs, root)
     assert PairingStore(root).get().id == first['datasetId']
+
+
+def test_weekly_calendar_boundaries_and_monthly_reconciliation(publication):
+    db, runs, root = publication
+    for name, run in (('reports', runs[0]), ('fee_usd_events', runs[1])):
+        template = json.loads(db.execute(
+            'SELECT row_json FROM analysis_outputs WHERE run_id=? AND name=? ORDER BY rowid LIMIT 1',
+            (run, name)).fetchone()[0])
+        for number, timestamp, gain in ((100, DAY-1, '7'), (101, DAY+7*86400-1, '11'),
+                                        (102, DAY+7*86400, '13')):
+            row = template | {'tx_hash': f'0x{number:064x}', 'block_timestamp': timestamp}
+            if name == 'reports':
+                row |= {field: gain for field in ('gross_gain_usd', 'net_yield_usd',
+                                                  'raw_gross_gain_usd', 'raw_net_yield_usd')}
+            else:
+                row['total_fees_paid_usd'] = '1'
+            write_output(db, run, name, row)
+    db.commit()
+    select_pairing(db.execute('PRAGMA database_list').fetchone()[2], *runs, root)
+    store = PairingStore(root)
+    status, weekly = pairing_response(store, '/api/fees/history?interval=weekly')
+    assert status == 200 and weekly['interval'] == 'weekly'
+    assert [bucket['period'] for bucket in weekly['buckets']] == [
+        '2023-12-25', '2024-01-01', '2024-01-08', '2024-01-29']
+    assert weekly['buckets'][0]['startTimestamp'] == DAY-7*86400
+    assert weekly['buckets'][0]['endTimestamp'] == DAY
+    assert weekly['buckets'][1]['totalFeesPaidUsd'] == '20'
+    assert weekly['buckets'][2]['totalFeesPaidUsd'] == '1'
+    assert weekly['buckets'][-1]['endTimestamp'] == DAY+35*86400
+    status, monthly = pairing_response(store, '/api/fees/history')
+    assert status == 200 and monthly['interval'] == 'monthly'
+    assert [bucket['period'] for bucket in monthly['buckets']] == ['2023-12', '2024-01', '2024-02']
+    assert all('startTimestamp' not in bucket for bucket in monthly['buckets'])
+    assert sum(int(b['totalFeesPaidUsd']) for b in weekly['buckets']) == 25
+    assert sum(int(b['totalFeesPaidUsd']) for b in monthly['buckets']) == 25
+
+
+def test_vault_filter_matches_all_three_views_and_preserves_contract_layers(publication):
+    db, runs, root = publication
+    address = '0x' + 'ab' * 20
+    db.execute("""UPDATE analysis_outputs SET row_json=json_set(row_json,'$.vault_address',?)
+        WHERE run_id IN (?,?) AND json_extract(row_json,'$.vault_address')=?""", (address, *runs, VAULT))
+    db.commit()
+    select_pairing(db.execute('PRAGMA database_list').fetchone()[2], *runs, root)
+    store = PairingStore(root)
+    query = '?chainId=1&vaultAddress=0x' + address[2:].upper()
+    status, summary = pairing_response(store, '/api/fees'+query)
+    assert status == 200 and summary['totalFeesPaidUsd'] == '9'
+    assert summary['netLifetimeEarningsUsd'] == '105'
+    status, weekly = pairing_response(store, '/api/fees/history'+query+'&interval=weekly')
+    assert status == 200 and weekly['buckets'][0]['totalFeesPaidUsd'] == '9'
+    assert weekly['buckets'][0]['lifetimeEarnings']['netYieldUsd'] == '105'
+    status, vaults = pairing_response(store, '/api/fees/vaults'+query)
+    assert status == 200 and vaults['count'] == 1
+    assert vaults['vaults'][0]['address'] == address
+    assert vaults['vaults'][0]['totalFeesPaidUsd'] == summary['totalFeesPaidUsd']
+    assert vaults['vaults'][0]['name'] is None
+    status, other_chain = pairing_response(store, '/api/fees?chainId=10&vaultAddress='+address)
+    assert status == 200 and other_chain['totalFeesPaidUsd'] == '3'
+    assert other_chain['netLifetimeEarningsUsd'] == '30'
+    status, child = pairing_response(store, '/api/fees?chainId=1&vaultAddress='+TOKENIZED)
+    assert status == 200 and child['totalFeesPaidUsd'] == '10'
+    assert child['netLifetimeEarningsUsd'] is None
+
+
+def test_weekly_vault_filter_applies_half_open_range_and_pinned_dataset(publication):
+    db, runs, root = publication
+    manifest = select_pairing(db.execute('PRAGMA database_list').fetchone()[2], *runs, root)
+    store = PairingStore(root)
+    query = f'?chainId=1&vaultAddress={VAULT}&since={DAY+86400}&until={DAY+2*86400}'
+    status, history = pairing_response(store, '/api/fees/history'+query+'&interval=weekly&datasetId='+manifest['datasetId'])
+    assert status == 200 and history['datasetId'] == manifest['datasetId']
+    assert history['buckets'][0]['totalFeesPaidUsd'] is None
+    assert history['buckets'][0]['lifetimeEarnings']['netYieldUsd'] == '15'
+    status, summary = pairing_response(store, '/api/fees'+query)
+    assert status == 200 and summary['netLifetimeEarningsUsd'] == '15'
+    empty = f'?chainId=1&vaultAddress={VAULT}&since={DAY+2*86400}&until={DAY+3*86400}'
+    assert pairing_response(store, '/api/fees/history'+empty+'&interval=weekly')[1]['buckets'] == []
+    assert pairing_response(store, '/api/fees'+empty)[1]['netLifetimeEarningsUsd'] is None
+
+
+@pytest.mark.parametrize('query', [
+    f'vaultAddress={VAULT}', f'vaultAddress={VAULT}&chainId=1,10',
+    'vaultAddress=bad&chainId=1', 'vaultAddress=0x1234&chainId=1',
+    'vaultAddress=0x'+'ff'*20+'&chainId=1',
+    f'vaultAddress={TOKENIZED}&chainId=10', f'vaultAddress={VAULT}&chainId=999',
+    f'vaultAddress={VAULT}&vaultAddress={TOKENIZED}&chainId=1',
+])
+def test_invalid_or_unindexed_vault_scope_is_rejected(publication, query):
+    db, runs, root = publication
+    select_pairing(db.execute('PRAGMA database_list').fetchone()[2], *runs, root)
+    assert pairing_response(PairingStore(root), '/api/fees/history?interval=weekly&'+query)[0] == 400

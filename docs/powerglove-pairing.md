@@ -47,7 +47,23 @@ The server validates the selected results at startup, reads the source database 
 | `/api/fees/history` | Ordered monthly fee/earnings buckets. |
 | `/api/fees/vaults` | Chain/address-keyed vault rows and their amounts. |
 
-Filters are `since`, exclusive `until`, `chainId` (one ID or a comma-separated list), and `interval=monthly` for history. Monetary values are decimal strings or null. A wholly unavailable amount is not converted to zero. Unknown chains and invalid parameters produce normal request errors.
+Filters are `since`, exclusive `until`, `chainId` (one ID or a comma-separated list), and `vaultAddress`. History supports `interval=monthly` (the unchanged default) or `interval=weekly`. Monetary values are decimal strings or null. A wholly unavailable amount is not converted to zero. Unknown chains and invalid parameters produce normal request errors.
+
+`vaultAddress` selects one contract and requires exactly one `chainId`. Addresses are validated as 20-byte hex values and matched case-insensitively. The same selector applies before aggregation to all three views. A contract absent from the selected dataset on that chain produces HTTP 400; a known contract with no reports in the requested range returns empty history and unavailable totals. Missing names do not prevent selection.
+
+Weekly buckets use Monday 00:00 UTC through the following Monday, with an exclusive end. Their `period` is the week-start date (`YYYY-MM-DD`), and `startTimestamp` / `endTimestamp` give those calendar boundaries in Unix seconds. They are sorted by week start. Existing monthly buckets retain their `YYYY-MM` periods and response shape.
+
+Amounts are filtered by `[since, until)` and the selected dataset cutoff before grouping. A first or last weekly bucket can therefore contain only part of its calendar week; its boundary fields describe the calendar week, not additional observations. Empty calendar weeks are not fabricated. Weekly earnings remain reports recognized during the period rather than continuously accrued returns.
+
+For example, these requests describe one vault's amounts and weekly history:
+
+```text
+/api/fees?chainId=1&vaultAddress=0x...&since=START&until=END
+/api/fees/history?chainId=1&vaultAddress=0x...&interval=weekly&since=START&until=END&datasetId=SELECTED_ID
+/api/fees/vaults?chainId=1&vaultAddress=0x...&since=START&until=END&datasetId=SELECTED_ID
+```
+
+Replace the placeholders with a full address, Unix timestamps and the summary's dataset ID. Vault filtering counts that contract's own accepted fee charges and incident-adjusted reported P&L. It does not consolidate children into the parent or attribute downstream charges to historical ownership. Tokenized Strategy fees remain available independently of main vault earnings.
 
 Each response carries an opaque `datasetId`. Powerglove uses the summary's ID in subsequent history/vault requests, so a manual publication change cannot mix datasets. That identifier is not displayed. Source reasons, price provenance, coverage counts and reporting cutoffs remain in developer publication records and the existing analysis exports.
 

@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal, localcontext
 from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -149,6 +149,8 @@ class PairingDataset:
                 raise ValueError('unsupported earnings report family')
             diagnostics['earnings:' + row['valuation_status']] += 1
         self.chains = tuple(sorted({row['chain_id'] for row in self.fees + self.earnings}))
+        self.vaults = frozenset((row['chain_id'], row['vault_address'].lower())
+                               for row in self.fees + self.earnings)
         self.context = {
             'earningsRunId': earnings_run_id, 'feesRunId': fees_run_id, 'beforeTimestamp': self.cutoff,
             'runs': runs, 'earningsOutputSha256': earnings_hash, 'feesOutputSha256': fees_hash,
@@ -161,11 +163,21 @@ class PairingDataset:
         self.id = hashlib.sha256(_json(self.context | {'vaultNames': vault_names}).encode()).hexdigest()
 
     @lru_cache(maxsize=128)
-    def view(self, name, since=None, until=None, chains=()):
+    def view(self, name, since=None, until=None, chains=(), interval='monthly', vault_address=None):
         if name not in ('summary', 'history', 'vaults'):
             raise ValueError('unsupported pairing view')
         if any(chain not in self.chains for chain in chains):
             raise ValueError('unsupported chain for this dataset')
+        if interval not in ('monthly', 'weekly'):
+            raise ValueError('interval must be monthly or weekly')
+        if vault_address is not None:
+            if not re.fullmatch(r'0x[0-9a-fA-F]{40}', vault_address):
+                raise ValueError('vaultAddress must be a 20-byte hex address')
+            if len(chains) != 1:
+                raise ValueError('vaultAddress requires exactly one chainId')
+            vault_address = vault_address.lower()
+            if (chains[0], vault_address) not in self.vaults:
+                raise ValueError('vaultAddress is not in this selected dataset on the requested chain')
         if since is not None and since < 0 or until is not None and until < 0:
             raise ValueError('timestamps must be nonnegative')
         if since is not None and until is not None and since >= until:
@@ -175,7 +187,8 @@ class PairingDataset:
         end = min(self.cutoff, until if until is not None else self.cutoff)
         def included(row):
             return ((since is None or row['block_timestamp'] >= since) and row['block_timestamp'] < end
-                    and (not chains or row['chain_id'] in chains))
+                    and (not chains or row['chain_id'] in chains)
+                    and (vault_address is None or row['vault_address'].lower() == vault_address))
         fees = [row for row in self.fees if included(row)]
         earnings = [row for row in self.earnings if included(row)]
 
@@ -195,11 +208,21 @@ class PairingDataset:
             buckets = defaultdict(lambda: ([], []))
             for kind, rows in enumerate((fees, earnings)):
                 for row in rows:
-                    period = datetime.fromtimestamp(row['block_timestamp'], timezone.utc).strftime('%Y-%m')
+                    date = datetime.fromtimestamp(row['block_timestamp'], timezone.utc)
+                    if interval == 'weekly':
+                        start = date.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=date.weekday())
+                        period = start.strftime('%Y-%m-%d')
+                    else:
+                        period = date.strftime('%Y-%m')
                     buckets[period][kind].append(row)
-            result = {'interval': 'monthly', 'buckets': [
-                {'period': period} | totals(*buckets[period]) for period in sorted(buckets)
-            ]}
+            history = []
+            for period in sorted(buckets):
+                bucket = {'period': period}
+                if interval == 'weekly':
+                    start = int(datetime.fromisoformat(period).replace(tzinfo=timezone.utc).timestamp())
+                    bucket |= {'startTimestamp': start, 'endTimestamp': start + 7 * 86400}
+                history.append(bucket | totals(*buckets[period]))
+            result = {'interval': interval, 'buckets': history}
         else:
             buckets = defaultdict(lambda: ([], []))
             for kind, rows in enumerate((fees, earnings)):
@@ -266,7 +289,7 @@ def pairing_response(store, url):
         return 404, {'error': 'Not found'}
     try:
         query = parse_qs(request.query, keep_blank_values=True)
-        if set(query) - {'since', 'until', 'chainId', 'interval', 'datasetId'}:
+        if set(query) - {'since', 'until', 'chainId', 'interval', 'datasetId', 'vaultAddress'}:
             raise ValueError('unsupported filter')
         if any(len(values) != 1 for values in query.values()):
             raise ValueError('filters must appear only once')
@@ -279,14 +302,15 @@ def pairing_response(store, url):
             if not re.fullmatch(r'\d+', raw):
                 raise ValueError(f'{key} must be a nonnegative Unix timestamp')
             return int(raw)
-        if value('interval') not in (None, 'monthly'):
-            raise ValueError('interval must be monthly')
+        if value('interval') not in (None, 'monthly', 'weekly'):
+            raise ValueError('interval must be monthly or weekly')
         raw_chains = value('chainId')
         if raw_chains is not None and not re.fullmatch(r'[1-9]\d*(,[1-9]\d*)*', raw_chains):
             raise ValueError('chainId must contain positive integers')
         chains = tuple(sorted({int(chain) for chain in raw_chains.split(',')})) if raw_chains else ()
         dataset = store.get(value('datasetId'))
-        return 200, dataset.view(paths[request.path], timestamp('since'), timestamp('until'), chains)
+        return 200, dataset.view(paths[request.path], timestamp('since'), timestamp('until'), chains,
+                                 value('interval') or 'monthly', value('vaultAddress'))
     except ValueError as error:
         return 400, {'error': str(error)}
 
