@@ -158,13 +158,16 @@ source TVL. No current bridge state is projected into past dates.
 
 Focused tests cover nested layers, shared holders, debt/TVL caps, zeros and missing
 evidence, cross-chain identity, V1 quantities, V2/V3 layouts, Morpho membership,
-wrapper valuation, migration, and exports. A built wheel was validated from an empty database with old-service access
-blocked. A separate live Ethereum discovery found 637 unique vaults in the selected
+wrapper valuation, migration, and exports. Batched acquisition is tested through
+collection and export against ordinary reads, including deployment boundaries,
+Multicall fallback, and unavailable values. A built wheel was validated from an
+empty database with old-service access blocked. A separate live Ethereum discovery found 637 unique vaults in the selected
 scope (600 Kong candidates, 28 V1 candidates, 13 curated candidates, with overlap)
 and collected/exported a V1 and curated-vault sample at one historical block.
 The live factory smoke window was bounded to 1,001 recent blocks. Earlier checks
-also exercised a retired V2 router and allocator/curated-child positions. Full-history backfill and service-wide numerical parity are not required
-for this logic check and have not been run.
+also exercised a retired V2 router and allocator/curated-child positions. The
+subsequent monthly backfill is described below; service-wide numerical parity
+is not required for these logic checks.
 
 ## Running the historical backfill
 

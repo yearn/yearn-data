@@ -33,7 +33,9 @@ def test_three_level_nesting_counts_capital_once():
 
 
 def test_shared_holder_and_multiple_children_share_debt_budget():
-    points=[snapshot(1,'100'),snapshot(2,'300'),snapshot(3,'500'),snapshot(4,'500')]
+    # Parents can have idle capital beyond their recorded strategy debt.
+    # Keep parent TVL above that debt so a TVL cap cannot hide a debt-cap bug.
+    points=[snapshot(1,'500'),snapshot(2,'500'),snapshot(3,'500'),snapshot(4,'500')]
     positions=[edge(1,9,3,'100','400'),edge(2,9,3,'300','400'),
                edge(1,9,4,'100','400'),edge(2,9,4,'300','400')]
     _,edges,total=account(points,positions)
@@ -41,12 +43,12 @@ def test_shared_holder_and_multiple_children_share_debt_budget():
     assert Decimal(total['overlap_usd'])==400
 
 
-def test_incoming_and_parent_tvl_caps():
-    points=[snapshot(1,'50'),snapshot(2,'100'),snapshot(3,'100')]
+@pytest.mark.parametrize('child_tvl,deductions,external', [('100',[50,50],150),('1000',[50,100],1000)])
+def test_incoming_and_parent_tvl_caps(child_tvl,deductions,external):
+    points=[snapshot(1,'50'),snapshot(2,'100'),snapshot(3,child_tvl)]
     _,edges,total=account(points,[edge(1,9,3,'200','200'),edge(2,10,3,'200','200')])
-    assert sum(Decimal(e['overlap_usd']) for e in edges)<=100
-    assert Decimal(edges[0]['overlap_usd'])<=50
-    assert Decimal(total['external_tvl_usd'])>=0
+    assert [Decimal(e['overlap_usd']) for e in edges]==deductions
+    assert Decimal(total['external_tvl_usd'])==external
 
 
 def test_curation_is_an_explicit_accounting_choice():
@@ -66,8 +68,11 @@ def test_missing_values_are_not_zero_or_complete_totals():
 
 
 def test_cross_chain_same_address_is_not_an_overlap():
-    total=account([snapshot(1,'100',chain=1),snapshot(2,'100',chain=10)], [edge(1,9,2,'100','100')])[2]
-    assert total['external_tvl_usd']=='200'
+    points=[snapshot(1,'100'),snapshot(2,'100'),snapshot(2,'300',chain=10)]
+    rows,_,total=account(points,[edge(1,9,2,'60','60')])
+    child_values={r['chain_id']:Decimal(r['external_tvl_usd']) for r in rows if r['vault']==address(2)}
+    assert child_values=={1:40,10:300}
+    assert Decimal(total['external_tvl_usd'])==440
 
 
 def test_raw_quantity_keeps_integer_precision_and_requires_decimals():
@@ -185,17 +190,6 @@ def test_bridge_candidates_do_not_silently_rewrite_history():
     assert total['issues']==['bridge_migration_timing_unverified']
 
 
-def test_vault_share_underlying_is_valued_from_dated_child(db,monkeypatch):
-    db.execute('UPDATE vaults SET asset=? WHERE address=?',(address(2),address(1)))
-    monkeypatch.setattr('yearn_data.tvl_sources.fetch_defillama_price',
-                        lambda chain,asset,ts:(999,'ok',{}) if asset==address(2) else (1,'ok',{}))
-    run=collect_tvl(db,100,100,reader_factory=Reader,price_source='defillama')
-    points=[json.loads(r[0]) for r in db.execute('SELECT data_json FROM tvl_snapshots WHERE run_id=?',(run,))]
-    parent=next(p for p in points if p['vault']==address(1))
-    assert Decimal(parent['tvl_usd'])==100
-    assert parent['pricing']['source']=='nested-share'
-
-
 def test_failed_scans_are_not_zero_balances(db):
     class Broken(Reader):
         def uint(self,*args): raise RuntimeError('archive unavailable')
@@ -215,12 +209,20 @@ def test_collection_exports_ordinary_strategy_debt_without_overlap(db,monkeypatc
     assert allocation['overlap_usd']=='0'
 
 
-def test_morpho_adapter_debt_requires_historical_membership():
+@pytest.mark.parametrize('family',['curation','morpho-v2'])
+def test_morpho_adapter_debt_requires_historical_membership(family):
     reader=object.__new__(ArchiveReader)
-    reader.uint=lambda addr,sig,block,arg=None: 1 if sig=='isAdapter(address)' else 123
-    assert reader.debt(address(1),address(9),'curation',10)==123
-    reader.uint=lambda *args: 0
-    assert reader.debt(address(1),address(9),'curation',10)==0
+    calls=[]
+    member=True
+    def uint(vault,signature,block,arg=None):
+        calls.append((vault,signature,block,arg))
+        return int(member) if signature=='isAdapter(address)' else 123
+    reader.uint=uint
+    assert reader.debt(address(1),address(9),family,110)==123
+    assert calls==[(address(1),'isAdapter(address)',110,address(9)),(address(9),'realAssets()',110,None)]
+    member=False;calls.clear()
+    assert reader.debt(address(1),address(9),family,110)==0
+    assert calls==[(address(1),'isAdapter(address)',110,address(9))]
 
 
 def test_known_child_outside_sample_stays_a_known_relationship(db,monkeypatch):
@@ -291,21 +293,29 @@ def test_empty_v1_does_not_require_undefined_share_price():
 def test_multilevel_wrappers_use_leaf_value_in_any_order(tmp_path,monkeypatch,ids,share_prices):
     conn=connect(tmp_path/'wrappers.sqlite');init_db(conn)
     outer,middle,leaf=map(address,ids)
-    for vault,asset in [(outer,middle),(middle,leaf),(leaf,address(90))]:
-        conn.execute("INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (1,'v3',?,?,18,1)",(vault,asset))
+    for vault,asset,decimals in [(outer,middle,18),(middle,leaf,18),(leaf,address(90),6)]:
+        conn.execute("INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (1,'v3',?,?,?,1)",(vault,asset,decimals))
     conn.commit()
+    assets={outer:50*10**18,middle:50*10**18,leaf:200*10**6}
+    supplies={outer:100*10**18,middle:200*10**18,leaf:100*10**18}
     class FullOwner(Reader):
-        def uint(self,*args):return 100*10**18
+        def uint(self,vault,signature,block,arg=None):
+            if signature=='totalSupply()':return supplies[vault]
+            if signature=='totalAssets()':return assets[vault]
+            return {(middle,outer):assets[outer],(leaf,middle):assets[middle]}[(vault,arg)]
         def debt(self,*args):return 0
     def price(chain,asset,timestamp):
         if not share_prices and asset!=address(90):return None,'missing',{}
-        return {middle:2,leaf:3,address(90):1}[asset],'ok',{}
+        return {middle:2,leaf:3,address(90):2}[asset],'ok',{}
     monkeypatch.setattr('yearn_data.tvl_sources.fetch_defillama_price',price)
     run=collect_tvl(conn,100,100,reader_factory=FullOwner,price_source='defillama')
     export_tvl(conn,tmp_path/'out',run)
     data=json.loads((tmp_path/'out/tvl.json').read_text())
-    assert {Decimal(p['tvl_usd']) for p in data['vaults']}=={Decimal(100)}
-    assert Decimal(data['history'][0]['external_tvl_usd'])==100
+    # Leaf: 200 tokens at $2. Middle owns half its shares; outer owns
+    # one quarter of the middle. Deduct $200 + $50 once, leaving $400.
+    assert {p['vault']:Decimal(p['tvl_usd']) for p in data['vaults']}=={outer:50,middle:200,leaf:400}
+    assert Decimal(data['history'][0]['overlap_usd'])==250
+    assert Decimal(data['history'][0]['external_tvl_usd'])==400
     assert data['history'][0]['status']=='complete'
     conn.close()
 

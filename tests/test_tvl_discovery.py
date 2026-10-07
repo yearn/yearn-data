@@ -326,18 +326,6 @@ def test_missing_adapter_history_keeps_current_relationships(db):
     assert db.execute('SELECT COUNT(*) FROM tvl_targets').fetchone()[0]==1
 
 
-def test_morpho_family_collection_uses_membership_and_real_assets():
-    from yearn_data.tvl_sources import ArchiveReader
-    reader=object.__new__(ArchiveReader)
-    calls=[]
-    def uint(address,signature,block,arg=None):
-        calls.append(signature)
-        return 1 if signature=='isAdapter(address)' else 123
-    reader.uint=uint
-    assert reader.debt(addr(1),addr(9),'morpho-v2',110)==123
-    assert calls==['isAdapter(address)','realAssets()']
-
-
 def test_adapter_list_failure_still_discovers_removed_adapters(db):
     from yearn_data.tvl_discovery import discover_adapter_relations
     seed_adapter_catalog(db)

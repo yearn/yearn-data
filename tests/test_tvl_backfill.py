@@ -18,12 +18,6 @@ def test_monthly_ranges_are_complete_disjoint_and_newest_first():
     assert sorted(t for lo,hi in ranges for t in range(lo,hi+1,86400))==list(range(ts('2020-02-27'),ts('2020-04-02')+1,86400))
 
 
-def test_exact_calldata_address_padding():
-    assert b.call_data('totalSupply()')=='0x18160ddd'
-    arg='0x'+'ab'*20
-    assert b.call_data('balanceOf(address)',arg)=='0x70a08231'+'0'*24+'ab'*20
-
-
 def test_direct_batch_matches_ids_even_when_out_of_order(monkeypatch):
     reader=object.__new__(b.BatchedReader)
     reader.w3=Mock();reader.w3.provider.endpoint_uri='https://rpc.test'
@@ -60,12 +54,6 @@ def test_birth_hint_checked_against_previous_block():
     r.exists.side_effect=lambda _a,n:n>=4
     r.w3.eth.get_block.return_value={'timestamp':123}
     assert b.deployment(r,{'address':'0xabc','deployment_block':7})==(4,123)
-
-
-def test_atomic_status_is_valid_json(tmp_path):
-    p=tmp_path/'status.json';b.atomic_json(p,{'phase':'running','snapshots':7})
-    assert json.loads(p.read_text())['snapshots']==7
-    assert not p.with_suffix('.tmp').exists()
 
 
 @pytest.mark.parametrize('interrupted', [False,True])
@@ -135,3 +123,125 @@ def test_restart_restores_saved_batch_exports_without_recollection(tmp_path,monk
     assert len(attempts)==3 and len(set(attempts))==1
     assert (batch/'history.csv').is_file()
     collect.assert_not_called()
+
+
+def test_interrupted_status_publication_preserves_previous_status(tmp_path,monkeypatch):
+    path=tmp_path/'status.json'
+    previous={'phase':'running','snapshots':7}
+    path.write_text(json.dumps(previous))
+    def fail_publish(*args):raise OSError('publication interrupted')
+    monkeypatch.setattr(type(path),'replace',fail_publish)
+    with pytest.raises(OSError):b.atomic_json(path,{'phase':'finished','snapshots':8})
+    assert json.loads(path.read_text())==previous
+
+
+@pytest.mark.parametrize('multicall',[False,True])
+@pytest.mark.parametrize('missing_child',[False,True])
+def test_batched_collection_and_export_preserve_historical_accounting(tmp_path,monkeypatch,multicall,missing_child):
+    from types import SimpleNamespace
+    from decimal import Decimal
+    from eth_abi import decode
+    from web3 import Web3
+    from yearn_data.storage import connect,init_db
+    from yearn_data.tvl_sources import ArchiveReader,collect_tvl,candidate_edges
+    from yearn_data.tvl import export_tvl
+    def address(n):return '0x'+f'{n:040x}'
+    births={address(n):(2 if n==7 else 0) for n in range(1,8)}
+    signatures=['totalSupply()','totalAssets()','getPricePerFullShare()',
+                'balanceOf(address)','strategies(address)','isAdapter(address)','realAssets()']
+    signatures_by_selector={bytes(Web3.keccak(text=sig)[:4]):sig for sig in signatures}
+    assets={address(n):v for n,v in [(2,300_000_000),(3,120_000_000),(4,150_000_000),
+                                   (5,100_000_000),(6,25_000_000),(7,70_000_000)]}
+    supplies={address(n):v for n,v in [(1,100_000_000),(2,200_000_000),(3,100_000_000),
+                                     (4,150_000_000),(5,100_000_000),(6,50_000_000),(7,70_000_000)]}
+    direct_calls=[];multicall_calls=[]
+    def raw_call(vault,data,block):
+        vault=vault.lower()
+        data=bytes.fromhex(data.removeprefix('0x')) if isinstance(data,str) else bytes(data)
+        signature=signatures_by_selector[data[:4]]
+        if vault in births and block<births[vault]:raise ValueError('not deployed')
+        if signature=='totalSupply()':words=[supplies[vault]]
+        elif signature=='totalAssets()':
+            if missing_child and vault==address(3) and block==3:raise ValueError('historical read unavailable')
+            words=[assets[vault]]
+        elif signature=='getPricePerFullShare()':words=[2*10**18]+[0]*127
+        elif signature=='realAssets()':words=[60_000_000]
+        else:
+            holder=decode(['address'],data[4:])[0].lower()
+            if signature=='balanceOf(address)':words=[{(address(3),address(6)):25_000_000,(address(5),address(9)):40_000_000}[(vault,holder)]]
+            elif signature=='isAdapter(address)':words=[int((vault,holder)==(address(4),address(9)))]
+            elif vault==address(2):words=[0,1,2,3,4,5,80_000_000,7,8]
+            else:words=[1,2,10_000_000,100_000_000]
+        return b''.join(n.to_bytes(32,'big') for n in words)
+    def get_block(number):
+        return {'number':number,'timestamp':number*43200,'hash':bytes.fromhex('01'*32)}
+    def get_code(vault,block_identifier):
+        if vault.lower()==b.MULTICALL3.lower():return b'code' if multicall else b''
+        return b'code' if vault.lower() in births and block_identifier>=births[vault.lower()] else b''
+    def eth_call(request,block_identifier):return raw_call(request['to'],request['data'],block_identifier)
+    def aggregate(payload):
+        def call(*,block_identifier):
+            multicall_calls.append(block_identifier)
+            rows=[]
+            for vault,allow_failure,data in payload:
+                # Exercise the real direct-call fallback, even for a valid adapter.
+                if vault.lower()==address(9):rows.append((False,b''));continue
+                try:rows.append((True,raw_call(vault,data,block_identifier)))
+                except ValueError:rows.append((False,b''))
+            return rows
+        return SimpleNamespace(call=call)
+    w3=SimpleNamespace(provider=SimpleNamespace(endpoint_uri='https://fixture.invalid'),eth=SimpleNamespace(
+        chain_id=1,get_block=get_block,get_code=get_code,call=eth_call,
+        contract=lambda **kwargs:SimpleNamespace(functions=SimpleNamespace(aggregate3=aggregate))))
+    def initialize(self,chain):
+        self.w3=w3;self.head=get_block(4);self.cache={};self.blocks={};self.finality_policy='rpc-finalized'
+    monkeypatch.setattr(ArchiveReader,'__init__',initialize)
+    def post(url,*,json,timeout):
+        rows=[]
+        for item in json:
+            request,block=item['params'];block=int(block,16)
+            direct_calls.append((request['to'].lower(),block))
+            try:rows.append({'id':item['id'],'result':'0x'+eth_call(request,block).hex()})
+            except ValueError:rows.append({'id':item['id'],'error':{'code':-32000}})
+        return SimpleNamespace(raise_for_status=lambda:None,json=lambda:list(reversed(rows)))
+    monkeypatch.setattr(b.requests,'post',post)
+    class Prices:
+        def prime(self,keys):pass
+        def get(self,chain,token,timestamp):return (999 if token==address(3) else 1),'ok',{'fixture':True}
+    prices=Prices();monkeypatch.setattr(b.sources,'fetch_yearn_price',prices.get)
+    outputs=[];batched_conn=None
+    for batched in [False,True]:
+        conn=connect(tmp_path/('batched.sqlite' if batched else 'ordinary.sqlite'));init_db(conn)
+        conn.executescript(b.SCHEMA)
+        for n,family in [(1,'v1'),(2,'v2'),(3,'v3'),(4,'morpho-v2'),(5,'erc4626'),(6,'v3'),(7,'v3')]:
+            conn.execute('INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at,tvl_category) VALUES (1,?,?,?,?,1,?)',
+                         (family,address(n),address(3) if n==6 else address(90),6,'curation' if n in (4,5) else family))
+        for parent,strategy in [(2,3),(3,10),(4,9)]:
+            conn.execute('INSERT INTO tvl_strategies VALUES (1,?,?,?)',(address(parent),address(strategy),'fixture'))
+        conn.execute('INSERT INTO tvl_targets VALUES (1,?,?,?)',(address(9),address(5),'fixture'));conn.commit()
+        if batched:
+            vaults=[dict(r) for r in conn.execute('SELECT * FROM vaults')]
+            reader=b.BatchedReader(1,conn,{'head_block':4,'head_hash':'01'*32},vaults,candidate_edges(conn,vaults),births,prices)
+            factory=lambda chain:reader
+            batched_conn=conn
+        else:factory=ArchiveReader
+        run=collect_tvl(conn,86399,172799,reader_factory=factory)
+        out=tmp_path/('batched' if batched else 'ordinary');export_tvl(conn,out,run,include_curation=True)
+        data=json.loads((out/'tvl.json').read_text())
+        outputs.append({key:data[key] for key in ['vaults','positions','history']})
+        if not batched:conn.close()
+    assert outputs[0]==outputs[1]
+    history=outputs[1]['history']
+    # Day one: $900 gross less $80 strategy debt, $30 wrapper shares and
+    # $40 adapter shares. Day two adds a newly deployed $70 vault.
+    assert Decimal(history[0]['external_tvl_usd'])==750
+    if missing_child:
+        assert history[1]['status']=='incomplete' and history[1]['external_tvl_usd'] is None
+        assert Decimal(history[1]['known_overlap_usd'])==40
+    else:
+        assert Decimal(history[1]['external_tvl_usd'])==820
+    assert [(r['timestamp'],r['block_number']) for r in batched_conn.execute('SELECT * FROM tvl_backfill_blocks ORDER BY timestamp')]==[(86399,1),(172799,3)]
+    assert (address(7),1) not in direct_calls
+    assert bool(multicall_calls)==multicall
+    if multicall:assert (address(9),1) in direct_calls
+    batched_conn.close()
