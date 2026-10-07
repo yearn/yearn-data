@@ -388,6 +388,39 @@ def _position(edge,timestamp,reader,snapshots):
     return data
 
 
+def _value_nested_shares(points):
+    """Resolve tracked share-token assets only after their children are valued."""
+    pending = {key:(key[0],(p['asset'] or '').lower()) for key,p in points.items()
+               if (key[0],(p['asset'] or '').lower()) in points
+               and p['status'] != 'not_deployed' and p['total_assets_raw'] != '0'}
+    for key,child_key in pending.items():
+        p = points[key]
+        # Provider share-token quotes are provisional: unknown child state must
+        # not leave a seemingly complete parent valuation behind.
+        p.update(tvl_usd=None,price_usd=None)
+        if p['total_assets_raw'] is not None:
+            p.update(status='unavailable',reason='missing_nested_share_valuation',
+                     pricing={'source':'nested-share','child':points[child_key]['vault']})
+    while pending:
+        ready = [key for key,child in pending.items() if child not in pending]
+        if not ready:
+            # Cycles have no independently valued leaf. Leave them unknown.
+            break
+        for key in ready:
+            child = points[pending.pop(key)]
+            p = points[key]
+            supply = int(child['total_supply_raw'] or 0)
+            if child['tvl_usd'] is None or p['total_assets_raw'] is None or p['asset_units'] is None or not supply:
+                continue
+            with localcontext() as ctx:
+                ctx.prec = 78
+                value = decimal(child['tvl_usd'])*Decimal(p['total_assets_raw'])/Decimal(supply)
+                units = decimal(p['asset_units'])
+                p.update(tvl_usd=str(value),price_usd=str(value/units) if units else None,
+                         status='ok',pricing={'source':'nested-share','child':child['vault']})
+                p.pop('reason',None)
+
+
 def collect_tvl(conn,from_timestamp,to_timestamp,*,interval=86400,chain_ids=None,addresses=None,
                 price_source='yearn-prices',reader_factory=ArchiveReader,progress=None):
     if from_timestamp < 0 or from_timestamp > to_timestamp or interval < 1:
@@ -428,25 +461,7 @@ def collect_tvl(conn,from_timestamp,to_timestamp,*,interval=86400,chain_ids=None
                 if chain in reader_errors:
                     point.update(reason='archive_rpc_setup_failed',failure_class=reader_errors[chain])
                 points[(chain,vault['address'].lower())] = point
-            # Value vault-share assets from the same dated child snapshot, even if
-            # the price provider has no entry. Resolve chains of wrappers from leaves.
-            for _ in range(len(points)):
-                changed = False
-                for key, p in points.items():
-                    child = points.get((key[0],(p['asset'] or '').lower()))
-                    if p.get('pricing',{}).get('source') == 'nested-share' or child is None or child['tvl_usd'] is None or p['total_assets_raw'] is None or p['status']=='not_deployed':
-                        continue
-                    supply = int(child['total_supply_raw'] or 0)
-                    if not supply:
-                        continue
-                    with localcontext() as ctx:
-                        ctx.prec=78
-                        value = decimal(child['tvl_usd'])*Decimal(p['total_assets_raw'])/Decimal(supply)
-                        p.update(tvl_usd=str(value),price_usd=str(value/decimal(p['asset_units'])) if decimal(p['asset_units']) else None,
-                                 status='ok',pricing={'source':'nested-share','child':child['vault']})
-                    changed = True
-                if not changed:
-                    break
+            _value_nested_shares(points)
             position_rows = [_position(e,timestamp,readers[e['chain_id']],points) for e in edges]
             with conn:
                 for p in points.values():
@@ -477,7 +492,7 @@ def scan_holders(conn,timestamp,*,chain_ids=None,reader_factory=ArchiveReader,pr
     sync_strategies(conn)
     vaults = [dict(v) for v in conn.execute('SELECT * FROM vaults') if v['chain_id'] not in TVL_EXCLUDED_CHAIN_IDS and (not chain_ids or v['chain_id'] in chain_ids)]
     holders = {(r['chain_id'],r['strategy']) for r in conn.execute('SELECT * FROM tvl_strategies')
-               if not chain_ids or r['chain_id'] in chain_ids}
+               if r['chain_id'] not in TVL_EXCLUDED_CHAIN_IDS and (not chain_ids or r['chain_id'] in chain_ids)}
     holders.update((v['chain_id'],v['address'].lower()) for v in vaults)
     strategies = sorted(holders)
     readers = {}

@@ -72,3 +72,23 @@ def test_backfill_does_not_report_excluded_rows_as_pending(tmp_path,monkeypatch)
     state=json.loads((out/'status.json').read_text())
     assert state['pending_chains']==[] and state['scheduled_batches']==0
     assert state['excluded_chain_ids']==[146,80094]
+
+
+@pytest.mark.parametrize('chain_ids', [None,[1,146,80094]])
+def test_holder_scan_skips_retained_excluded_strategy_rows(db,chain_ids):
+    from yearn_data.tvl_sources import scan_holders
+    for chain in [1,146,80094]:
+        db.execute('INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (?,?,?,?,?,1)',
+                   (chain,'v3',address(1),address(90),18))
+        db.execute('INSERT INTO tvl_strategies VALUES (?,?,?,?)',(chain,address(1).lower(),address(9).lower(),'old-catalog'))
+    db.commit()
+    requested=[]
+    class Reader:
+        def __init__(self,chain):
+            requested.append(chain);assert chain==1
+        def block_at(self,timestamp):return 100
+        def exists(self,*args):return False
+    result=scan_holders(db,86399,chain_ids=chain_ids,reader_factory=Reader)
+    assert requested==[1] and result['failed_reads']==0
+    assert db.execute('SELECT count(*) FROM tvl_strategies WHERE chain_id IN (146,80094)').fetchone()[0]==2
+    assert db.execute('SELECT count(*) FROM vaults').fetchone()[0]==3

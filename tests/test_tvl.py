@@ -284,3 +284,78 @@ def test_empty_v1_does_not_require_undefined_share_price():
     point=_snapshot(vault,86399,EmptyV1(),{},'yearn-prices')
     assert point['total_assets_raw']=='0' and point['total_supply_raw']=='0'
     assert point['tvl_usd']=='0' and point['status']=='ok'
+
+
+@pytest.mark.parametrize('ids', [(1,2,3),(3,2,1)])
+@pytest.mark.parametrize('share_prices', [True,False])
+def test_multilevel_wrappers_use_leaf_value_in_any_order(tmp_path,monkeypatch,ids,share_prices):
+    conn=connect(tmp_path/'wrappers.sqlite');init_db(conn)
+    outer,middle,leaf=map(address,ids)
+    for vault,asset in [(outer,middle),(middle,leaf),(leaf,address(90))]:
+        conn.execute("INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (1,'v3',?,?,18,1)",(vault,asset))
+    conn.commit()
+    class FullOwner(Reader):
+        def uint(self,*args):return 100*10**18
+        def debt(self,*args):return 0
+    def price(chain,asset,timestamp):
+        if not share_prices and asset!=address(90):return None,'missing',{}
+        return {middle:2,leaf:3,address(90):1}[asset],'ok',{}
+    monkeypatch.setattr('yearn_data.tvl_sources.fetch_defillama_price',price)
+    run=collect_tvl(conn,100,100,reader_factory=FullOwner,price_source='defillama')
+    export_tvl(conn,tmp_path/'out',run)
+    data=json.loads((tmp_path/'out/tvl.json').read_text())
+    assert {Decimal(p['tvl_usd']) for p in data['vaults']}=={Decimal(100)}
+    assert Decimal(data['history'][0]['external_tvl_usd'])==100
+    assert data['history'][0]['status']=='complete'
+    conn.close()
+
+
+@pytest.mark.parametrize('failure', ['membership','assets','positive-debt','zero-debt'])
+def test_unresolved_adapter_read_failure_cannot_export_complete(tmp_path,monkeypatch,failure):
+    conn=connect(tmp_path/'adapter.sqlite');init_db(conn)
+    conn.execute("INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (1,'curation',?,?,18,1)",(address(1),address(90)))
+    conn.execute('INSERT INTO tvl_strategies VALUES (1,?,?,?)',(address(1),address(9),'fixture'))
+    conn.execute("INSERT INTO tvl_catalog_evidence VALUES (1,?,?,'unresolved','{}',1)",(address(9),'adapter:'+address(1)))
+    conn.commit()
+    class AdapterReader(Reader):
+        debt=ArchiveReader.debt
+        def uint(self,vault,signature,block,arg=None):
+            if signature=='isAdapter(address)':
+                if failure=='membership':raise ValueError('historical membership unavailable')
+                return 1
+            if signature=='realAssets()':
+                if failure=='assets':raise RuntimeError('historical assets unavailable')
+                return 0 if failure=='zero-debt' else 10*10**18
+            return 100*10**18
+    monkeypatch.setattr('yearn_data.tvl_sources.fetch_defillama_price',lambda *a:(1,'ok',{}))
+    run=collect_tvl(conn,100,100,reader_factory=AdapterReader,price_source='defillama')
+    export_tvl(conn,tmp_path/'out',run)
+    data=json.loads((tmp_path/'out/tvl.json').read_text())
+    summary=data['history'][0]
+    if failure=='zero-debt':
+        assert summary['status']=='complete' and Decimal(summary['external_tvl_usd'])==100
+        assert data['positions'][0]['overlap_usd']=='0'
+    else:
+        assert summary['status']=='incomplete'
+        assert summary['gross_tvl_usd'] is None and summary['external_tvl_usd'] is None
+        assert data['positions'][0]['overlap_usd'] is None
+    conn.close()
+
+
+@pytest.mark.parametrize('cycle', [False,True])
+def test_nested_valuation_without_a_known_leaf_stays_unavailable(tmp_path,monkeypatch,cycle):
+    conn=connect(tmp_path/'unknown.sqlite');init_db(conn)
+    for vault,asset in [(address(1),address(2)),(address(2),address(1) if cycle else address(90))]:
+        conn.execute("INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (1,'v3',?,?,18,1)",(vault,asset))
+    conn.commit()
+    class FullOwner(Reader):
+        def uint(self,*args):return 100*10**18
+    monkeypatch.setattr('yearn_data.tvl_sources.fetch_defillama_price',
+                        lambda chain,asset,timestamp:(None,'missing',{}) if asset==address(90) else (999,'ok',{}))
+    run=collect_tvl(conn,100,100,reader_factory=FullOwner,price_source='defillama')
+    export_tvl(conn,tmp_path/'out',run)
+    data=json.loads((tmp_path/'out/tvl.json').read_text())
+    assert all(p['tvl_usd'] is None for p in data['vaults'])
+    assert data['history'][0]['status']=='incomplete'
+    assert data['history'][0]['external_tvl_usd'] is None
+    conn.close()

@@ -188,9 +188,10 @@ PYTHONPATH=src python scripts/backfill_tvl.py \
   --to-date 2026-10-05
 ```
 
-Restarting the same command skips completed monthly batches, including those
-marked incomplete because of missing data. Interrupted batches are collected
-again as a new run; earlier runs stay in the database for inspection. The job
+Restarting the same command reuses saved monthly collections, including those
+marked incomplete because of missing data. Interrupted collections are collected
+again as a new run; interrupted exports reuse their saved collection. Earlier
+runs stay in the database for inspection. The job
 writes `status.json` and one export folder per chain/month. A process lock prevents
 two backfills from writing to the same database at once.
 
@@ -207,6 +208,11 @@ Archive settings also serve ordinary full-node reads. `ARCHIVE_RPC_URI_FOR_<id>`
 such as `ETH_RPC_URL`; one archive-capable endpoint is sufficient for both uses.
 The local TVL worktree shares the main repository's ignored `.env` via a symlink.
 Restart the backfill to load environment changes; saved monthly batches are kept.
+
+Each monthly export gets an `export-complete.json` receipt only after all files
+are written. On restart, missing files or a missing/mismatched receipt cause the
+export to be regenerated from its saved run, without collecting that batch again.
+Older exports without receipts are regenerated once to establish completion.
 
 The October 6 RPC refresh enabled Gnosis, Fantom, Robinhood (4663), and HyperEVM
 alongside the existing six chains. Katana discovery uses 50,000-block log ranges

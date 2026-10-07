@@ -236,6 +236,25 @@ def monthly_ranges(start,end):
         if int(last.timestamp())<start: break
 
 
+def batch_export_complete(out,run_id):
+    try:
+        receipt = json.loads((out/'export-complete.json').read_text())
+        return receipt == {'run_id':run_id} and all(
+            (out/name).is_file() and (out/name).stat().st_size > 0
+            for name in ('vaults.csv','positions.csv','history.csv','tvl.json'))
+    except (OSError,ValueError):
+        return False
+
+
+def export_batch(conn,out,run_id):
+    # Only publish completion after every output is written. A failed export
+    # keeps its saved collection and will be retried on the next invocation.
+    receipt = out/'export-complete.json'
+    receipt.unlink(missing_ok=True)
+    export_tvl(conn,out,run_id)
+    atomic_json(receipt,{'run_id':run_id})
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--db',type=Path,required=True)
@@ -324,13 +343,18 @@ def main():
         state['scheduled_batches']=len(tasks)
         performed=0
         for lo,hi,chain in tasks:
+            month=datetime.fromtimestamp(lo,UTC).strftime('%Y-%m')
+            batch_out=args.out/'batches'/str(chain)/month
             existing=conn.execute('SELECT * FROM tvl_backfill_batches WHERE chain_id=? AND from_timestamp=? AND to_timestamp=?',(chain,lo,hi)).fetchone()
-            if existing and existing['status'] in ('complete','incomplete'):continue
+            if existing and existing['status'] in ('complete','incomplete'):
+                if not batch_export_complete(batch_out,existing['run_id']):
+                    publish(phase='restoring exports',active_chain=chain,active_month=month,active_run=existing['run_id'])
+                    export_batch(conn,batch_out,existing['run_id'])
+                continue
             selected=[v for v in chain_vaults[chain] if v['address'].lower() not in births[chain] or births[chain][v['address'].lower()]<=readers[chain].block_at(hi)]
             if not selected:continue
             edges=sources.candidate_edges(conn,selected)
             reader=BatchedReader(chain,conn,heads[chain],selected,edges,births[chain],prices)
-            month=datetime.fromtimestamp(lo,UTC).strftime('%Y-%m')
             publish(phase='running',active_chain=chain,active_month=month,selected_vaults=len(selected))
             with conn:conn.execute("INSERT OR REPLACE INTO tvl_backfill_batches VALUES (?,?,?,NULL,'running')",(chain,lo,hi))
             def progress(message):
@@ -342,7 +366,7 @@ def main():
             run=sources.collect_tvl(conn,lo,hi,chain_ids=[chain],addresses=[v['address'] for v in selected],reader_factory=lambda _:reader,progress=progress)
             status=conn.execute('SELECT status FROM tvl_runs WHERE id=?',(run,)).fetchone()[0]
             with conn:conn.execute('UPDATE tvl_backfill_batches SET run_id=?,status=? WHERE chain_id=? AND from_timestamp=? AND to_timestamp=?',(run,status,chain,lo,hi))
-            export_tvl(conn,args.out/'batches'/str(chain)/month,run)
+            export_batch(conn,batch_out,run)
             performed+=1
             publish(last_batch_status=status)
             if args.limit_batches and performed>=args.limit_batches:

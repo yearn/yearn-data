@@ -86,8 +86,9 @@ def _account(snapshots, positions, *, include_curation):
             issues.append('bridge_migration_timing_unverified')
     for edge in edges:
         if edge.get('method') == 'strategy-allocation':
-            if edge.get('reason') == 'unresolved_adapter_mapping':
-                issues.append('unresolved_adapter_mapping')
+            if (edge.get('reason') == 'unresolved_adapter_mapping'
+                    or (edge.get('mapping_status') == 'unresolved' and edge.get('status') != 'ok')):
+                issues.append(edge.get('reason') or 'unresolved_adapter_mapping')
             else:
                 edge['overlap_usd'] = '0'
             continue
