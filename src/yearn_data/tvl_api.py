@@ -68,7 +68,7 @@ def publish_tvl(database, publication, *, current_bridge_policy='none'):
             allocator_keys = [list(r) for r in conn.execute(
                 "SELECT DISTINCT chain_id,lower(vault_address) FROM strategy_reports WHERE version='v3'")]
     context = {'runs': runs, 'catalog': catalog, 'allocatorKeys': sorted(allocator_keys),
-               'currentBridgePolicy': current_bridge_policy, 'selectionPolicy': 'known-value-then-newest-finished-common-close-3', 'priceRejections': PRICE_REJECTIONS,
+               'currentBridgePolicy': current_bridge_policy, 'selectionPolicy': 'known-value-then-newest-finished-common-close-4', 'priceRejections': PRICE_REJECTIONS,
                'historicalBridgePolicy': 'dated-evidence-only', 'database': str(Path(database).resolve())}
     dataset_id = hashlib.sha256(encoded(context).encode()).hexdigest()
     root = Path(publication)
@@ -174,6 +174,14 @@ class TvlDataset:
         if chain_id is not None:
             where += ' AND chain_id=?'
             args += (chain_id,)
+        # Reject invalid quotes before ranking valid daily observations. Otherwise
+        # seven rejected initial quotes can exhaust the reference window and hide
+        # the later corrected canonical prices.
+        rejected = []
+        for (chain,asset,timestamp), quote in self.price_rejections.items():
+            rejected.append("(s.chain_id=? AND s.timestamp=? AND lower(json_extract(s.data_json,'$.asset'))=? AND CAST(json_extract(s.data_json,'$.price_usd') AS TEXT)=?)")
+            args += (chain,timestamp,asset,quote['priceUsd'])
+        exclude = ' AND NOT ('+' OR '.join(rejected)+')' if rejected else ''
         sql = f'''WITH winners AS (
             SELECT chain_id,vault,timestamp,MAX((CASE WHEN json_extract(data_json,'$.tvl_usd') IS NOT NULL THEN 2
                 WHEN json_extract(data_json,'$.asset_units') IS NOT NULL THEN 1 ELSE 0 END)*{self.base}+run_id) rank
@@ -183,7 +191,7 @@ class TvlDataset:
                 FROM tvl_snapshots s JOIN winners w ON s.chain_id=w.chain_id AND s.vault=w.vault
                 AND s.timestamp=w.timestamp AND s.run_id=w.rank%{self.base}
                 WHERE CAST(json_extract(s.data_json,'$.asset_units') AS REAL)>0
-                AND CAST(json_extract(s.data_json,'$.tvl_usd') AS REAL)>0)
+                AND CAST(json_extract(s.data_json,'$.tvl_usd') AS REAL)>0{exclude})
             SELECT s.data_json FROM candidates c JOIN tvl_snapshots s
             ON s.run_id=c.run_id AND s.chain_id=c.chain_id AND s.vault=c.vault AND s.timestamp=c.timestamp
             WHERE c.n<=7 ORDER BY c.timestamp'''

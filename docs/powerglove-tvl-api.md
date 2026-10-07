@@ -50,7 +50,9 @@ remain in developer diagnostics. Verified invalid provider quotes are rejected b
 chain/asset/day/price matches in `inventories/tvl-price-rejections.json`, frozen into
 the publication. Historical reserve evidence is retained there. Rejected values
 remain unavailable until a corrected canonical quote is collected; no fallback
-USD price is substituted. HTTP responses serve available stored amounts;
+USD price is substituted. Reference candidates are filtered before selecting the
+first seven valid daily observations, so rejected quotes cannot exhaust that
+window or set its constant price. HTTP responses serve available stored amounts;
 unavailable amounts remain null rather than fabricated zero.
 
 `datasets/<dataset-id>.json` freezes finished source-run membership, the vault

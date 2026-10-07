@@ -269,3 +269,23 @@ def test_long_histories_keep_streaming_instead_of_filling_shared_cache(source, m
         pytest.fail('long history was retained in the shared row cache')
     monkeypatch.setattr(dataset,'history_rows',oversized_cache)
     assert [r['Ethereum'] for r in dataset.history(interval='daily')['chart']] == [100,200]
+
+
+def test_reference_skips_a_full_window_of_rejected_prices(source, monkeypatch):
+    import yearn_data.tvl_api as api
+    conn,path,root = source
+    asset='0x'+'aa'*20
+    rejected=[]
+    for index in range(8):
+        timestamp=DAY+index*86400
+        run(conn,index+1,timestamp,[(PARENT,'720000000')])
+        rejected.append({'chainId':1,'asset':asset,'timestamp':timestamp,
+                         'priceUsd':'72000000','reason':'verified_bad_quote'})
+    run(conn,9,DAY+8*86400,[(PARENT,'10')])
+    monkeypatch.setattr(api,'PRICE_REJECTIONS',rejected)
+    store=TvlStore(path,root)
+    result=store.get().history(interval='daily',constant=True)
+    assert result['references'] == [{'vault':'1:'+PARENT,'timestamp':DAY+8*86400,
+                                     'priceUsd':1,'source':'stored-tvl','depegCandidateSkipped':False}]
+    assert result['constantPriceChart'][-1]['Ethereum'] == 10
+    assert all(row == {'timestamp':DAY+index*86400} for index,row in enumerate(result['actualChart'][:-1]))
