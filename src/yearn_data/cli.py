@@ -98,6 +98,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("init-db")
 
+    merge_p = sub.add_parser("merge-databases", help="Combine fee/earnings and TVL in a new shared database")
+    merge_p.add_argument("--fees-db", required=True)
+    merge_p.add_argument("--tvl-db", required=True)
+    merge_p.add_argument("--out", required=True)
+    merge_p.add_argument("--check-only", action="store_true", help="Report disk needs and table mapping without writing")
+    merge_p.add_argument("--reserve-gib", type=float, default=4)
+
     tvl_p = sub.add_parser("tvl", help="Historical vault TVL and nested positions")
     tvl_sub = tvl_p.add_subparsers(dest="tvl_command", required=True)
     tvl_discover = tvl_sub.add_parser("discover", help="Create or refresh the TVL catalog independently")
@@ -268,6 +275,12 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if args.command == "merge-databases":
+        from .shared_db import merge_plan, merge_databases
+        fn = merge_plan if args.check_only else merge_databases
+        result = fn(args.fees_db,args.tvl_db,args.out,reserve_gib=args.reserve_gib)
+        print(json.dumps(result,sort_keys=True))
+        return 0 if result["space_sufficient"] else 2
     load_environment(args.env)
     conn = open_db(args.db)
     event_source = get_event_source()

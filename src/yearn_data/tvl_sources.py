@@ -42,16 +42,16 @@ def import_service_catalog(conn, path):
             for row in source.execute('SELECT * FROM vaults'):
                 address = Web3.to_checksum_address(row['address'])
                 asset = Web3.to_checksum_address(row['asset_address']) if row['asset_address'] else None
-                conn.execute('''INSERT INTO vaults (chain_id,version,address,asset,asset_symbol,
+                conn.execute('''INSERT INTO tvl_vaults (chain_id,version,address,asset,asset_symbol,
                     asset_decimals,name,api_version,management,protocol,active,updated_at)
                     VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(chain_id,address) DO UPDATE SET
-                    asset=COALESCE(excluded.asset,vaults.asset),
-                    asset_decimals=COALESCE(excluded.asset_decimals,vaults.asset_decimals),
-                    asset_symbol=COALESCE(excluded.asset_symbol,vaults.asset_symbol),name=excluded.name''',
+                    asset=COALESCE(excluded.asset,tvl_vaults.asset),
+                    asset_decimals=COALESCE(excluded.asset_decimals,tvl_vaults.asset_decimals),
+                    asset_symbol=COALESCE(excluded.asset_symbol,tvl_vaults.asset_symbol),name=excluded.name''',
                     (row['chain_id'],row['category'],address,asset,row['asset_symbol'],row['asset_decimals'],
                      row['name'],row['api_version'],'yearn','curation' if row['category']=='curation' else None,
                      not row['is_retired'],now))
-                conn.execute('UPDATE vaults SET tvl_category=? WHERE chain_id=? AND address=?',
+                conn.execute('UPDATE tvl_vaults SET tvl_category=? WHERE chain_id=? AND address=?',
                              (row['category'],row['chain_id'],address))
                 count += 1
             for row in source.execute('''SELECT s.chain_id,s.address,s.name,v.category,v.address AS parent
@@ -80,11 +80,12 @@ def sync_strategies(conn):
         for row in conn.execute(f'SELECT DISTINCT chain_id,vault_address,strategy_address FROM {table}'):
             if row['strategy_address'].lower() != row['vault_address'].lower():
                 put_strategy(conn,row['chain_id'],row['vault_address'],row['strategy_address'],'local-history')
-    for row in conn.execute("SELECT chain_id,contract_address,decoded_json FROM events_raw WHERE event_name IN ('StrategyAdded','StrategyChanged','StrategyMigrated','StrategyRevoked')"):
-        data = json.loads(row['decoded_json'])
-        for name in ('strategy','newVersion','oldVersion'):
-            if data.get(name):
-                put_strategy(conn,row['chain_id'],row['contract_address'],data[name],'local-history')
+    for table in ('events_raw','tvl_events_raw'):
+        for row in conn.execute(f"SELECT chain_id,contract_address,decoded_json FROM {table} WHERE event_name IN ('StrategyAdded','StrategyChanged','StrategyMigrated','StrategyRevoked')"):
+            data = json.loads(row['decoded_json'])
+            for name in ('strategy','newVersion','oldVersion'):
+                if data.get(name):
+                    put_strategy(conn,row['chain_id'],row['contract_address'],data[name],'local-history')
     seed_targets(conn)
     conn.commit()
 
@@ -127,11 +128,11 @@ def refresh_kong_catalog(conn, *, chain_ids=None, with_summary=False):
                             ON CONFLICT(chain_id,address,source) DO UPDATE SET metadata_status=excluded.metadata_status,
                             evidence_json=excluded.evidence_json,updated_at=excluded.updated_at''',
                             (key[0],key[1],'kong','ok' if complete else 'unavailable',to_json({'source':'kong'}),now))
-                        conn.execute('''INSERT INTO vaults (chain_id,version,address,asset,asset_symbol,asset_decimals,
+                        conn.execute('''INSERT INTO tvl_vaults (chain_id,version,address,asset,asset_symbol,asset_decimals,
                             name,api_version,active,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)
-                            ON CONFLICT(chain_id,address) DO UPDATE SET version=CASE WHEN vaults.version IN ('morpho-v1','morpho-v2') THEN vaults.version ELSE excluded.version END,asset=COALESCE(excluded.asset,vaults.asset),
-                            asset_decimals=COALESCE(excluded.asset_decimals,vaults.asset_decimals),
-                            asset_symbol=COALESCE(excluded.asset_symbol,vaults.asset_symbol),
+                            ON CONFLICT(chain_id,address) DO UPDATE SET version=CASE WHEN tvl_vaults.version IN ('morpho-v1','morpho-v2') THEN tvl_vaults.version ELSE excluded.version END,asset=COALESCE(excluded.asset,tvl_vaults.asset),
+                            asset_decimals=COALESCE(excluded.asset_decimals,tvl_vaults.asset_decimals),
+                            asset_symbol=COALESCE(excluded.asset_symbol,tvl_vaults.asset_symbol),
                             name=excluded.name,api_version=excluded.api_version,active=excluded.active,updated_at=excluded.updated_at''',
                             (key[0],'v3' if row['v3'] else 'v2',Web3.to_checksum_address(row['address']),
                              Web3.to_checksum_address(asset['address']) if asset.get('address') else None,
@@ -284,7 +285,7 @@ def _snapshot(vault,timestamp,reader,price_cache,price_source):
 
 def candidate_edges(conn,vaults):
     by_key = {(v['chain_id'],v['address'].lower()):v for v in vaults}
-    catalog_keys = {(r['chain_id'],r['address'].lower()) for r in conn.execute('SELECT chain_id,address FROM vaults')}
+    catalog_keys = {(r['chain_id'],r['address'].lower()) for r in conn.execute('SELECT chain_id,address FROM tvl_vaults')}
     edges = {}
     adapter_status = {(r['chain_id'],r['address'],r['source'].removeprefix('adapter:')):r['metadata_status']
                       for r in conn.execute("SELECT * FROM tvl_catalog_evidence WHERE source LIKE 'adapter:%'")}
@@ -429,7 +430,7 @@ def collect_tvl(conn,from_timestamp,to_timestamp,*,interval=86400,chain_ids=None
         raise ValueError('Yearn Prices TVL samples must use UTC day-end timestamps and whole-day intervals')
     if price_source not in ('yearn-prices','defillama'):
         raise ValueError('unsupported TVL price source')
-    vaults = [dict(r) for r in conn.execute('SELECT * FROM vaults ORDER BY chain_id,address')
+    vaults = [dict(r) for r in conn.execute('SELECT * FROM tvl_vaults ORDER BY chain_id,address')
               if r['chain_id'] not in TVL_EXCLUDED_CHAIN_IDS
               and (not chain_ids or r['chain_id'] in chain_ids)
               and (not addresses or r['address'].lower() in {a.lower() for a in addresses})]
@@ -490,7 +491,7 @@ def scan_holders(conn,timestamp,*,chain_ids=None,reader_factory=ArchiveReader,pr
     Every discovered relation is still re-valued at each collection date.
     """
     sync_strategies(conn)
-    vaults = [dict(v) for v in conn.execute('SELECT * FROM vaults') if v['chain_id'] not in TVL_EXCLUDED_CHAIN_IDS and (not chain_ids or v['chain_id'] in chain_ids)]
+    vaults = [dict(v) for v in conn.execute('SELECT * FROM tvl_vaults') if v['chain_id'] not in TVL_EXCLUDED_CHAIN_IDS and (not chain_ids or v['chain_id'] in chain_ids)]
     holders = {(r['chain_id'],r['strategy']) for r in conn.execute('SELECT * FROM tvl_strategies')
                if r['chain_id'] not in TVL_EXCLUDED_CHAIN_IDS and (not chain_ids or r['chain_id'] in chain_ids)}
     holders.update((v['chain_id'],v['address'].lower()) for v in vaults)

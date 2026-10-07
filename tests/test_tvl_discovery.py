@@ -39,8 +39,8 @@ def test_v1_discovery_starts_empty_and_repeats_without_duplicates(db):
     first=discover_v1(db,reader_factory=MetadataReader)
     assert first['status']=='complete' and first['enriched']==28
     assert discover_v1(db,reader_factory=MetadataReader)['discovered']==28
-    assert db.execute('SELECT COUNT(*) FROM vaults').fetchone()[0]==28
-    vault=db.execute('SELECT * FROM vaults LIMIT 1').fetchone()
+    assert db.execute('SELECT COUNT(*) FROM tvl_vaults').fetchone()[0]==28
+    vault=db.execute('SELECT * FROM tvl_vaults LIMIT 1').fetchone()
     assert vault['version']=='v1' and vault['asset_decimals']==0
     evidence=db.execute('SELECT * FROM tvl_catalog_evidence LIMIT 1').fetchone()
     assert evidence['metadata_status']=='ok'
@@ -54,7 +54,7 @@ def test_missing_rpc_keeps_v1_candidates_and_safe_failures(db):
     result=discover_v1(db,reader_factory=broken)
     assert result['status']=='incomplete' and result['enriched']==0
     assert len(result['failures'])==28
-    assert db.execute('SELECT COUNT(*) FROM vaults WHERE asset IS NULL').fetchone()[0]==28
+    assert db.execute('SELECT COUNT(*) FROM tvl_vaults WHERE asset IS NULL').fetchone()[0]==28
     assert 'secret' not in json.dumps(result)
     assert 'credential' not in db.execute('SELECT evidence_json FROM tvl_catalog_evidence LIMIT 1').fetchone()[0]
 
@@ -66,7 +66,7 @@ def test_metadata_retry_preserves_previous_good_values(db):
             raise RuntimeError('provider unavailable')
     result=discover_v1(db,reader_factory=Missing)
     assert result['status']=='incomplete'
-    assert db.execute('SELECT COUNT(*) FROM vaults WHERE asset_decimals=0').fetchone()[0]==28
+    assert db.execute('SELECT COUNT(*) FROM tvl_vaults WHERE asset_decimals=0').fetchone()[0]==28
     assert discover_v1(db,reader_factory=MetadataReader)['status']=='complete'
 
 
@@ -74,7 +74,7 @@ def test_v1_chain_filter_avoids_unselected_rpc(db):
     def unexpected(chain):
         raise AssertionError('RPC should not be called')
     assert discover_v1(db,chain_ids=[8453],reader_factory=unexpected)['discovered']==0
-    assert db.execute('SELECT COUNT(*) FROM vaults').fetchone()[0]==0
+    assert db.execute('SELECT COUNT(*) FROM tvl_vaults').fetchone()[0]==0
 
 
 def test_metadata_uses_v1_token_and_preserves_zero_decimals():
@@ -164,7 +164,7 @@ def test_factory_uses_actual_family_events_and_resumes(db,monkeypatch):
     scanned=len(reader.scans)
     assert scan_factory(db,f,reader,chunk_size=10)==first
     assert len(reader.scans)==scanned
-    assert db.execute('SELECT COUNT(*) FROM vault_inventory_events').fetchone()[0]==1
+    assert db.execute('SELECT COUNT(*) FROM tvl_inventory_events').fetchone()[0]==1
 
 
 def test_factory_failure_does_not_certify_missing_range(db,monkeypatch):
@@ -176,7 +176,7 @@ def test_factory_failure_does_not_certify_missing_range(db,monkeypatch):
             return super().logs(address,abi,start,end)
     f={'chain_id':1,'address':addr(60),'from_block':100,'family':'morpho-v1'}
     with pytest.raises(RuntimeError):scan_factory(db,f,Fail(1),chunk_size=10)
-    rows=db.execute('SELECT from_block,to_block FROM history_coverage').fetchall()
+    rows=db.execute('SELECT from_block,to_block FROM tvl_history_coverage').fetchall()
     assert [tuple(r) for r in rows]==[(100,109)]
 
 
@@ -191,12 +191,12 @@ def test_curation_unions_api_factory_and_extra_and_preserves_omissions(db,monkey
         return {collection:{'items':[morpho_row(4)] if collection=='vaults' else []}}
     result=discover_curation(db,reader_factory=FactoryReader,request=request,chunk_size=10)
     assert result['status']=='complete' and result['enriched']==3
-    assert {(r['version'],r['tvl_category']) for r in db.execute('SELECT * FROM vaults')}=={
+    assert {(r['version'],r['tvl_category']) for r in db.execute('SELECT * FROM tvl_vaults')}=={
         ('morpho-v1','curation'),('morpho-v2','curation'),('erc4626','curation')}
     def empty(query,variables):
         return {('vaultV2s' if 'vaultV2s(' in query else 'vaults'):{'items':[]}}
     discover_curation(db,reader_factory=FactoryReader,request=empty,chunk_size=10)
-    assert db.execute('SELECT COUNT(*) FROM vaults').fetchone()[0]==3
+    assert db.execute('SELECT COUNT(*) FROM tvl_vaults').fetchone()[0]==3
 
 
 def test_curation_api_failure_does_not_prevent_factory_or_extra_discovery(db,monkeypatch):
@@ -209,7 +209,7 @@ def test_curation_api_failure_does_not_prevent_factory_or_extra_discovery(db,mon
     result=discover_curation(db,reader_factory=FactoryReader,request=broken,chunk_size=10)
     assert result['status']=='incomplete' and result['enriched']==2
     assert any(f['stage']=='morpho-api' for f in result['failures'])
-    assert db.execute('SELECT COUNT(*) FROM vaults').fetchone()[0]==2
+    assert db.execute('SELECT COUNT(*) FROM tvl_vaults').fetchone()[0]==2
 
 
 def test_real_metamorpho_indexed_asset_log_decodes():
@@ -241,11 +241,11 @@ def test_generic_extra_does_not_erase_known_morpho_family_during_api_outage(db,m
         collection='vaultV2s' if 'vaultV2s(' in query else 'vaults'
         return {collection:{'items':[morpho_row(3)] if collection=='vaultV2s' else []}}
     discover_curation(db,reader_factory=FactoryReader,request=request)
-    assert db.execute('SELECT version FROM vaults').fetchone()[0]=='morpho-v2'
+    assert db.execute('SELECT version FROM tvl_vaults').fetchone()[0]=='morpho-v2'
     def broken(*args):raise RuntimeError('API unavailable')
     result=discover_curation(db,reader_factory=FactoryReader,request=broken)
     assert result['status']=='incomplete'
-    assert db.execute('SELECT version FROM vaults').fetchone()[0]=='morpho-v2'
+    assert db.execute('SELECT version FROM tvl_vaults').fetchone()[0]=='morpho-v2'
 
 
 class AdapterReader(FactoryReader):
@@ -289,7 +289,7 @@ def test_adapter_discovery_includes_non_liquidity_and_removed_adapters(db):
     assert db.execute('SELECT COUNT(*) FROM tvl_targets').fetchone()[0]==2
     discover_adapter_relations(db,reader_factory=AdapterReader,chunk_size=10)
     assert db.execute('SELECT COUNT(*) FROM tvl_targets').fetchone()[0]==2
-    assert db.execute("SELECT COUNT(*) FROM events_raw WHERE event_name='AddAdapter'").fetchone()[0]==1
+    assert db.execute("SELECT COUNT(*) FROM tvl_events_raw WHERE event_name='AddAdapter'").fetchone()[0]==1
 
 
 def test_external_child_is_a_relation_without_adding_other_protocol_tvl(db):
@@ -297,8 +297,8 @@ def test_external_child_is_a_relation_without_adding_other_protocol_tvl(db):
     from yearn_data.tvl_sources import candidate_edges
     seed_adapter_catalog(db,children=False)
     discover_adapter_relations(db,reader_factory=AdapterReader,chunk_size=10)
-    assert db.execute('SELECT COUNT(*) FROM vaults').fetchone()[0]==1
-    edges=candidate_edges(db,[dict(r) for r in db.execute('SELECT * FROM vaults')])
+    assert db.execute('SELECT COUNT(*) FROM tvl_vaults').fetchone()[0]==1
+    edges=candidate_edges(db,[dict(r) for r in db.execute('SELECT * FROM tvl_vaults')])
     assert {e['child'] for e in edges if e['method']!='strategy-allocation'}=={addr(2).lower(),addr(3).lower()}
 
 
@@ -440,8 +440,8 @@ def test_kong_refresh_paginates_selected_chain_and_preserves_morpho_family(db,mo
     summary=refresh_kong_catalog(db,chain_ids=[8453],with_summary=True)
     assert summary['status']=='complete' and summary['discovered']==101
     assert [v['skip'] for v in calls]==[0,100]
-    assert db.execute('SELECT COUNT(*) FROM vaults').fetchone()[0]==101
-    old=db.execute('SELECT version,tvl_category FROM vaults WHERE lower(address)=?',(addr(1000).lower(),)).fetchone()
+    assert db.execute('SELECT COUNT(*) FROM tvl_vaults').fetchone()[0]==101
+    old=db.execute('SELECT version,tvl_category FROM tvl_vaults WHERE lower(address)=?',(addr(1000).lower(),)).fetchone()
     assert tuple(old)==('morpho-v2','curation')
 
 
@@ -476,7 +476,7 @@ def test_factory_window_before_deployment_is_an_empty_scope(db):
     factory={'chain_id':1,'address':addr(60),'from_block':120,'family':'morpho-v2'}
     reader=FactoryReader(1)
     assert scan_factory(db,factory,reader,from_block=100,to_block=110)==[]
-    assert db.execute('SELECT COUNT(*) FROM history_coverage').fetchone()[0]==0
+    assert db.execute('SELECT COUNT(*) FROM tvl_history_coverage').fetchone()[0]==0
 
 
 def test_fresh_catalog_collect_and_export_without_migration(db,monkeypatch,tmp_path):
@@ -501,7 +501,7 @@ def test_fresh_catalog_collect_and_export_without_migration(db,monkeypatch,tmp_p
     second=discover_catalog(db,chain_ids=[1],reader_factory=AdapterReader,request=request,chunk_size=10)
     assert first['status']==second['status']=='complete'
     assert first['catalog_vaults']==second['catalog_vaults']
-    assert {r[0] for r in db.execute('SELECT COALESCE(tvl_category,version) FROM vaults')}=={'v1','v2','v3','curation'}
+    assert {r[0] for r in db.execute('SELECT COALESCE(tvl_category,version) FROM tvl_vaults')}=={'v1','v2','v3','curation'}
     class Collector:
         def __init__(self,chain):pass
         def block_at(self,timestamp):return 123

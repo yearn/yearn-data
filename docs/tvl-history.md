@@ -16,13 +16,13 @@ owner/creator/curator queries, factory creation events, and explicitly listed
 curated products. It requires no old TVL service checkout or database.
 
 ```bash
-yearn-data --db data/tvl.sqlite --env .env tvl discover
+yearn-data --db data/yearn.sqlite --env .env tvl discover
 
 # One daily UTC-close sample: 2026-10-03 23:59:59 UTC.
-yearn-data --db data/tvl.sqlite --env .env tvl collect \
+yearn-data --db data/yearn.sqlite --env .env tvl collect \
   --from-timestamp 1791071999 --to-timestamp 1791071999
 
-yearn-data --db data/tvl.sqlite tvl export --out exports/tvl
+yearn-data --db data/yearn.sqlite tvl export --out exports/tvl
 ```
 
 Discovery supports `--sources kong v1 curation` and `--chain-ids 1 8453`.
@@ -46,7 +46,7 @@ Migration remains optional. It brings across an existing catalog and relationshi
 without importing current balances as historical values:
 
 ```bash
-yearn-data --db data/tvl.sqlite tvl import-catalog \
+yearn-data --db data/yearn.sqlite tvl import-catalog \
   --service-db ../yearn-tvl-service/packages/db/yearn-tvl.db
 ```
 
@@ -79,7 +79,7 @@ date. This scans all known strategy and vault holders against the chain's vaults
 so run it deliberately rather than on every daily collection:
 
 ```bash
-yearn-data --db data/tvl.sqlite --env .env tvl map-holders \
+yearn-data --db data/yearn.sqlite --env .env tvl map-holders \
   --chain-ids 1 --timestamp 1791071999
 ```
 
@@ -177,14 +177,17 @@ batched RPC requests only change acquisition speed. Deployment boundaries are
 verified against archive code, and successful prices and dated blocks are cached
 in the selected database. It never imports historical TVL values.
 
-The October 2026 local job uses `data/tvl-backfill.sqlite`, leaving the existing
-fee/earnings database untouched. Its catalog comes from independent discovery,
+The initial October 2026 local job used a separate `data/tvl-backfill.sqlite`.
+TVL now owns namespaced tables in the shared database; see
+[One database for TVL, fees and earnings](shared-database.md) for consolidation.
+Use the same database path as fee/earnings jobs for future collections. The
+catalog comes from independent discovery,
 with deployment hints and historical strategy identities from this project's
 existing event database. Its finalized-head manifest records the RPC checks.
 
 ```bash
 PYTHONPATH=src python scripts/backfill_tvl.py \
-  --db data/tvl-backfill.sqlite \
+  --db data/yearn.sqlite \
   --heads artifacts/tvl-review/backfill/heads.json \
   --env /path/to/.env \
   --out artifacts/tvl-review/backfill \

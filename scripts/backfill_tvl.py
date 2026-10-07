@@ -24,21 +24,11 @@ from yearn_data.config import load_environment, TVL_EXCLUDED_CHAIN_IDS
 from yearn_data.multicall import MULTICALL3, MULTICALL3_ABI
 from yearn_data.pricing import fetch_yearn_price, fetch_yearn_prices_batch, yearn_prices_token_key
 from yearn_data.storage import connect, init_db
-from yearn_data.tvl import export_tvl
+from yearn_data.tvl import export_tvl, BACKFILL_SCHEMA
 from yearn_data import tvl_sources as sources
 
 UTC = timezone.utc
-SCHEMA = '''
-CREATE TABLE IF NOT EXISTS tvl_backfill_batches (
- chain_id INTEGER, from_timestamp INTEGER, to_timestamp INTEGER, run_id INTEGER,
- status TEXT NOT NULL, PRIMARY KEY(chain_id,from_timestamp,to_timestamp));
-CREATE TABLE IF NOT EXISTS tvl_backfill_births (
- chain_id INTEGER, address TEXT, block_number INTEGER, timestamp INTEGER,
- status TEXT, reason TEXT, PRIMARY KEY(chain_id,address));
-CREATE TABLE IF NOT EXISTS tvl_backfill_blocks (
- chain_id INTEGER, timestamp INTEGER, block_number INTEGER,
- PRIMARY KEY(chain_id,timestamp));
-'''
+SCHEMA = BACKFILL_SCHEMA
 
 
 def atomic_json(path, value):
@@ -68,7 +58,7 @@ class Prices:
         for key in sorted(set(keys)):
             if key in self.cache:
                 continue
-            row = self.conn.execute("SELECT * FROM prices WHERE chain_id=? AND token_address=? AND timestamp=? AND source='yearn-prices'", key).fetchone()
+            row = self.conn.execute("SELECT * FROM tvl_prices WHERE chain_id=? AND token_address=? AND timestamp=? AND source='yearn-tvl_prices'", key).fetchone()
             if row and row['status'] not in ('retryable', 'invalid', 'unavailable'):
                 self.cache[key] = (row['price_usd'], row['status'], json.loads(row['raw_json']))
             else:
@@ -94,9 +84,9 @@ class Prices:
             for key, result in results.items():
                 self.cache[key] = result
                 price, status, evidence = result
-                self.conn.execute('''INSERT OR REPLACE INTO prices
+                self.conn.execute('''INSERT OR REPLACE INTO tvl_prices
                     (chain_id,token_address,timestamp,source,price_usd,status,raw_json)
-                    VALUES (?,?,?,'yearn-prices',?,?,?)''', (*key,price,status,json.dumps(evidence)))
+                    VALUES (?,?,?,'yearn-tvl_prices',?,?,?)''', (*key,price,status,json.dumps(evidence)))
 
 
 class BatchedReader(sources.ArchiveReader):
@@ -291,7 +281,7 @@ def main():
         state['catalog_failures'] = [f for source in summary['sources'] for f in source.get('failures',[])]
     publish()
     try:
-        all_vaults=[dict(r) for r in conn.execute('SELECT * FROM vaults')
+        all_vaults=[dict(r) for r in conn.execute('SELECT * FROM tvl_vaults')
                     if r['chain_id'] not in TVL_EXCLUDED_CHAIN_IDS]
         chain_vaults={}
         for v in all_vaults:chain_vaults.setdefault(v['chain_id'],[]).append(v)

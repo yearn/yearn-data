@@ -10,6 +10,87 @@ from pathlib import Path
 from .storage import to_json
 
 SCHEMA = """
+CREATE TABLE IF NOT EXISTS tvl_vaults (
+    chain_id INTEGER NOT NULL,
+    version TEXT NOT NULL,
+    address TEXT NOT NULL,
+    source_address TEXT,
+    asset TEXT,
+    asset_symbol TEXT,
+    asset_decimals INTEGER,
+    name TEXT,
+    api_version TEXT,
+    management TEXT NOT NULL DEFAULT 'yearn',
+    protocol TEXT,
+    deployment_block INTEGER,
+    active INTEGER NOT NULL DEFAULT 1,
+    updated_at INTEGER NOT NULL,
+    tvl_category TEXT,
+    PRIMARY KEY (chain_id, address)
+);
+CREATE TABLE IF NOT EXISTS tvl_prices (
+    chain_id INTEGER NOT NULL,
+    token_address TEXT NOT NULL,
+    timestamp INTEGER NOT NULL,
+    block_number INTEGER,
+    source TEXT NOT NULL,
+    price_usd REAL,
+    status TEXT NOT NULL,
+    raw_json TEXT NOT NULL DEFAULT '{}',
+    PRIMARY KEY (chain_id, token_address, timestamp, source)
+);
+CREATE TABLE IF NOT EXISTS tvl_events_raw (
+    chain_id INTEGER NOT NULL,
+    contract_address TEXT NOT NULL,
+    event_name TEXT NOT NULL,
+    tx_hash TEXT NOT NULL,
+    log_index INTEGER NOT NULL,
+    block_number INTEGER NOT NULL,
+    block_timestamp INTEGER NOT NULL,
+    decoded_json TEXT NOT NULL,
+    PRIMARY KEY (chain_id, tx_hash, log_index)
+);
+CREATE TABLE IF NOT EXISTS tvl_inventory_events (
+    chain_id INTEGER NOT NULL,
+    version TEXT NOT NULL,
+    vault_address TEXT NOT NULL,
+    source_kind TEXT NOT NULL,
+    action TEXT NOT NULL DEFAULT 'added',
+    source_address TEXT NOT NULL,
+    asset TEXT,
+    tx_hash TEXT NOT NULL,
+    log_index INTEGER NOT NULL,
+    block_number INTEGER NOT NULL,
+    block_timestamp INTEGER NOT NULL,
+    decoded_json TEXT NOT NULL DEFAULT '{}',
+    PRIMARY KEY (chain_id, tx_hash, log_index, source_kind)
+);
+CREATE TABLE IF NOT EXISTS tvl_history_coverage (
+    chain_id INTEGER NOT NULL,
+    target TEXT NOT NULL,
+    family TEXT NOT NULL,
+    policy TEXT NOT NULL,
+    from_block INTEGER NOT NULL CHECK(from_block >= 0),
+    to_block INTEGER NOT NULL CHECK(to_block >= from_block),
+    source TEXT NOT NULL,
+    end_hash TEXT NOT NULL,
+    row_count INTEGER NOT NULL CHECK(row_count >= 0),
+    run_id INTEGER REFERENCES tvl_history_sync_runs(id),
+    completed_at INTEGER NOT NULL,
+    PRIMARY KEY(chain_id, target, family, policy, from_block, to_block)
+);
+CREATE TABLE IF NOT EXISTS tvl_history_sync_runs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    created_at INTEGER NOT NULL,
+    manifest_json TEXT NOT NULL,
+    summary_json TEXT,
+    status TEXT NOT NULL DEFAULT 'pending'
+);
+
+CREATE INDEX IF NOT EXISTS tvl_events_raw_contract_idx
+ON tvl_events_raw(chain_id,contract_address,event_name,block_number);
+CREATE INDEX IF NOT EXISTS tvl_inventory_events_vault_idx
+ON tvl_inventory_events(chain_id,version,vault_address,source_kind,block_number);
 CREATE TABLE IF NOT EXISTS tvl_discovery_runs (
     id INTEGER PRIMARY KEY AUTOINCREMENT, started_at INTEGER NOT NULL, completed_at INTEGER,
     status TEXT NOT NULL, params_json TEXT NOT NULL, summary_json TEXT
@@ -44,6 +125,19 @@ CREATE TABLE IF NOT EXISTS tvl_positions (
 );
 """
 
+
+BACKFILL_SCHEMA = """
+CREATE TABLE IF NOT EXISTS tvl_backfill_batches (
+ chain_id INTEGER, from_timestamp INTEGER, to_timestamp INTEGER, run_id INTEGER,
+ status TEXT NOT NULL, PRIMARY KEY(chain_id,from_timestamp,to_timestamp));
+CREATE TABLE IF NOT EXISTS tvl_backfill_births (
+ chain_id INTEGER, address TEXT, block_number INTEGER, timestamp INTEGER,
+ status TEXT, reason TEXT, PRIMARY KEY(chain_id,address));
+CREATE TABLE IF NOT EXISTS tvl_backfill_blocks (
+ chain_id INTEGER, timestamp INTEGER, block_number INTEGER,
+ PRIMARY KEY(chain_id,timestamp));
+"""
+SCHEMA += BACKFILL_SCHEMA
 
 def decimal(value):
     if value is None:

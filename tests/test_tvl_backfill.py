@@ -40,13 +40,13 @@ def test_invalid_ids_cannot_become_success(monkeypatch):
 
 def test_price_omissions_verified_and_persisted(monkeypatch):
     c=sqlite3.connect(':memory:');c.row_factory=sqlite3.Row
-    c.execute('CREATE TABLE prices(chain_id,token_address,timestamp,block_number,source,price_usd,status,raw_json)')
+    c.execute('CREATE TABLE tvl_prices(chain_id,token_address,timestamp,block_number,source,price_usd,status,raw_json)')
     key=(1,'0x'+'11'*20,ts('2020-03-01'))
     monkeypatch.setattr(b,'fetch_yearn_prices_batch',lambda *_a,**_k:{})
     exact=Mock(return_value=(None,'missing',{'provider':'yearn-prices'}));monkeypatch.setattr(b,'fetch_yearn_price',exact)
     prices=b.Prices(c);prices.prime([key]);assert prices.get(*key)[1]=='missing'
     prices.cache.clear();assert prices.get(*key)[0] is None;assert exact.call_count==1
-    assert c.execute('select status from prices').fetchone()[0]=='missing'
+    assert c.execute('select status from tvl_prices').fetchone()[0]=='missing'
 
 
 def test_birth_hint_checked_against_previous_block():
@@ -62,7 +62,7 @@ def test_restart_restores_saved_batch_exports_without_recollection(tmp_path,monk
     from yearn_data.storage import connect,init_db
     db=tmp_path/'restart.sqlite';conn=connect(db);init_db(conn)
     vault='0x'+'01'*20;asset='0x'+'02'*20
-    conn.execute('INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (?,?,?,?,?,?)',
+    conn.execute('INSERT INTO tvl_vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (?,?,?,?,?,?)',
                  (1,'v3',vault,asset,18,1));conn.commit();conn.close()
     heads=tmp_path/'heads.json'
     heads.write_text(json.dumps([dict(chain_id=1,status='ready',head_block=100,head_hash='01'*32,genesis_timestamp=0)]))
@@ -214,13 +214,13 @@ def test_batched_collection_and_export_preserve_historical_accounting(tmp_path,m
         conn=connect(tmp_path/('batched.sqlite' if batched else 'ordinary.sqlite'));init_db(conn)
         conn.executescript(b.SCHEMA)
         for n,family in [(1,'v1'),(2,'v2'),(3,'v3'),(4,'morpho-v2'),(5,'erc4626'),(6,'v3'),(7,'v3')]:
-            conn.execute('INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at,tvl_category) VALUES (1,?,?,?,?,1,?)',
+            conn.execute('INSERT INTO tvl_vaults(chain_id,version,address,asset,asset_decimals,updated_at,tvl_category) VALUES (1,?,?,?,?,1,?)',
                          (family,address(n),address(3) if n==6 else address(90),6,'curation' if n in (4,5) else family))
         for parent,strategy in [(2,3),(3,10),(4,9)]:
             conn.execute('INSERT INTO tvl_strategies VALUES (1,?,?,?)',(address(parent),address(strategy),'fixture'))
         conn.execute('INSERT INTO tvl_targets VALUES (1,?,?,?)',(address(9),address(5),'fixture'));conn.commit()
         if batched:
-            vaults=[dict(r) for r in conn.execute('SELECT * FROM vaults')]
+            vaults=[dict(r) for r in conn.execute('SELECT * FROM tvl_vaults')]
             reader=b.BatchedReader(1,conn,{'head_block':4,'head_hash':'01'*32},vaults,candidate_edges(conn,vaults),births,prices)
             factory=lambda chain:reader
             batched_conn=conn

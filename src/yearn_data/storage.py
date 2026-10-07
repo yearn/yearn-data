@@ -279,7 +279,6 @@ def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(COVERAGE_SCHEMA)
     from .tvl import SCHEMA as TVL_SCHEMA
     conn.executescript(TVL_SCHEMA)
-    _ensure_column(conn, "vaults", "tvl_category", "TEXT")
     _ensure_column(conn, "vault_inventory_events", "action", "TEXT NOT NULL DEFAULT 'added'")
     conn.execute("""CREATE TABLE IF NOT EXISTS fee_daily_prices (
         chain_id INTEGER NOT NULL, asset TEXT NOT NULL, eod_timestamp INTEGER NOT NULL,

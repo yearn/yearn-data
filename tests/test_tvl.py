@@ -96,7 +96,7 @@ def db(tmp_path):
     conn=connect(tmp_path/'test.sqlite')
     init_db(conn)
     for n,version in [(1,'v3'),(2,'v3'),(3,'v1'),(4,'curation')]:
-        conn.execute('''INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at,active)
+        conn.execute('''INSERT INTO tvl_vaults(chain_id,version,address,asset,asset_decimals,updated_at,active)
                         VALUES (1,?,?,?,?,1,0)''',(version,address(n),address(8),6))
     conn.execute('INSERT INTO tvl_strategies VALUES (1,?,?,?)',(address(1),address(2),'fixture'))
     conn.commit()
@@ -147,7 +147,7 @@ def test_share_scan_discovers_nonregistry_intermediaries(db):
     db.execute('INSERT INTO tvl_strategies VALUES (1,?,?,?)',(address(1),address(9),'fixture'))
     result=scan_holders(db,100,reader_factory=Reader)
     assert result['positive_holdings']>0 and result['failed_reads']==0
-    vaults=[dict(r) for r in db.execute('SELECT * FROM vaults')]
+    vaults=[dict(r) for r in db.execute('SELECT * FROM tvl_vaults')]
     assert any(e['strategy']==address(9) and e['child']==address(2) for e in candidate_edges(db,vaults))
 
 
@@ -165,7 +165,7 @@ def test_migration_is_read_only_idempotent_and_includes_all_categories(tmp_path)
     conn=connect(tmp_path/'new.sqlite');init_db(conn)
     assert import_service_catalog(conn,path)==4
     assert import_service_catalog(conn,path)==4
-    assert conn.execute('SELECT COUNT(*) FROM vaults').fetchone()[0]==4
+    assert conn.execute('SELECT COUNT(*) FROM tvl_vaults').fetchone()[0]==4
     assert path.read_bytes()==original
     assert conn.execute('SELECT COUNT(*) FROM tvl_strategies WHERE chain_id=999').fetchone()[0]==1
     conn.close()
@@ -294,7 +294,7 @@ def test_multilevel_wrappers_use_leaf_value_in_any_order(tmp_path,monkeypatch,id
     conn=connect(tmp_path/'wrappers.sqlite');init_db(conn)
     outer,middle,leaf=map(address,ids)
     for vault,asset,decimals in [(outer,middle,18),(middle,leaf,18),(leaf,address(90),6)]:
-        conn.execute("INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (1,'v3',?,?,?,1)",(vault,asset,decimals))
+        conn.execute("INSERT INTO tvl_vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (1,'v3',?,?,?,1)",(vault,asset,decimals))
     conn.commit()
     assets={outer:50*10**18,middle:50*10**18,leaf:200*10**6}
     supplies={outer:100*10**18,middle:200*10**18,leaf:100*10**18}
@@ -323,7 +323,7 @@ def test_multilevel_wrappers_use_leaf_value_in_any_order(tmp_path,monkeypatch,id
 @pytest.mark.parametrize('failure', ['membership','assets','positive-debt','zero-debt'])
 def test_unresolved_adapter_read_failure_cannot_export_complete(tmp_path,monkeypatch,failure):
     conn=connect(tmp_path/'adapter.sqlite');init_db(conn)
-    conn.execute("INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (1,'curation',?,?,18,1)",(address(1),address(90)))
+    conn.execute("INSERT INTO tvl_vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (1,'curation',?,?,18,1)",(address(1),address(90)))
     conn.execute('INSERT INTO tvl_strategies VALUES (1,?,?,?)',(address(1),address(9),'fixture'))
     conn.execute("INSERT INTO tvl_catalog_evidence VALUES (1,?,?,'unresolved','{}',1)",(address(9),'adapter:'+address(1)))
     conn.commit()
@@ -356,7 +356,7 @@ def test_unresolved_adapter_read_failure_cannot_export_complete(tmp_path,monkeyp
 def test_nested_valuation_without_a_known_leaf_stays_unavailable(tmp_path,monkeypatch,cycle):
     conn=connect(tmp_path/'unknown.sqlite');init_db(conn)
     for vault,asset in [(address(1),address(2)),(address(2),address(1) if cycle else address(90))]:
-        conn.execute("INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (1,'v3',?,?,18,1)",(vault,asset))
+        conn.execute("INSERT INTO tvl_vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (1,'v3',?,?,18,1)",(vault,asset))
     conn.commit()
     class FullOwner(Reader):
         def uint(self,*args):return 100*10**18

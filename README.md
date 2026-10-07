@@ -106,3 +106,7 @@ vaults, and export nested capital positions with overlap deductions. Start from 
 `tvl discover`, collect an explicit date range with `tvl collect`, and use
 `tvl export` for CSV/JSON outputs. See [Historical TVL and nested positions](docs/tvl-history.md)
 for the accounting rules, mapping, and coverage boundaries.
+
+Use one shared SQLite file with separate TVL and fee/earnings tables. See
+[Shared database](docs/shared-database.md) to combine existing databases with a
+disk-space check and preserved source copies.

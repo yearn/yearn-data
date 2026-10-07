@@ -84,18 +84,18 @@ def store_candidate(conn, chain_id, address, family, category, source, *, metada
     address = Web3.to_checksum_address(address)
     metadata = metadata or {}
     now = int(time.time())
-    existing = conn.execute('SELECT address FROM vaults WHERE chain_id=? AND lower(address)=?',
+    existing = conn.execute('SELECT address FROM tvl_vaults WHERE chain_id=? AND lower(address)=?',
                             (chain_id, address.lower())).fetchone()
     stored_address = existing['address'] if existing else address
-    conn.execute('''INSERT INTO vaults(chain_id,version,address,asset,asset_symbol,asset_decimals,
+    conn.execute('''INSERT INTO tvl_vaults(chain_id,version,address,asset,asset_symbol,asset_decimals,
         name,management,protocol,deployment_block,updated_at,tvl_category)
         VALUES (?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(chain_id,address) DO UPDATE SET
-        version=CASE WHEN excluded.version='erc4626' AND vaults.version IN ('v2','v3','morpho-v1','morpho-v2')
-                     THEN vaults.version ELSE excluded.version END,
-        asset=COALESCE(excluded.asset,vaults.asset),asset_symbol=COALESCE(excluded.asset_symbol,vaults.asset_symbol),
-        asset_decimals=COALESCE(excluded.asset_decimals,vaults.asset_decimals),
-        name=COALESCE(excluded.name,vaults.name),protocol=COALESCE(excluded.protocol,vaults.protocol),
-        deployment_block=COALESCE(vaults.deployment_block,excluded.deployment_block),
+        version=CASE WHEN excluded.version='erc4626' AND tvl_vaults.version IN ('v2','v3','morpho-v1','morpho-v2')
+                     THEN tvl_vaults.version ELSE excluded.version END,
+        asset=COALESCE(excluded.asset,tvl_vaults.asset),asset_symbol=COALESCE(excluded.asset_symbol,tvl_vaults.asset_symbol),
+        asset_decimals=COALESCE(excluded.asset_decimals,tvl_vaults.asset_decimals),
+        name=COALESCE(excluded.name,tvl_vaults.name),protocol=COALESCE(excluded.protocol,tvl_vaults.protocol),
+        deployment_block=COALESCE(tvl_vaults.deployment_block,excluded.deployment_block),
         tvl_category=excluded.tvl_category,updated_at=excluded.updated_at''',
         (chain_id,family,stored_address,metadata.get('asset'),metadata.get('asset_symbol'),
          metadata.get('asset_decimals'),metadata.get('name'),'yearn',
@@ -266,7 +266,7 @@ def scan_factory(conn, factory, reader, *, from_block=None, to_block=None, chunk
     owners = owners_for_chain(factory['chain_id'])
     abi = FACTORY_EVENTS[factory['family']]
     scope = Scope(factory['chain_id'],factory['address'],'inventory:tvl-curation',fingerprint([abi,sorted(owners)]))
-    for lo,hi in missing_ranges(conn,scope,start,end,chunk_size):
+    for lo,hi in missing_ranges(conn,scope,start,end,chunk_size,table='tvl_history_coverage'):
         logs = reader.logs(factory['address'],abi,lo,hi)
         # Reject a possible capped response instead of certifying a truncated scan.
         if len(logs)>=10_000:
@@ -285,7 +285,7 @@ def scan_factory(conn, factory, reader, *, from_block=None, to_block=None, chunk
                 args = log['args']
                 tx = Web3.to_hex(log['transactionHash'])
                 asset = Web3.to_checksum_address(args['asset'])
-                db.execute('''INSERT OR IGNORE INTO vault_inventory_events
+                db.execute('''INSERT OR IGNORE INTO tvl_inventory_events
                     (chain_id,version,vault_address,source_kind,source_address,asset,tx_hash,
                      log_index,block_number,block_timestamp,decoded_json) VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
                     (factory['chain_id'],factory['family'],address,'tvl-curation-factory',factory['address'].lower(),
@@ -296,8 +296,8 @@ def scan_factory(conn, factory, reader, *, from_block=None, to_block=None, chunk
                                 deployment_block=int(log['blockNumber']))
             return len(accepted)
         end_hash = Web3.to_hex(reader.block(hi)['hash'])
-        commit_range(conn,scope,lo,hi,source='rpc',end_hash=end_hash,run_id=None,write=write)
-    rows = conn.execute('''SELECT vault_address,MIN(block_number) AS deployment_block FROM vault_inventory_events
+        commit_range(conn,scope,lo,hi,source='rpc',end_hash=end_hash,run_id=None,write=write,table='tvl_history_coverage')
+    rows = conn.execute('''SELECT vault_address,MIN(block_number) AS deployment_block FROM tvl_inventory_events
         WHERE chain_id=? AND source_kind='tvl-curation-factory' AND lower(source_address)=?
         AND block_number<=? GROUP BY vault_address''',(factory['chain_id'],factory['address'].lower(),end))
     return [{'chain_id':factory['chain_id'],'address':r['vault_address'],'family':factory['family'],
@@ -369,12 +369,12 @@ def historical_adapters(conn, parent, reader, *, from_block=None, to_block=None,
     if deployment is None:
         deployment = reader.deployment_block(address)
         with conn:
-            conn.execute('UPDATE vaults SET deployment_block=? WHERE chain_id=? AND lower(address)=?',
+            conn.execute('UPDATE tvl_vaults SET deployment_block=? WHERE chain_id=? AND lower(address)=?',
                          (deployment,chain,address.lower()))
     start = max(deployment,from_block if from_block is not None else deployment)
     scope = Scope(chain,address,'tvl-adapter-membership',fingerprint(ADD_ADAPTER_EVENT))
     if start<=end:
-        for lo,hi in missing_ranges(conn,scope,start,end,chunk_size):
+        for lo,hi in missing_ranges(conn,scope,start,end,chunk_size,table='tvl_history_coverage'):
             logs = reader.logs(address,ADD_ADAPTER_EVENT,lo,hi)
             if len(logs)>=10_000:
                 raise ValueError('adapter result cap; use smaller chunks')
@@ -382,7 +382,7 @@ def historical_adapters(conn, parent, reader, *, from_block=None, to_block=None,
                 for log in logs:
                     adapter = Web3.to_checksum_address(log['args']['account'])
                     header = reader.block(log['blockNumber'])
-                    db.execute('''INSERT OR IGNORE INTO events_raw(chain_id,contract_address,event_name,
+                    db.execute('''INSERT OR IGNORE INTO tvl_events_raw(chain_id,contract_address,event_name,
                         tx_hash,log_index,block_number,block_timestamp,decoded_json) VALUES (?,?,?,?,?,?,?,?)''',
                         (chain,address.lower(),'AddAdapter',Web3.to_hex(log['transactionHash']),
                          int(log['logIndex']),int(log['blockNumber']),int(header['timestamp']),
@@ -390,8 +390,8 @@ def historical_adapters(conn, parent, reader, *, from_block=None, to_block=None,
                     from .tvl_sources import put_strategy
                     put_strategy(db,chain,address,adapter,'morpho-adapter-event')
                 return len(logs)
-            commit_range(conn,scope,lo,hi,source='rpc',end_hash=Web3.to_hex(reader.block(hi)['hash']),run_id=None,write=write)
-    rows = conn.execute('''SELECT decoded_json,MIN(block_number) AS block_number FROM events_raw
+            commit_range(conn,scope,lo,hi,source='rpc',end_hash=Web3.to_hex(reader.block(hi)['hash']),run_id=None,write=write,table='tvl_history_coverage')
+    rows = conn.execute('''SELECT decoded_json,MIN(block_number) AS block_number FROM tvl_events_raw
         WHERE chain_id=? AND lower(contract_address)=? AND event_name='AddAdapter' AND block_number<=?
         GROUP BY decoded_json''',(chain,address.lower(),end))
     return {json.loads(r['decoded_json'])['account'].lower():r['block_number'] for r in rows}
@@ -404,7 +404,7 @@ def discover_adapter_relations(conn, *, chain_ids=None, reader_factory=Discovery
     result = {'source':'curation-relations','parents':0,'adapters':0,'nested':0,'market_adapters':0,
               'failures':[],'status':'complete'}
     readers = {}
-    parents = [dict(r) for r in conn.execute("SELECT * FROM vaults WHERE version='morpho-v2'")
+    parents = [dict(r) for r in conn.execute("SELECT * FROM tvl_vaults WHERE version='morpho-v2'")
                if r['chain_id'] not in TVL_EXCLUDED_CHAIN_IDS and (chain_ids is None or r['chain_id'] in chain_ids)]
     for parent in parents:
         chain, address = parent['chain_id'],parent['address']
@@ -552,7 +552,7 @@ def discover_catalog(conn, *, sources=None, chain_ids=None, from_block=None, to_
         with conn:
             seed_targets(conn)
         status = 'complete' if all(r['status']=='complete' for r in results) else 'incomplete'
-        catalog_count = sum(1 for r in conn.execute('SELECT chain_id FROM vaults')
+        catalog_count = sum(1 for r in conn.execute('SELECT chain_id FROM tvl_vaults')
                             if r['chain_id'] not in TVL_EXCLUDED_CHAIN_IDS and (chain_ids is None or r['chain_id'] in chain_ids))
         summary = {'run_id':run_id,'status':status,'catalog_vaults':catalog_count,'sources':results,
                    'scope':'configured registries, current API identities, and selected historical scan ranges'}

@@ -27,7 +27,7 @@ def test_kong_default_discovery_ignores_excluded_chains(db,monkeypatch):
     monkeypatch.setattr('yearn_data.tvl_sources.requests.post',lambda *_a,**_k:response)
     result=refresh_kong_catalog(db,with_summary=True)
     assert result['discovered']==1 and result['status']=='complete'
-    assert [r['chain_id'] for r in db.execute('SELECT chain_id FROM vaults')]==[1]
+    assert [r['chain_id'] for r in db.execute('SELECT chain_id FROM tvl_vaults')]==[1]
 
 
 def test_morpho_discovery_ignores_excluded_api_results(monkeypatch):
@@ -44,7 +44,7 @@ def test_morpho_discovery_ignores_excluded_api_results(monkeypatch):
 
 def test_collection_skips_retained_excluded_catalog_rows(db,monkeypatch):
     for chain in [1,146,80094]:
-        db.execute('INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (?,?,?,?,?,?)',
+        db.execute('INSERT INTO tvl_vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (?,?,?,?,?,?)',
                    (chain,'v3',address(1),address(90),18,1))
     db.commit()
     class Reader:
@@ -53,7 +53,7 @@ def test_collection_skips_retained_excluded_catalog_rows(db,monkeypatch):
         def exists(self,vault,block):return False
     run=collect_tvl(db,86399,86399,reader_factory=Reader)
     assert [r[0] for r in db.execute('SELECT DISTINCT chain_id FROM tvl_snapshots WHERE run_id=?',(run,))]==[1]
-    assert db.execute('SELECT count(*) FROM vaults').fetchone()[0]==3
+    assert db.execute('SELECT count(*) FROM tvl_vaults').fetchone()[0]==3
 
 
 def test_backfill_does_not_report_excluded_rows_as_pending(tmp_path,monkeypatch):
@@ -61,7 +61,7 @@ def test_backfill_does_not_report_excluded_rows_as_pending(tmp_path,monkeypatch)
     b=importlib.util.module_from_spec(spec);spec.loader.exec_module(b)
     dbpath=tmp_path/'old.sqlite';c=connect(dbpath);init_db(c)
     for chain in [146,80094]:
-        c.execute('INSERT INTO vaults(chain_id,version,address,updated_at) VALUES (?,?,?,?)',(chain,'v3',address(chain),1))
+        c.execute('INSERT INTO tvl_vaults(chain_id,version,address,updated_at) VALUES (?,?,?,?)',(chain,'v3',address(chain),1))
     c.commit();c.close()
     heads=tmp_path/'heads.json';heads.write_text('[]')
     env=tmp_path/'.env';env.write_text('')
@@ -78,7 +78,7 @@ def test_backfill_does_not_report_excluded_rows_as_pending(tmp_path,monkeypatch)
 def test_holder_scan_skips_retained_excluded_strategy_rows(db,chain_ids):
     from yearn_data.tvl_sources import scan_holders
     for chain in [1,146,80094]:
-        db.execute('INSERT INTO vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (?,?,?,?,?,1)',
+        db.execute('INSERT INTO tvl_vaults(chain_id,version,address,asset,asset_decimals,updated_at) VALUES (?,?,?,?,?,1)',
                    (chain,'v3',address(1),address(90),18))
         db.execute('INSERT INTO tvl_strategies VALUES (?,?,?,?)',(chain,address(1).lower(),address(9).lower(),'old-catalog'))
     db.commit()
@@ -91,4 +91,4 @@ def test_holder_scan_skips_retained_excluded_strategy_rows(db,chain_ids):
     result=scan_holders(db,86399,chain_ids=chain_ids,reader_factory=Reader)
     assert requested==[1] and result['failed_reads']==0
     assert db.execute('SELECT count(*) FROM tvl_strategies WHERE chain_id IN (146,80094)').fetchone()[0]==2
-    assert db.execute('SELECT count(*) FROM vaults').fetchone()[0]==3
+    assert db.execute('SELECT count(*) FROM tvl_vaults').fetchone()[0]==3
