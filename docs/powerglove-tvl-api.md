@@ -107,3 +107,19 @@ healthy public endpoints supplied the requested historical close and the Katana-
 repair completed. RPC endpoint configuration is local and contains no committed
 credentials. Refresh the existing fee/earnings analyses separately when their
 source data changes; TVL collection does not regenerate those analyses.
+
+## Historical query performance
+
+Chain, version and constant-price charts reuse compact, dated valuation rows
+within a dataset. The shared row cache is bounded to four windows of at most 400
+observed dates; longer histories keep streaming. Reference prices are cached
+separately for eight daily windows, independent of chart grouping. Explicit
+all-time first/last bounds share the same response cache as omitted bounds.
+Concurrent requests for identical source work join that calculation, while
+current summaries and unrelated reads remain available. The reference-price SQL
+sorts observation identities rather than full snapshot payloads.
+
+A first uncached history or reference window still performs a stored-data scan;
+subsequent group changes reuse those observations. These caches are in memory
+and are rebuilt after restart or a new dataset selection. No historical valuation,
+reference-price rule or reporting cutoff changes as a result of caching.

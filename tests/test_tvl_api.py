@@ -206,3 +206,66 @@ def test_rejected_provider_quote_is_not_served_or_used_as_reference(source, monk
     repaired = store.get().history(interval='daily',constant=True)
     assert repaired['actualChart'][0]['Ethereum'] == 130
     assert repaired['references'][0]['timestamp'] == DAY
+
+
+def test_version_and_constant_price_share_accounting_and_all_time_bounds(source, monkeypatch):
+    conn,path,root = source
+    run(conn,1,DAY,[(PARENT,'100'),(CHILD,'100')],[(CHILD,'50')])
+    run(conn,2,DAY+86400,[(PARENT,'200'),(CHILD,'200')],[(CHILD,'100')])
+    dataset = TvlStore(path,root).get()
+    chain = dataset.history(constant=True)
+    def unexpected_scan(*args, **kwargs):
+        pytest.fail('changing chart grouping rescanned stored source data')
+    monkeypatch.setattr(dataset,'iter_frames',unexpected_scan)
+    monkeypatch.setattr(dataset,'reference_candidates',unexpected_scan)
+    # Explicit full bounds are the same cache identity as omitted bounds.
+    assert dataset.history(start=DAY,end=DAY+86400,constant=True) is chain
+    versions = dataset.history(group='category',constant=True)
+    assert versions['actualChart'][0]['v3'] == chain['actualChart'][0]['Ethereum']
+    assert versions['constantPriceChart'][1]['v3'] == chain['constantPriceChart'][1]['Ethereum']
+
+
+def test_concurrent_group_requests_share_work_without_blocking_summary(source, monkeypatch):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+    conn,path,root = source
+    run(conn,1,DAY,[(PARENT,'100')])
+    dataset = TvlStore(path,root).get()
+    entered, release, joined = Event(), Event(), Event()
+    original = dataset._history_rows
+    count = []
+    def slow_rows(*args):
+        count.append(1)
+        entered.set()
+        assert release.wait(5)
+        return original(*args)
+    monkeypatch.setattr(dataset,'_history_rows',slow_rows)
+    original_once = dataset.compute_once
+    def notice_join(identity,compute):
+        if identity in dataset._pending:
+            joined.set()
+        return original_once(identity,compute)
+    monkeypatch.setattr(dataset,'compute_once',notice_join)
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        chain = pool.submit(dataset.history)
+        assert entered.wait(5)
+        versions = pool.submit(dataset.history,group='category')
+        assert joined.wait(5)
+        assert pool.submit(dataset.summary).result(timeout=2)['totalTvl'] == 100
+        release.set()
+        assert chain.result(timeout=5)['chart'][0]['Ethereum'] == 100
+        assert versions.result(timeout=5)['chart'][0]['v3'] == 100
+    assert len(count) == 1
+
+
+def test_long_histories_keep_streaming_instead_of_filling_shared_cache(source, monkeypatch):
+    import yearn_data.tvl_api as api
+    conn,path,root = source
+    run(conn,1,DAY,[(PARENT,'100')])
+    run(conn,2,DAY+86400,[(PARENT,'200')])
+    dataset = TvlStore(path,root).get()
+    monkeypatch.setattr(api,'HISTORY_CACHE_MAX_DATES',1)
+    def oversized_cache(*args, **kwargs):
+        pytest.fail('long history was retained in the shared row cache')
+    monkeypatch.setattr(dataset,'history_rows',oversized_cache)
+    assert [r['Ethereum'] for r in dataset.history(interval='daily')['chart']] == [100,200]

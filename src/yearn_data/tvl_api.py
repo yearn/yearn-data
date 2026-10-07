@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from concurrent.futures import Future
 from contextlib import closing
 from datetime import datetime, timezone
 from decimal import Decimal, localcontext
@@ -22,6 +23,7 @@ from .tvl import account, decimal
 CHAINS = {1: 'Ethereum', 10: 'Optimism', 100: 'Gnosis', 137: 'Polygon', 250: 'Fantom',
           999: 'HyperEVM', 4663: 'Yeer', 8453: 'Base', 42161: 'Arbitrum', 747474: 'Katana'}
 CATEGORIES = ('v1', 'v2', 'v3', 'curation')
+HISTORY_CACHE_MAX_DATES = 400
 PRICE_REJECTIONS = json.loads((Path(__file__).parent/'inventories'/'tvl-price-rejections.json').read_text())
 
 
@@ -103,6 +105,7 @@ class TvlDataset:
         self.base = max(self.run_ids)+1
         self.price_rejections = {(r['chainId'],r['asset'].lower(),r['timestamp']): r for r in manifest.get('priceRejections',[])}
         self._lock = threading.RLock()
+        self._pending = {}
 
     @lru_cache(maxsize=1)
     def dates(self):
@@ -175,13 +178,15 @@ class TvlDataset:
             SELECT chain_id,vault,timestamp,MAX((CASE WHEN json_extract(data_json,'$.tvl_usd') IS NOT NULL THEN 2
                 WHEN json_extract(data_json,'$.asset_units') IS NOT NULL THEN 1 ELSE 0 END)*{self.base}+run_id) rank
             FROM tvl_snapshots WHERE {where} GROUP BY chain_id,vault,timestamp),
-            candidates AS (SELECT s.data_json,s.timestamp,s.chain_id,s.vault,
+            candidates AS (SELECT s.run_id,s.timestamp,s.chain_id,s.vault,
                 ROW_NUMBER() OVER (PARTITION BY s.chain_id,s.vault ORDER BY s.timestamp) n
                 FROM tvl_snapshots s JOIN winners w ON s.chain_id=w.chain_id AND s.vault=w.vault
                 AND s.timestamp=w.timestamp AND s.run_id=w.rank%{self.base}
                 WHERE CAST(json_extract(s.data_json,'$.asset_units') AS REAL)>0
                 AND CAST(json_extract(s.data_json,'$.tvl_usd') AS REAL)>0)
-            SELECT data_json FROM candidates WHERE n<=7 ORDER BY timestamp'''
+            SELECT s.data_json FROM candidates c JOIN tvl_snapshots s
+            ON s.run_id=c.run_id AND s.chain_id=c.chain_id AND s.vault=c.vault AND s.timestamp=c.timestamp
+            WHERE c.n<=7 ORDER BY c.timestamp'''
         for row in conn.execute(sql,args):
             yield self.validate_price(json.loads(row['data_json']))
 
@@ -192,7 +197,7 @@ class TvlDataset:
     def iter_frames(self, timestamps, chain_id=None, include_curation=False):
         if not timestamps:
             return
-        with self._lock, closing(read_db(self.database)) as conn:
+        with closing(read_db(self.database)) as conn:
             snapshots = groupby(self.selected_rows(conn, 'tvl_snapshots', timestamps, chain_id), lambda r: r['timestamp'])
             edges = iter(groupby(self.selected_rows(conn, 'tvl_positions', timestamps, chain_id), lambda r: r['timestamp']))
             edge_group = next(edges, None)
@@ -256,35 +261,88 @@ class TvlDataset:
         result.update({c+'Tvl': result['tvlByCategory'][c] for c in CATEGORIES})
         return result | {'datasetId': self.id, 'asOfTimestamp': self.as_of()}
 
-    @lru_cache(maxsize=32)
+    def compute_once(self, identity, compute):
+        # Coalesce only identical expensive reads. Unrelated requests, including
+        # the current summary, must not wait behind a full-history calculation.
+        with self._lock:
+            future = self._pending.get(identity)
+            owner = future is None
+            if owner:
+                future = self._pending[identity] = Future()
+        if not owner:
+            return future.result()
+        try:
+            result = compute()
+            future.set_result(result)
+            return result
+        except Exception as error:
+            future.set_exception(error)
+            raise
+        finally:
+            with self._lock:
+                del self._pending[identity]
+
+    @lru_cache(maxsize=4)
+    def history_rows(self, timestamps, chain_id):
+        return self.compute_once(('rows',timestamps,chain_id), lambda:self._history_rows(timestamps,chain_id))
+
+    def _history_rows(self, timestamps, chain_id):
+        # Keep only the fields charts need, never full snapshot/position payloads.
+        # Version, chain and constant-price views share this dated accounting.
+        fields = ('chain_id','vault','name','category','version','asset_units','tvl_usd','external_tvl_usd')
+        return tuple((timestamp, tuple({field:row[field] for field in fields if field in row} for row in rows))
+                     for timestamp,rows,_,_ in self.iter_frames(timestamps, chain_id))
+
+    @lru_cache(maxsize=8)
+    def price_references(self, window, chain_id):
+        return self.compute_once(('references',window,chain_id), lambda:self._price_references(window,chain_id))
+
+    def _price_references(self, window, chain_id):
+        candidates = defaultdict(list)
+        with closing(read_db(self.database)) as conn:
+            for row in self.reference_candidates(conn, window, chain_id):
+                units, value = decimal(row.get('asset_units')), decimal(row.get('tvl_usd'))
+                if units and value and len(candidates[key(row)]) < 7:
+                    with localcontext() as ctx:
+                        ctx.prec = 78
+                        candidates[key(row)].append((row['timestamp'], value/units))
+        references, reference_prices = {}, {}
+        for identity, values in candidates.items():
+            center = median(price for _,price in values)
+            first = values[0]
+            skipped = max(first[1]/center,center/first[1]) > Decimal('1.5')
+            chosen = next(((t,p) for t,p in values if max(p/center,center/p)<=Decimal('1.5')),first) if skipped else first
+            references[identity] = {'vault':f'{identity[0]}:{identity[1]}','timestamp':chosen[0],
+                                    'priceUsd':float(chosen[1]),'source':'stored-tvl','depegCandidateSkipped':skipped}
+            reference_prices[identity] = chosen[1]
+        return references, reference_prices
+
     def history(self, group='chain', mode='external', interval='weekly', start=None, end=None, chain_id=None, constant=False):
+        # Canonicalize all-time bounds before caching: explicit first/last closes
+        # and omitted bounds select the same observations and reference window.
+        dates = self.dates()
+        if start is not None and start <= dates[0]:
+            start = None
+        if end is not None and end >= self.as_of():
+            end = None
+        return self._history(group,mode,interval,start,end,chain_id,constant)
+
+    @lru_cache(maxsize=32)
+    def _history(self, group, mode, interval, start, end, chain_id, constant):
         timestamps = self.sampled_dates(interval, start, end)
-        frames = self.iter_frames(timestamps, chain_id)
+        # Long daily histories remain streamed instead of retaining millions of
+        # vault rows. The main weekly charts fit within the bounded shared cache.
+        frames = (self.history_rows(timestamps, chain_id) if len(timestamps) <= HISTORY_CACHE_MAX_DATES
+                  else ((timestamp,rows) for timestamp,rows,_,_ in self.iter_frames(timestamps,chain_id)))
         references = {}
         reference_prices = {}
         if constant:
-            candidates = defaultdict(list)
-            # Reference selection uses the first seven stored daily observations
-            # in the requested window, not the global first date or a weekly price.
+            # Reference selection remains daily and scoped to the requested window.
             window = tuple(t for t in self.dates() if t <= self.as_of() and (start is None or t >= start) and (end is None or t <= end))
-            with closing(read_db(self.database)) as conn:
-                for row in self.reference_candidates(conn, window, chain_id):
-                    units, value = decimal(row.get('asset_units')), decimal(row.get('tvl_usd'))
-                    if units and value and len(candidates[key(row)]) < 7:
-                        with localcontext() as ctx:
-                            ctx.prec = 78
-                            candidates[key(row)].append((row['timestamp'], value/units))
-            for identity, values in candidates.items():
-                center = median(price for _, price in values)
-                first = values[0]
-                skipped = max(first[1]/center, center/first[1]) > Decimal('1.5')
-                chosen = next(((t,p) for t,p in values if max(p/center,center/p)<=Decimal('1.5')), first) if skipped else first
-                references[identity] = {'vault':f'{identity[0]}:{identity[1]}','timestamp':chosen[0],
-                                        'priceUsd':float(chosen[1]),'source':'stored-tvl','depegCandidateSkipped':skipped}
-                reference_prices[identity] = chosen[1]
+            references, reference_prices = self.price_references(window, chain_id)
         points = []
         actual_chart, fixed_chart = [], []
-        for timestamp, rows, _, _ in frames:
+        for timestamp, rows in frames:
             actual, fixed = defaultdict(list), defaultdict(list)
             for row in rows:
                 name = (CHAINS.get(row['chain_id'],f"Chain {row['chain_id']}") if group == 'chain' else
