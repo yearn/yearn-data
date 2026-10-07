@@ -1,0 +1,117 @@
+{
+  "source": "Yearn curator scope and extra products; Morpho factory families verified against official contracts",
+  "owners": [
+    {
+      "address": "0xFc5F89d29CCaa86e5410a7ad9D9d280d4455C12B",
+      "chain_ids": null
+    },
+    {
+      "address": "0x50B75d586929Ab2F75dC15f07E1B921b7C4Ba8fA",
+      "chain_ids": null
+    },
+    {
+      "address": "0x75a1253432356f90611546a487b5350CEF08780D",
+      "chain_ids": null
+    },
+    {
+      "address": "0x518C21DC88D9780c0A1Be566433c571461A70149",
+      "chain_ids": [
+        747474
+      ]
+    }
+  ],
+  "factories": [
+    {
+      "chain_id": 1,
+      "address": "0xa9c3d3a366466fa809d1ae982fb2c46e5fc41101",
+      "from_block": 18925584,
+      "family": "morpho-v1"
+    },
+    {
+      "chain_id": 1,
+      "address": "0x1897a8997241c1cd4bd0698647e4eb7213535c24",
+      "from_block": 21439510,
+      "family": "morpho-v1"
+    },
+    {
+      "chain_id": 1,
+      "address": "0xA1D94F746dEfa1928926b84fB2596c06926C0405",
+      "from_block": 23375073,
+      "family": "morpho-v2"
+    },
+    {
+      "chain_id": 8453,
+      "address": "0xA9c3D3a366466Fa809d1Ae982Fb2c46E5fC41101",
+      "from_block": 13978134,
+      "family": "morpho-v1"
+    },
+    {
+      "chain_id": 8453,
+      "address": "0xFf62A7c278C62eD665133147129245053Bbf5918",
+      "from_block": 23928808,
+      "family": "morpho-v1"
+    },
+    {
+      "chain_id": 8453,
+      "address": "0x4501125508079A99ebBebCE205DeC9593C2b5857",
+      "from_block": 35615206,
+      "family": "morpho-v2"
+    },
+    {
+      "chain_id": 747474,
+      "address": "0x1c8De6889acee12257899BFeAa2b7e534de32E16",
+      "from_block": 2741420,
+      "family": "morpho-v1"
+    },
+    {
+      "chain_id": 42161,
+      "address": "0x878988f5f561081deEa117717052164ea1Ef0c82",
+      "from_block": 296447195,
+      "family": "morpho-v1"
+    },
+    {
+      "chain_id": 42161,
+      "address": "0x6b46fa3cc9EBF8aB230aBAc664E37F2966Bf7971",
+      "from_block": 387016724,
+      "family": "morpho-v2"
+    }
+  ],
+  "extra_vaults": [
+    {
+      "chain_id": 1,
+      "address": "0xF470EB50B4a60c9b069F7Fd6032532B8F5cC014d",
+      "label": "Turtle Club",
+      "family": "erc4626"
+    },
+    {
+      "chain_id": 1,
+      "address": "0xA5DaB32DbE68E6fa784e1e50e4f620a0477D3896",
+      "label": "Turtle Club",
+      "family": "erc4626"
+    },
+    {
+      "chain_id": 1,
+      "address": "0xe1Ac97e2616Ad80f69f705ff007A4bbb3655544a",
+      "label": "Turtle Club",
+      "family": "erc4626"
+    },
+    {
+      "chain_id": 1,
+      "address": "0x77570CfEcf83bc6bB08E2cD9e8537aeA9F97eA2F",
+      "label": "Turtle Club",
+      "family": "erc4626"
+    },
+    {
+      "chain_id": 1,
+      "address": "0x3Dfe70B05657949A5dB340754aD664810ac63b21",
+      "label": "ARM WETH",
+      "family": "erc4626"
+    },
+    {
+      "chain_id": 8453,
+      "address": "0x581Cc9a73Ec7431723A4a80699B8f801205841F1",
+      "label": "OUSD",
+      "family": "erc4626"
+    }
+  ]
+}

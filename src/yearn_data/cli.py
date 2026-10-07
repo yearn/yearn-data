@@ -98,6 +98,32 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("init-db")
 
+    tvl_p = sub.add_parser("tvl", help="Historical vault TVL and nested positions")
+    tvl_sub = tvl_p.add_subparsers(dest="tvl_command", required=True)
+    tvl_discover = tvl_sub.add_parser("discover", help="Create or refresh the TVL catalog independently")
+    tvl_discover.add_argument("--sources", nargs="+", choices=["kong", "v1", "curation"], help="Default: all sources")
+    tvl_discover.add_argument("--chain-ids", nargs="+", type=int)
+    tvl_discover.add_argument("--from-block", type=int, help="Optional lower bound for factory and adapter scans")
+    tvl_discover.add_argument("--to-block", type=int, help="Optional finalized upper bound for historical scans")
+    tvl_discover.add_argument("--chunk-size", type=int, default=50_000)
+    tvl_import = tvl_sub.add_parser("import-catalog", help="Read the TVL service catalog once")
+    tvl_import.add_argument("--service-db", required=True)
+    tvl_sub.add_parser("refresh-kong", help="Refresh paginated V2/V3 vault and strategy inventory")
+    tvl_collect = tvl_sub.add_parser("collect", help="Store archive-state TVL at explicit timestamps")
+    tvl_collect.add_argument("--from-timestamp", required=True, type=int)
+    tvl_collect.add_argument("--to-timestamp", required=True, type=int)
+    tvl_collect.add_argument("--interval", type=int, default=86400, help="Seconds between samples; default daily")
+    tvl_collect.add_argument("--chain-ids", nargs="+", type=int)
+    tvl_collect.add_argument("--vaults", nargs="+", help="Optional bounded vault-address selection")
+    tvl_collect.add_argument("--price-source", choices=["yearn-prices", "defillama"], default="yearn-prices")
+    tvl_map = tvl_sub.add_parser("map-holders", help="Scan strategy balances for nested child vaults at a date")
+    tvl_map.add_argument("--timestamp", required=True, type=int)
+    tvl_map.add_argument("--chain-ids", nargs="+", type=int)
+    tvl_export = tvl_sub.add_parser("export", help="Export vaults, positions, and aggregate history")
+    tvl_export.add_argument("--out", required=True)
+    tvl_export.add_argument("--run-id", type=int)
+    tvl_export.add_argument("--include-curation", action="store_true", help="Deduct curated child ownership too")
+
     catchup_p = sub.add_parser("catch-up", help="Acquire one bounded chain window; no pricing or analysis")
     catchup_p.add_argument("--chain", required=True, choices=sorted(CHAINS))
     catchup_p.add_argument("--from-block", type=int, required=True)
@@ -245,6 +271,34 @@ def main(argv: list[str] | None = None) -> int:
     load_environment(args.env)
     conn = open_db(args.db)
     event_source = get_event_source()
+
+    if args.command == "tvl":
+        from .tvl import export_tvl
+        from .tvl_sources import import_service_catalog, refresh_kong_catalog, collect_tvl, scan_holders
+        if args.tvl_command == "discover":
+            from .tvl_discovery import discover_catalog
+            try:
+                result = discover_catalog(conn, sources=args.sources, chain_ids=args.chain_ids,
+                    from_block=args.from_block, to_block=args.to_block, chunk_size=args.chunk_size, progress=progress)
+                print(json.dumps(result, sort_keys=True))
+                return 0 if result["status"] == "complete" else 2
+            finally:
+                conn.close()
+        elif args.tvl_command == "import-catalog":
+            result = {"vaults": import_service_catalog(conn, args.service_db)}
+        elif args.tvl_command == "refresh-kong":
+            result = {"vaults": refresh_kong_catalog(conn)}
+        elif args.tvl_command == "map-holders":
+            result = scan_holders(conn, args.timestamp, chain_ids=args.chain_ids, progress=progress)
+        elif args.tvl_command == "collect":
+            result = {"run_id": collect_tvl(conn, args.from_timestamp, args.to_timestamp,
+                interval=args.interval, chain_ids=args.chain_ids, addresses=args.vaults,
+                price_source=args.price_source, progress=progress)}
+        else:
+            result = {"out": str(export_tvl(conn, args.out, args.run_id, include_curation=args.include_curation))}
+        print(json.dumps(result, sort_keys=True))
+        conn.close()
+        return 0
 
     if args.command == "init-db":
         print(f"initialized {args.db}")

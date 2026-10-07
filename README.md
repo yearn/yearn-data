@@ -97,3 +97,12 @@ For explicit per-chain RPC/Envio windows, including Optimism and Fantom, see [bo
 
 For the complete scriptable workflow and reproducible CSV exports, see
 [Refresh and export earnings and fees](docs/earnings-and-fees.md).
+
+
+## Historical TVL
+
+Store dated TVL for the complete vault inventory, including retired and curated
+vaults, and export nested capital positions with overlap deductions. Start from an empty database with
+`tvl discover`, collect an explicit date range with `tvl collect`, and use
+`tvl export` for CSV/JSON outputs. See [Historical TVL and nested positions](docs/tvl-history.md)
+for the accounting rules, mapping, and coverage boundaries.

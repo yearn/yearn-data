@@ -39,6 +39,9 @@ CHAINS: dict[str, ChainConfig] = {
 # keep default Envio jobs on chains with verified endpoint coverage.
 DEFAULT_CHAINS = ("eth", "polygon", "base", "arb", "kat")
 
+# Explicitly outside this project's TVL scope. Retain existing catalog evidence.
+TVL_EXCLUDED_CHAIN_IDS = frozenset({146, 80094})
+
 CHAIN_ALIASES = {
     "ethereum": "eth",
     "mainnet": "eth",
@@ -89,12 +92,22 @@ def normalize_chain_key(chain: str) -> str:
     return key
 
 
+def get_rpc_url_by_chain_id(chain_id: int) -> str:
+    """One endpoint selection for archive and ordinary full-node reads."""
+    env = next((cfg.rpc_env for cfg in CHAINS.values() if cfg.chain_id == chain_id), None)
+    value = (os.environ.get(f"ARCHIVE_RPC_URI_FOR_{chain_id}")
+             or os.environ.get(f"ARCHIVE_RPC_URL_{chain_id}")
+             or os.environ.get(f"RPC_URI_FOR_{chain_id}")
+             or (os.environ.get(env) if env else None))
+    if not value:
+        raise ValueError(f"missing RPC for chain {chain_id}; set ARCHIVE_RPC_URL_{chain_id}")
+    return value
+
+
 def get_rpc_url(chain: str) -> str:
     cfg = CHAINS[normalize_chain_key(chain)]
-    value = os.environ.get(cfg.rpc_env)
-    if not value:
-        raise ValueError(f"missing RPC for {cfg.key}; set {cfg.rpc_env}")
-    return value
+    return get_rpc_url_by_chain_id(cfg.chain_id)
+
 
 def get_rpc_urls(chain: str) -> list[str]:
     """RPC endpoints for a chain; comma-separated values are tried in order."""
