@@ -114,3 +114,5 @@ for the accounting rules, mapping, and coverage boundaries.
 Use one shared SQLite file with separate TVL and fee/earnings tables. See
 [Shared database](docs/shared-database.md) to combine existing databases with a
 disk-space check and preserved source copies.
+
+Serve the accumulated observations to Powerglove with the [TVL pairing API](docs/powerglove-tvl-api.md).

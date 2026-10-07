@@ -39,7 +39,7 @@ yearn-data serve-pairing --publication data/powerglove \
   --host 127.0.0.1 --port 3490
 ```
 
-The server validates the selected results at startup, reads the source database in read-only mode, and caches bounded queries over those results. It makes no RPC or price-service requests. It supplies only:
+The server validates the selected results at startup, reads the source database in read-only mode, and caches bounded queries over those results. It makes no RPC or price-service requests. Without the optional TVL publication, it supplies:
 
 | Path | Result |
 | --- | --- |
@@ -134,3 +134,7 @@ The implementation is validated with offline selection/filter/accounting fixture
 | A7–A8: rendering/requests | Actual-source cards/charts/table; browser HTTP failure and retry; absent amounts render as dashes; filter/late-response/cache-refresh tests; no public coverage panel. |
 | A9: analytics | Proxied fee-stack and profitability financial payloads match their existing providers; TVL continues serving successfully; production-origin separation is tested. |
 | A10: pairing | Production frontend build, actual-source browser inspection, dataset-pinned history/vault requests and retained private preview. |
+
+## TVL integration
+
+For the shared-database TVL cutover and consumer configuration, see [Powerglove TVL API](powerglove-tvl-api.md).
