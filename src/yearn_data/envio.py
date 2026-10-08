@@ -478,11 +478,12 @@ def _import_vault_inventory_entities(
                 asset = node.get(asset_field) if asset_field else None
                 cur = conn.execute(
                     """
-                    INSERT OR IGNORE INTO vault_inventory_events (
-                        chain_id, version, vault_address, source_kind, source_address,
-                        action, asset, tx_hash, log_index, block_number, block_timestamp,
-                        decoded_json
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        INSERT INTO vault_inventory_events (
+                            chain_id, version, vault_address, source_kind, source_address,
+                            action, asset, tx_hash, log_index, block_number, block_timestamp,
+                            decoded_json
+                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        ON CONFLICT DO NOTHING
                     """,
                     (
                         cfg.chain_id,

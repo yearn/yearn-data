@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 from yearn_data.config import load_environment, TVL_EXCLUDED_CHAIN_IDS
 from yearn_data.multicall import MULTICALL3, MULTICALL3_ABI
 from yearn_data.pricing import fetch_yearn_price, fetch_yearn_prices_batch, yearn_prices_token_key
-from yearn_data.storage import connect, init_db
+from yearn_data.storage import connect, init_db, is_postgres, database_reference
 from yearn_data.tvl import export_tvl, BACKFILL_SCHEMA
 from yearn_data import tvl_sources as sources
 
@@ -84,9 +84,15 @@ class Prices:
             for key, result in results.items():
                 self.cache[key] = result
                 price, status, evidence = result
-                self.conn.execute('''INSERT OR REPLACE INTO tvl_prices
+                self.conn.execute("""
+                    INSERT INTO tvl_prices
                     (chain_id,token_address,timestamp,source,price_usd,status,raw_json)
-                    VALUES (?,?,?,'yearn-tvl_prices',?,?,?)''', (*key,price,status,json.dumps(evidence)))
+                    VALUES (?,?,?,'yearn-tvl_prices',?,?,?)
+                    ON CONFLICT(chain_id,token_address,timestamp,source) DO UPDATE SET
+                        price_usd=excluded.price_usd,
+                        status=excluded.status,
+                        raw_json=excluded.raw_json
+                """, (*key,price,status,json.dumps(evidence)))
 
 
 class BatchedReader(sources.ArchiveReader):
@@ -247,7 +253,7 @@ def export_batch(conn,out,run_id):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--db',type=Path,required=True)
+    p.add_argument('--db',required=True,help='SQLite path, or neon to use NEON_DB_URL')
     p.add_argument('--heads',type=Path,required=True,help='Verified finalized-head preflight JSON')
     p.add_argument('--env',type=Path,required=True)
     p.add_argument('--out',type=Path,required=True)
@@ -256,16 +262,26 @@ def main():
     p.add_argument('--limit-batches',type=int)
     args=p.parse_args()
     args.out.mkdir(parents=True,exist_ok=True)
-    lock=(args.db.with_suffix('.backfill.lock')).open('w')
+    lock_path = args.out/'.backfill.lock' if is_postgres(args.db) else Path(args.db).with_suffix('.backfill.lock')
+    lock=lock_path.open('w')
     fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
     load_environment([args.env])
-    conn=connect(args.db);init_db(conn)
-    conn.execute('PRAGMA journal_mode=WAL');conn.execute('PRAGMA busy_timeout=60000');conn.executescript(SCHEMA)
+    conn=connect(args.db,direct=True)
+    if is_postgres(args.db):
+        # A direct connection keeps the advisory lock on the same backend for
+        # this job's lifetime, including when another host starts a backfill.
+        if not conn.execute('SELECT pg_try_advisory_lock(743219887)').fetchone()[0]:
+            conn.close()
+            raise ValueError('a TVL backfill already holds the database lock')
+    init_db(conn)
+    if not is_postgres(args.db):
+        conn.execute('PRAGMA journal_mode=WAL');conn.execute('PRAGMA busy_timeout=60000')
+    conn.executescript(SCHEMA)
     heads={r['chain_id']:r for r in json.loads(args.heads.read_text())}
     start=int(datetime.strptime(args.from_date,'%Y-%m-%d').replace(tzinfo=UTC).timestamp())+86399
     end=int(datetime.strptime(args.to_date,'%Y-%m-%d').replace(tzinfo=UTC).timestamp())+86399
     state={'phase':'preparing','pid':os.getpid(),'from':args.from_date,'through':args.to_date,
-           'interval':'daily UTC close','price_source':'yearn-prices','db':str(args.db.resolve()),
+           'interval':'daily UTC close','price_source':'yearn-prices','db':database_reference(args.db),
            'scope':'known catalog; known candidate overlap mappings; curation reported separately',
            'excluded_chain_ids':sorted(TVL_EXCLUDED_CHAIN_IDS),
            'pending_chains':[], 'price_limits':[], 'completed_batches':0}
@@ -316,7 +332,7 @@ def main():
             with ThreadPoolExecutor(max_workers=6) as pool:
                 for index,result in enumerate(pool.map(resolve,pending),1):
                     if index%20==0: publish(deployment_progress={"chain_id":chain,"checked":index,"remaining":len(pending)-index})
-                    with conn:conn.execute('INSERT OR REPLACE INTO tvl_backfill_births VALUES (?,?,?,?,?,?)',result)
+                    with conn:conn.execute('INSERT INTO tvl_backfill_births VALUES (?,?,?,?,?,?) ON CONFLICT(chain_id,address) DO UPDATE SET block_number=excluded.block_number, timestamp=excluded.timestamp, status=excluded.status, reason=excluded.reason',result)
             rows=conn.execute('SELECT * FROM tvl_backfill_births WHERE chain_id=?',(chain,)).fetchall()
             for r in rows:
                 if r['status']=='ok':births[chain][r['address']]=r['block_number']
@@ -346,7 +362,7 @@ def main():
             edges=sources.candidate_edges(conn,selected)
             reader=BatchedReader(chain,conn,heads[chain],selected,edges,births[chain],prices)
             publish(phase='running',active_chain=chain,active_month=month,selected_vaults=len(selected))
-            with conn:conn.execute("INSERT OR REPLACE INTO tvl_backfill_batches VALUES (?,?,?,NULL,'running')",(chain,lo,hi))
+            with conn:conn.execute("INSERT INTO tvl_backfill_batches VALUES (?,?,?,NULL,'running') ON CONFLICT(chain_id,from_timestamp,to_timestamp) DO UPDATE SET run_id=excluded.run_id, status=excluded.status",(chain,lo,hi))
             def progress(message):
                 print(message,flush=True)
                 run=conn.execute('SELECT max(id) FROM tvl_runs').fetchone()[0]
@@ -365,6 +381,9 @@ def main():
     except BaseException as exc:
         publish(phase='stopped',failure_class=type(exc).__name__)
         raise
+    finally:
+        conn.close()
+        lock.close()
 
 
 if __name__=='__main__':main()

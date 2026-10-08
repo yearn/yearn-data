@@ -53,7 +53,7 @@ def retain(conn, report, logs, coverage):
     payload = {'report_inputs': binding(report), 'coverage': coverage, 'logs': logs,
                'block_hash': logs[0]['blockHash'].lower()}
     evaluate(report, payload)
-    conn.execute('INSERT OR REPLACE INTO fee_filtered_log_evidence VALUES (?,?,?,?,?)',
+    conn.execute('INSERT INTO fee_filtered_log_evidence VALUES (?,?,?,?,?) ON CONFLICT(chain_id,tx_hash,report_log_index) DO UPDATE SET payload_json=excluded.payload_json, payload_sha256=excluded.payload_sha256',
         (report['chain_id'], report['tx_hash'], report['log_index'], json.dumps(payload), digest(payload)))
 
 

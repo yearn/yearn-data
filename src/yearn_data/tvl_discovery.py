@@ -100,9 +100,13 @@ def store_candidate(conn, chain_id, address, family, category, source, *, metada
         (chain_id,family,stored_address,metadata.get('asset'),metadata.get('asset_symbol'),
          metadata.get('asset_decimals'),metadata.get('name'),'yearn',
          'curation' if category=='curation' else None,deployment_block,now,category))
-    conn.execute('''INSERT INTO tvl_catalog_evidence VALUES (?,?,?,?,?,?)
-        ON CONFLICT(chain_id,address,source) DO UPDATE SET metadata_status=excluded.metadata_status,
-        evidence_json=excluded.evidence_json,updated_at=excluded.updated_at''',
+    conn.execute("""
+        INSERT INTO tvl_catalog_evidence VALUES (?,?,?,?,?,?)
+        ON CONFLICT(chain_id,address,source) DO UPDATE SET
+            metadata_status=excluded.metadata_status,
+            evidence_json=excluded.evidence_json,
+            updated_at=excluded.updated_at
+    """,
         (chain_id,address.lower(),source,status,to_json(evidence or {}),now))
 
 
@@ -285,9 +289,12 @@ def scan_factory(conn, factory, reader, *, from_block=None, to_block=None, chunk
                 args = log['args']
                 tx = Web3.to_hex(log['transactionHash'])
                 asset = Web3.to_checksum_address(args['asset'])
-                db.execute('''INSERT OR IGNORE INTO tvl_inventory_events
+                db.execute("""
+                    INSERT INTO tvl_inventory_events
                     (chain_id,version,vault_address,source_kind,source_address,asset,tx_hash,
-                     log_index,block_number,block_timestamp,decoded_json) VALUES (?,?,?,?,?,?,?,?,?,?,?)''',
+                    log_index,block_number,block_timestamp,decoded_json) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+                    ON CONFLICT DO NOTHING
+                """,
                     (factory['chain_id'],factory['family'],address,'tvl-curation-factory',factory['address'].lower(),
                      asset,tx,int(log['logIndex']),int(log['blockNumber']),int(header['timestamp']),
                      to_json({'owner':args.get('initialOwner',args.get('owner')),'event':abi['name']})))
@@ -382,8 +389,11 @@ def historical_adapters(conn, parent, reader, *, from_block=None, to_block=None,
                 for log in logs:
                     adapter = Web3.to_checksum_address(log['args']['account'])
                     header = reader.block(log['blockNumber'])
-                    db.execute('''INSERT OR IGNORE INTO tvl_events_raw(chain_id,contract_address,event_name,
-                        tx_hash,log_index,block_number,block_timestamp,decoded_json) VALUES (?,?,?,?,?,?,?,?)''',
+                    db.execute("""
+                        INSERT INTO tvl_events_raw(chain_id,contract_address,event_name,
+                        tx_hash,log_index,block_number,block_timestamp,decoded_json) VALUES (?,?,?,?,?,?,?,?)
+                        ON CONFLICT DO NOTHING
+                    """,
                         (chain,address.lower(),'AddAdapter',Web3.to_hex(log['transactionHash']),
                          int(log['logIndex']),int(log['blockNumber']),int(header['timestamp']),
                          to_json({'account':adapter})))
@@ -472,7 +482,7 @@ def discover_adapter_relations(conn, *, chain_ids=None, reader_factory=Discovery
                         child = target.lower()
                         evidence.update(getter=getter,child=child,child_metadata=metadata)
                         with conn:
-                            conn.execute('INSERT OR IGNORE INTO tvl_targets VALUES (?,?,?,?)',
+                            conn.execute('INSERT INTO tvl_targets VALUES (?,?,?,?) ON CONFLICT DO NOTHING',
                                          (chain,adapter,child,'morpho-adapter'))
                         status = 'nested'
                         result['nested'] += 1
@@ -492,9 +502,13 @@ def discover_adapter_relations(conn, *, chain_ids=None, reader_factory=Discovery
                     evidence['reason'] = type(exc).__name__
                 # Keep link diagnostics separately from historical valuation evidence.
                 with conn:
-                    conn.execute('''INSERT INTO tvl_catalog_evidence VALUES (?,?,?,?,?,?)
-                        ON CONFLICT(chain_id,address,source) DO UPDATE SET metadata_status=excluded.metadata_status,
-                        evidence_json=excluded.evidence_json,updated_at=excluded.updated_at''',
+                    conn.execute("""
+                        INSERT INTO tvl_catalog_evidence VALUES (?,?,?,?,?,?)
+                        ON CONFLICT(chain_id,address,source) DO UPDATE SET
+                            metadata_status=excluded.metadata_status,
+                            evidence_json=excluded.evidence_json,
+                            updated_at=excluded.updated_at
+                    """,
                         (chain,adapter,'adapter:'+address.lower(),status,to_json(evidence),int(time.time())))
         except Exception as exc:
             result['failures'].append({'chain_id':chain,'parent':address.lower(),'stage':'adapter-list',
@@ -525,8 +539,8 @@ def discover_catalog(conn, *, sources=None, chain_ids=None, from_block=None, to_
     params = {'sources':selected,'chain_ids':sorted(set(chain_ids)) if chain_ids is not None else None,
               'from_block':from_block,'to_block':to_block,'chunk_size':chunk_size,
               'excluded_chain_ids':sorted(TVL_EXCLUDED_CHAIN_IDS)}
-    run_id = conn.execute("INSERT INTO tvl_discovery_runs(started_at,status,params_json) VALUES (?,'running',?)",
-                          (int(time.time()),to_json(params))).lastrowid
+    run_id = conn.execute("INSERT INTO tvl_discovery_runs(started_at,status,params_json) VALUES (?,'running',?) RETURNING id",
+                          (int(time.time()),to_json(params))).fetchone()[0]
     conn.commit()
     results = []
     try:

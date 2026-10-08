@@ -40,7 +40,8 @@ def test_invalid_ids_cannot_become_success(monkeypatch):
 
 def test_price_omissions_verified_and_persisted(monkeypatch):
     c=sqlite3.connect(':memory:');c.row_factory=sqlite3.Row
-    c.execute('CREATE TABLE tvl_prices(chain_id,token_address,timestamp,block_number,source,price_usd,status,raw_json)')
+    c.execute('CREATE TABLE tvl_prices(chain_id,token_address,timestamp,block_number,source,price_usd,status,raw_json, '
+              'PRIMARY KEY(chain_id,token_address,timestamp,source))')
     key=(1,'0x'+'11'*20,ts('2020-03-01'))
     monkeypatch.setattr(b,'fetch_yearn_prices_batch',lambda *_a,**_k:{})
     exact=Mock(return_value=(None,'missing',{'provider':'yearn-prices'}));monkeypatch.setattr(b,'fetch_yearn_price',exact)

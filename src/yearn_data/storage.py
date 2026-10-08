@@ -1,14 +1,17 @@
-"""SQLite storage layer."""
+"""Shared SQLite/Postgres storage entry points."""
 
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
 from pathlib import Path
 from typing import Any, Iterable
+import psycopg
 
 
 DEFAULT_DB_PATH = Path("data/yearn.sqlite")
+DATABASE_ERRORS = (sqlite3.Error, psycopg.Error)
 
 
 SCHEMA = """
@@ -263,8 +266,33 @@ CREATE TABLE IF NOT EXISTS analysis_outputs (
 """
 
 
-def connect(path: str | Path = DEFAULT_DB_PATH) -> sqlite3.Connection:
+def is_postgres(database) -> bool:
+    return str(database) == 'neon' or str(database).startswith(('postgresql://', 'postgres://'))
+
+
+def database_reference(database) -> str:
+    """Publication manifests contain a logical name, never database credentials."""
+    if is_postgres(database):
+        if str(database) != 'neon':
+            raise ValueError('use the logical database name neon for publications; URLs contain credentials')
+        return 'neon'
+    return str(Path(database).resolve())
+
+
+def connect(path: str | Path = DEFAULT_DB_PATH, *, readonly=False, schema=None, direct=False):
+    if is_postgres(path):
+        from .postgres import Connection
+        url = os.environ.get('NEON_DB_URL') if str(path) == 'neon' else str(path)
+        if not url:
+            raise ValueError('NEON_DB_URL is required for --db neon')
+        return Connection(url, readonly=readonly,
+                          schema=schema or os.environ.get('YEARN_DATA_DB_SCHEMA', 'public'), direct=direct)
     db_path = Path(path)
+    if readonly:
+        conn = sqlite3.connect(db_path.resolve().as_uri() + '?mode=ro', uri=True)
+        conn.row_factory = sqlite3.Row
+        conn.execute('PRAGMA query_only=ON')
+        return conn
     db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
@@ -272,13 +300,29 @@ def connect(path: str | Path = DEFAULT_DB_PATH) -> sqlite3.Connection:
     return conn
 
 
-def init_db(conn: sqlite3.Connection) -> None:
+def table_columns(conn, table):
+    if hasattr(conn, 'raw'):
+        return [row[0] for row in conn.execute('SELECT column_name FROM information_schema.columns '
+            'WHERE table_schema=current_schema() AND table_name=? ORDER BY ordinal_position', (table,))]
+    return [row['name'] for row in conn.execute(f'PRAGMA table_info("{table}")')]
+
+
+def table_exists(conn, table):
+    if hasattr(conn, 'raw'):
+        return conn.execute('SELECT to_regclass(?)', (table,)).fetchone()[0] is not None
+    return conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?", (table,)).fetchone() is not None
+
+
+def init_db(conn) -> None:
     from .coverage import SCHEMA as COVERAGE_SCHEMA
 
     conn.executescript(SCHEMA)
     conn.executescript(COVERAGE_SCHEMA)
     from .tvl import SCHEMA as TVL_SCHEMA
     conn.executescript(TVL_SCHEMA)
+    if hasattr(conn, 'raw'):
+        from .postgres import create_indexes
+        create_indexes(conn)
     _ensure_column(conn, "vault_inventory_events", "action", "TEXT NOT NULL DEFAULT 'added'")
     conn.execute("""CREATE TABLE IF NOT EXISTS fee_daily_prices (
         chain_id INTEGER NOT NULL, asset TEXT NOT NULL, eod_timestamp INTEGER NOT NULL,
@@ -352,13 +396,13 @@ def init_db(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-def _ensure_column(conn: sqlite3.Connection, table: str, column: str, definition: str) -> None:
-    columns = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
+def _ensure_column(conn, table: str, column: str, definition: str) -> None:
+    columns = table_columns(conn, table)
     if column not in columns:
         conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
 
 
-def seed_chains(conn: sqlite3.Connection, chains: dict[str, Any]) -> None:
+def seed_chains(conn, chains: dict[str, Any]) -> None:
     rows = [
         (cfg.chain_id, cfg.key, cfg.name, cfg.rpc_env, cfg.defillama_slug)
         for cfg in chains.values()
@@ -386,7 +430,7 @@ def from_json(value: str) -> Any:
     return json.loads(value)
 
 
-def upsert_many(conn: sqlite3.Connection, sql: str, rows: Iterable[tuple[Any, ...]]) -> int:
+def upsert_many(conn, sql: str, rows: Iterable[tuple[Any, ...]]) -> int:
     cur = conn.executemany(sql, rows)
     conn.commit()
     return cur.rowcount

@@ -12,13 +12,13 @@ from itertools import groupby
 import json
 from pathlib import Path
 import re
-import sqlite3
 from statistics import median
 import threading
 import time
 from urllib.parse import parse_qs, urlsplit
 
 from .tvl import account, decimal
+from .storage import connect, database_reference, table_exists, DATABASE_ERRORS
 
 CHAINS = {1: 'Ethereum', 10: 'Optimism', 100: 'Gnosis', 137: 'Polygon', 250: 'Fantom',
           999: 'HyperEVM', 4663: 'Yeer', 8453: 'Base', 42161: 'Arbitrum', 747474: 'Katana'}
@@ -33,9 +33,7 @@ def encoded(value):
 
 
 def read_db(path):
-    conn = sqlite3.connect(Path(path).resolve().as_uri()+'?mode=ro', uri=True)
-    conn.row_factory = sqlite3.Row
-    return conn
+    return connect(path, readonly=True)
 
 
 def key(row):
@@ -49,6 +47,40 @@ def money(rows, field):
     with localcontext() as ctx:
         ctx.prec = 78
         return float(sum(values, Decimal(0))) if values else None
+
+
+def chart_response(result,top=None):
+    """Opt-in chart payload; the full diagnostic/export response is unchanged."""
+    output={key:value for key,value in result.items() if key not in ('points','references')}
+    output.update(points=[],references=[],meta=dict(result['meta']))
+    if 'references' in result:
+        output['meta']['referenceCount']=len(result['references'])
+    if top is None:
+        return output
+    actual=result['actualChart']
+    series=list(dict.fromkeys(name for row in actual for name in row if name!='timestamp'))
+    def latest(name):
+        return next((row[name] for row in reversed(actual) if name in row),0)
+    ranked=sorted(series,key=latest,reverse=True)
+    selected,remaining=ranked[:top],ranked[top:]
+    other='All other vaults'
+    chart=[]
+    neutral=[]
+    for row in actual:
+        point={'timestamp':row['timestamp']}|{name:row[name] for name in selected if name in row}
+        values=[row[name] for name in remaining if name in row]
+        if values:point[other]=sum(values)
+        chart.append(point)
+    for row in result['constantPriceChart']:
+        values=[value for name,value in row.items() if name!='timestamp']
+        point={'timestamp':row['timestamp']}
+        if values:point['Price-neutral TVL']=sum(values)
+        neutral.append(point)
+    output.pop('chart',None)
+    output.update(actualChart=chart,constantPriceChart=neutral,
+                  series=selected+([other] if remaining else []))
+    output['meta'].update(topSeries=output['series'],sourceSeriesCount=len(series))
+    return output
 
 
 def publish_tvl(database, publication, *, current_bridge_policy='none'):
@@ -65,12 +97,12 @@ def publish_tvl(database, publication, *, current_bridge_policy='none'):
         catalog = [dict(r) for r in conn.execute('SELECT * FROM tvl_vaults ORDER BY chain_id,address')]
         # Allocator recognition uses positive report evidence, not a V3 display label.
         allocator_keys = []
-        if conn.execute("SELECT 1 FROM sqlite_master WHERE name='strategy_reports'").fetchone():
+        if table_exists(conn, 'strategy_reports'):
             allocator_keys = [list(r) for r in conn.execute(
                 "SELECT DISTINCT chain_id,lower(vault_address) FROM strategy_reports WHERE version='v3'")]
     context = {'runs': runs, 'catalog': catalog, 'allocatorKeys': sorted(allocator_keys),
                'currentBridgePolicy': current_bridge_policy, 'selectionPolicy': 'known-value-then-newest-finished-common-close-6', 'bridgeMigrations': BRIDGE_MIGRATIONS, 'priceRejections': PRICE_REJECTIONS,
-               'historicalBridgePolicy': 'dated-evidence-only', 'database': str(Path(database).resolve())}
+               'historicalBridgePolicy': 'dated-evidence-only', 'database': database_reference(database)}
     dataset_id = hashlib.sha256(encoded(context).encode()).hexdigest()
     root = Path(publication)
     (root/'datasets').mkdir(parents=True, exist_ok=True)
@@ -108,6 +140,14 @@ class TvlDataset:
         self.price_rejections = {(r['chainId'],r['asset'].lower(),r['timestamp']): r for r in manifest.get('priceRejections',[])}
         self._lock = threading.RLock()
         self._pending = {}
+        self._prepared = None
+
+    def history_prepared(self):
+        # Preparation may finish after this API process first saw the dataset.
+        if not self._prepared:
+            from .tvl_history_cache import ready
+            self._prepared=ready(self)
+        return self._prepared
 
     @lru_cache(maxsize=1)
     def dates(self):
@@ -156,7 +196,8 @@ class TvlDataset:
             FROM {table} WHERE {where} GROUP BY {dimensions})
             SELECT s.run_id,s.data_json FROM {table} s JOIN winners w
             ON {joins} AND s.run_id=w.rank%{self.base} ORDER BY s.timestamp,s.chain_id'''
-        for row in conn.execute(sql, args):
+        records=conn.stream(sql,args) if hasattr(conn,'raw') else conn.execute(sql,args)
+        for row in records:
             data = json.loads(row['data_json'])
             data['source_run_id'] = row['run_id']
             yield self.validate_price(data) if table == 'tvl_snapshots' else data
@@ -207,7 +248,7 @@ class TvlDataset:
     def iter_frames(self, timestamps, chain_id=None, include_curation=False):
         if not timestamps:
             return
-        with closing(read_db(self.database)) as conn:
+        with closing(read_db(self.database)) as conn, conn:
             snapshots = groupby(self.selected_rows(conn, 'tvl_snapshots', timestamps, chain_id), lambda r: r['timestamp'])
             edges = iter(groupby(self.selected_rows(conn, 'tvl_positions', timestamps, chain_id), lambda r: r['timestamp']))
             edge_group = next(edges, None)
@@ -322,6 +363,9 @@ class TvlDataset:
         return self.compute_once(('rows',timestamps,chain_id), lambda:self._history_rows(timestamps,chain_id))
 
     def _history_rows(self, timestamps, chain_id):
+        if self.history_prepared():
+            from .tvl_history_cache import rows
+            return tuple(rows(self,timestamps,chain_id))
         if chain_id is not None:
             # Main charts and drilldowns share one dated accounting calculation.
             return tuple((timestamp,selected) for timestamp,rows in self.history_rows(timestamps,None)
@@ -342,13 +386,19 @@ class TvlDataset:
             return ({identity:reference for identity,reference in references.items() if identity[0]==chain_id},
                     {identity:price for identity,price in prices.items() if identity[0]==chain_id})
         candidates = defaultdict(list)
-        with closing(read_db(self.database)) as conn:
-            for row in self.reference_candidates(conn, window, chain_id):
-                units, value = decimal(row.get('asset_units')), decimal(row.get('tvl_usd'))
-                if units and value and len(candidates[key(row)]) < 7:
-                    with localcontext() as ctx:
-                        ctx.prec = 78
-                        candidates[key(row)].append((row['timestamp'], value/units))
+        def source_rows():
+            if self.history_prepared():
+                from .tvl_history_cache import references
+                yield from references(self,window)
+            else:
+                with closing(read_db(self.database)) as conn:
+                    yield from self.reference_candidates(conn, window, chain_id)
+        for row in source_rows():
+            units, value = decimal(row.get('asset_units')), decimal(row.get('tvl_usd'))
+            if units and value and len(candidates[key(row)]) < 7:
+                with localcontext() as ctx:
+                    ctx.prec = 78
+                    candidates[key(row)].append((row['timestamp'], value/units))
         references, reference_prices = {}, {}
         for identity, values in candidates.items():
             center = median(price for _,price in values)
@@ -373,10 +423,24 @@ class TvlDataset:
     @lru_cache(maxsize=32)
     def _history(self, group, mode, interval, start, end, chain_id, constant):
         timestamps = self.sampled_dates(interval, start, end)
+        if not constant and group in ('chain','category','type') and chain_id is None:
+            from .tvl_history_cache import totals_ready,totals
+            if totals_ready(self):
+                chart={timestamp:{'timestamp':timestamp} for timestamp in timestamps}
+                points=[]
+                for row in totals(self,timestamps,'category' if group=='type' else group,mode,chain_id):
+                    value=float(Decimal(row['value']))
+                    chart[row['timestamp']][row['series']]=value
+                    points.append({'timestamp':row['timestamp'],'series':row['series'],'tvlUsd':value})
+                return self.history_result(group,mode,interval,start,end,timestamps,points,list(chart.values()))
         # Long daily histories remain streamed instead of retaining millions of
         # vault rows. The main weekly charts fit within the bounded shared cache.
-        frames = (self.history_rows(timestamps, chain_id) if len(timestamps) <= HISTORY_CACHE_MAX_DATES
-                  else ((timestamp,rows) for timestamp,rows,_,_ in self.iter_frames(timestamps,chain_id)))
+        if self.history_prepared():
+            from .tvl_history_cache import rows
+            frames=rows(self,timestamps,chain_id)
+        else:
+            frames = (self.history_rows(timestamps, chain_id) if len(timestamps) <= HISTORY_CACHE_MAX_DATES
+                      else ((timestamp,rows) for timestamp,rows,_,_ in self.iter_frames(timestamps,chain_id)))
         references = {}
         reference_prices = {}
         if constant:
@@ -414,10 +478,7 @@ class TvlDataset:
                         neutral[name] = float(sum(fixed[name],Decimal(0)))
             actual_chart.append(chart)
             fixed_chart.append(neutral)
-        result = {'id':max(self.run_ids),'runId':max(self.run_ids),'createdAt':datetime.fromtimestamp(self.manifest['publishedAt'],timezone.utc).isoformat(),
-                  'mode':mode,'groupBy':group,'interval':interval,'range':{'from':timestamps[0] if timestamps else start,'to':timestamps[-1] if timestamps else end},
-                  'series':sorted({r['series'] for r in points}),'points':points,'chart':actual_chart,'pointCount':len(points),
-                  'maxVaults':None,'top':None,'query':{},'meta':{},'datasetId':self.id}
+        result = self.history_result(group,mode,interval,start,end,timestamps,points,actual_chart)
         if constant:
             fixed_by_timestamp = {row['timestamp']:row for row in fixed_chart}
             result.update(schemaVersion=1,methodology='asset units × timeframe reference × dated external fraction',
@@ -426,6 +487,12 @@ class TvlDataset:
                           points=[{'timestamp':p['timestamp'],'series':p['series'],'actualTvlUsd':p['tvlUsd'],
                                    'constantPriceTvlUsd':fixed_by_timestamp[p['timestamp']].get(p['series'])} for p in points])
         return result
+
+    def history_result(self,group,mode,interval,start,end,timestamps,points,chart):
+        return {'id':max(self.run_ids),'runId':max(self.run_ids),'createdAt':datetime.fromtimestamp(self.manifest['publishedAt'],timezone.utc).isoformat(),
+                'mode':mode,'groupBy':group,'interval':interval,'range':{'from':timestamps[0] if timestamps else start,'to':timestamps[-1] if timestamps else end},
+                'series':sorted({r['series'] for r in points}),'points':points,'chart':chart,'pointCount':len(points),
+                'maxVaults':None,'top':None,'query':{},'meta':{},'datasetId':self.id}
 
     def audit(self, chain_id=None):
         _, rows, positions, _ = self.frames((self.as_of(),), chain_id)[0]
@@ -530,7 +597,7 @@ class TvlStore:
             try:
                 publish_tvl(self.database, self.root, current_bridge_policy=self.policy)
                 self.last_error = None
-            except (OSError, sqlite3.Error, ValueError) as error:
+            except (OSError, *DATABASE_ERRORS, ValueError) as error:
                 self.last_error = str(error)
                 if not (self.root/'current.json').exists():
                     raise
@@ -560,7 +627,7 @@ def tvl_response(store, url):
         return 404, {'error':'Not found'}
     try:
         query = parse_qs(request.query,keep_blank_values=True)
-        if set(query)-{'chainId','groupBy','mode','interval','from','to','datasetId','includeCurrent'} or any(len(v)!=1 for v in query.values()):
+        if set(query)-{'chainId','groupBy','mode','interval','from','to','datasetId','includeCurrent','format','top'} or any(len(v)!=1 for v in query.values()):
             raise ValueError('unsupported or repeated TVL filter')
         def value(name, default=None):
             return query.get(name,[default])[0]
@@ -575,6 +642,12 @@ def tvl_response(store, url):
         if chain_id == 0 or start is not None and end is not None and start > end:
             raise ValueError('invalid chain or time range')
         group, mode, interval = value('groupBy','chain'), value('mode','external'), value('interval','weekly')
+        response_format=value('format','full')
+        top=integer('top')
+        if response_format not in ('full','chart'):
+            raise ValueError('unsupported history format')
+        if top is not None and (not 1<=top<=50 or response_format!='chart' or group!='vault' or not request.path.endswith('/constant-price')):
+            raise ValueError('top requires chart-format constant-price vault history and must be between 1 and 50')
         if group not in ('chain','vault','category','type') or mode not in ('raw','external') or interval not in ('daily','3day','weekly'):
             raise ValueError('unsupported TVL grouping, mode or interval')
         if value('includeCurrent') not in (None,'true','false'):
@@ -584,6 +657,7 @@ def tvl_response(store, url):
             raise ValueError('unsupported TVL chain')
         if request.path.startswith('/api/tvl/history'):
             result = dataset.history(group,mode,interval,start,end,chain_id,request.path.endswith('/constant-price'))
+            if response_format=='chart':result=chart_response(result,top)
         elif request.path.endswith('/curation-products'):
             result = dataset.curation(chain_id)
         elif request.path == '/api/audit/tree':

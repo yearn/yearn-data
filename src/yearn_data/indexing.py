@@ -135,11 +135,12 @@ def insert_raw_event(
 ) -> None:
     conn.execute(
         """
-        INSERT OR IGNORE INTO events_raw (
-            chain_id, contract_address, event_name, tx_hash, log_index,
-            block_number, block_timestamp, decoded_json
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO events_raw (
+                chain_id, contract_address, event_name, tx_hash, log_index,
+                block_number, block_timestamp, decoded_json
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT DO NOTHING
         """,
         (
             chain_id,
@@ -245,12 +246,13 @@ def normalize_v2_share_transfer_flow(
 def insert_vault_flow(conn, row: tuple[Any, ...]) -> int:
     cur = conn.execute(
         """
-        INSERT OR IGNORE INTO vault_flows (
-            chain_id, version, vault_address, direction, sender, owner, receiver,
-            tx_hash, log_index, block_number, block_timestamp, asset,
-            asset_decimals, assets_raw, shares_raw, decoded_json
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO vault_flows (
+                chain_id, version, vault_address, direction, sender, owner, receiver,
+                tx_hash, log_index, block_number, block_timestamp, asset,
+                asset_decimals, assets_raw, shares_raw, decoded_json
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT DO NOTHING
         """,
         row,
     )
@@ -296,13 +298,14 @@ def normalize_v3_debt_flow(
 def insert_strategy_debt_flow(conn, row: tuple[Any, ...]) -> int:
     cur = conn.execute(
         """
-        INSERT OR IGNORE INTO strategy_debt_flows (
-            chain_id, version, vault_address, strategy_address, direction,
-            tx_hash, log_index, block_number, block_timestamp, asset,
-            asset_decimals, debt_delta_raw, current_debt_raw, new_debt_raw,
-            source_event, decoded_json
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO strategy_debt_flows (
+                chain_id, version, vault_address, strategy_address, direction,
+                tx_hash, log_index, block_number, block_timestamp, asset,
+                asset_decimals, debt_delta_raw, current_debt_raw, new_debt_raw,
+                source_event, decoded_json
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT DO NOTHING
         """,
         row,
     )
@@ -312,13 +315,14 @@ def insert_strategy_debt_flow(conn, row: tuple[Any, ...]) -> int:
 def insert_vault_fee_event(conn, row: tuple[Any, ...]) -> int:
     cur = conn.execute(
         """
-        INSERT OR IGNORE INTO vault_fee_events (
-            chain_id, version, source, vault_address, strategy_address, recipient,
-            tx_hash, log_index, block_number, block_timestamp, asset,
-            asset_decimals, fee_raw, shares_raw, protocol_fees_raw,
-            total_fees_raw, total_refunds_raw, decoded_json
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO vault_fee_events (
+                chain_id, version, source, vault_address, strategy_address, recipient,
+                tx_hash, log_index, block_number, block_timestamp, asset,
+                asset_decimals, fee_raw, shares_raw, protocol_fees_raw,
+                total_fees_raw, total_refunds_raw, decoded_json
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT DO NOTHING
         """,
         row,
     )
@@ -328,13 +332,14 @@ def insert_vault_fee_event(conn, row: tuple[Any, ...]) -> int:
 def insert_strategy_report(conn, row: tuple[Any, ...]) -> None:
     conn.execute(
         """
-        INSERT OR IGNORE INTO strategy_reports (
-            chain_id, version, vault_address, strategy_address, tx_hash, log_index,
-            block_number, block_timestamp, asset, asset_decimals, gain_raw, loss_raw,
-            net_raw, current_debt_raw, protocol_fees_raw, total_fees_raw,
-            total_refunds_raw, extra_json
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO strategy_reports (
+                chain_id, version, vault_address, strategy_address, tx_hash, log_index,
+                block_number, block_timestamp, asset, asset_decimals, gain_raw, loss_raw,
+                net_raw, current_debt_raw, protocol_fees_raw, total_fees_raw,
+                total_refunds_raw, extra_json
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT DO NOTHING
         """,
         row,
     )
@@ -591,11 +596,16 @@ def _cached_vault_share_prices_many(
     now = int(time.time())
     conn.executemany(
         """
-        INSERT OR REPLACE INTO vault_share_prices (
-            chain_id, vault_address, block_number, price_per_share_raw,
-            share_decimals, source, updated_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO vault_share_prices (
+                chain_id, vault_address, block_number, price_per_share_raw,
+                share_decimals, source, updated_at
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(chain_id,vault_address,block_number) DO UPDATE SET
+                price_per_share_raw=excluded.price_per_share_raw,
+                share_decimals=excluded.share_decimals,
+                source=excluded.source,
+                updated_at=excluded.updated_at
         """,
         [
             (cfg.chain_id, address, block, str(price_per_share), share_decimals, source, now)

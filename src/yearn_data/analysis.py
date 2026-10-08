@@ -35,11 +35,12 @@ def _usd(raw_value: str, decimals: int | None, price: float | None) -> Decimal |
 
 def create_analysis_run(conn, name: str, params: dict[str, Any] | None = None) -> int:
     cur = conn.execute(
-        "INSERT INTO analysis_runs (name, started_at, status, params_json) VALUES (?, ?, 'running', ?)",
+        "INSERT INTO analysis_runs (name, started_at, status, params_json) VALUES (?, ?, 'running', ?) RETURNING id",
         (name, int(time.time()), to_json(params or {})),
     )
+    run_id = int(cur.fetchone()[0])
     conn.commit()
-    return int(cur.lastrowid)
+    return run_id
 
 
 def complete_analysis_run(conn, run_id: int, status: str = "complete") -> None:
@@ -141,7 +142,7 @@ def run_lifetime_yield(
                 CASE p2.source {priority} ELSE {len(price_sources)} END
             LIMIT 1
          )
-        WHERE (? IS NULL OR r.block_timestamp < ?)
+        WHERE (CAST(? AS BIGINT) IS NULL OR r.block_timestamp < ?)
         """,
         (*price_sources, *price_sources, before_timestamp, before_timestamp),
     ).fetchall()
