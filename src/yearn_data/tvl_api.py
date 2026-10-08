@@ -24,6 +24,7 @@ CHAINS = {1: 'Ethereum', 10: 'Optimism', 100: 'Gnosis', 137: 'Polygon', 250: 'Fa
           999: 'HyperEVM', 4663: 'Yeer', 8453: 'Base', 42161: 'Arbitrum', 747474: 'Katana'}
 CATEGORIES = ('v1', 'v2', 'v3', 'curation')
 HISTORY_CACHE_MAX_DATES = 400
+BRIDGE_MIGRATIONS = [r for r in json.loads((Path(__file__).parent/'inventories'/'tvl-overlaps.json').read_text())['bridges'] if r.get('migrationTimestamp') is not None]
 PRICE_REJECTIONS = json.loads((Path(__file__).parent/'inventories'/'tvl-price-rejections.json').read_text())
 
 
@@ -68,7 +69,7 @@ def publish_tvl(database, publication, *, current_bridge_policy='none'):
             allocator_keys = [list(r) for r in conn.execute(
                 "SELECT DISTINCT chain_id,lower(vault_address) FROM strategy_reports WHERE version='v3'")]
     context = {'runs': runs, 'catalog': catalog, 'allocatorKeys': sorted(allocator_keys),
-               'currentBridgePolicy': current_bridge_policy, 'selectionPolicy': 'known-value-then-newest-finished-common-close-4', 'priceRejections': PRICE_REJECTIONS,
+               'currentBridgePolicy': current_bridge_policy, 'selectionPolicy': 'known-value-then-newest-finished-common-close-6', 'bridgeMigrations': BRIDGE_MIGRATIONS, 'priceRejections': PRICE_REJECTIONS,
                'historicalBridgePolicy': 'dated-evidence-only', 'database': str(Path(database).resolve())}
     dataset_id = hashlib.sha256(encoded(context).encode()).hexdigest()
     root = Path(publication)
@@ -102,6 +103,7 @@ class TvlDataset:
         self.run_ids = tuple(r['id'] for r in manifest['runs'])
         self.catalog = {(r['chain_id'], r['address'].lower()): r for r in manifest['catalog']}
         self.allocators = {tuple(r) for r in manifest['allocatorKeys']}
+        self.bridge_migrations = {(r['sourceChainId'],r['sourceVaultAddress'].lower()):r for r in manifest.get('bridgeMigrations',[])}
         self.base = max(self.run_ids)+1
         self.price_rejections = {(r['chainId'],r['asset'].lower(),r['timestamp']): r for r in manifest.get('priceRejections',[])}
         self._lock = threading.RLock()
@@ -222,18 +224,43 @@ class TvlDataset:
                     parent = by_key.get((edge['chain_id'], edge['parent'].lower()))
                     if parent and edge.get('block_number') != parent.get('block_number'):
                         edge.update(status='unavailable', reason='selected_block_mismatch')
-                rows, positions, diagnostics = account(points, positions, include_curation=include_curation)
-                # The optional current policy preserves the existing service's
-                # retired bridge exclusions only at the newest stored observation.
-                # It is never silently projected backwards into undated history.
-                if timestamp == self.as_of() and self.manifest['currentBridgePolicy'] == 'retired-registry':
-                    for row in rows:
-                        meta = self.catalog.get(key(row), {})
-                        target = row.get('bridge_target_chain')
-                        if target in {c for c,_ in self.catalog} and meta.get('active') == 0:
-                            row['bridge_excluded_usd'] = row['external_tvl_usd']
-                            if row['external_tvl_usd'] is not None:
-                                row['external_tvl_usd'] = '0'
+                excluded = set()
+                for point in points:
+                    migration = self.bridge_migrations.get(key(point))
+                    if migration is not None:
+                        # A dated migration takes precedence over today's active
+                        # flag, including when the latest close is pre-migration.
+                        if timestamp >= migration['migrationTimestamp']:
+                            excluded.add(key(point))
+                    elif timestamp == self.as_of() and self.manifest['currentBridgePolicy'] == 'retired-registry':
+                        meta = self.catalog.get(key(point), {})
+                        if point.get('bridge_target_chain') in {c for c,_ in self.catalog} and meta.get('active') == 0:
+                            excluded.add(key(point))
+                # Excluded parents must not also deduct their holdings from child
+                # TVL. Keep their dated raw positions available for diagnostics.
+                excluded_positions = [edge for edge in positions if (edge['chain_id'],edge['parent'].lower()) in excluded]
+                included_positions = [edge for edge in positions if (edge['chain_id'],edge['parent'].lower()) not in excluded]
+                account_points = [dict(point,bridge_target_chain=None) if key(point) in self.bridge_migrations else point for point in points]
+                rows, positions, diagnostics = account(account_points, included_positions, include_curation=include_curation)
+                positions.extend(dict(edge,overlap_usd='0',accounting_excluded=True,reason='bridge_parent_excluded') for edge in excluded_positions)
+                for row in rows:
+                    migration = self.bridge_migrations.get(key(row))
+                    if migration:
+                        row['bridge_target_chain'] = migration['targetChainId']
+                    if key(row) in excluded:
+                        row['bridge_excluded_usd'] = row['external_tvl_usd']
+                        if migration:
+                            row['bridge_migration_timestamp'] = migration['migrationTimestamp']
+                        if row['external_tvl_usd'] is not None:
+                            row['external_tvl_usd'] = '0'
+                with localcontext() as ctx:
+                    ctx.prec = 78
+                    bridge_amount = sum((decimal(row['bridge_excluded_usd']) for row in rows if row.get('bridge_excluded_usd') is not None),Decimal(0))
+                    diagnostics['known_bridge_excluded_usd'] = str(bridge_amount)
+                    diagnostics['known_external_tvl_usd'] = str(max(Decimal(0),decimal(diagnostics['known_external_tvl_usd'])-bridge_amount))
+                    if diagnostics['external_tvl_usd'] is not None:
+                        diagnostics['external_tvl_usd'] = str(max(Decimal(0),decimal(diagnostics['external_tvl_usd'])-bridge_amount))
+                diagnostics['position_count'] = len(positions)
                 yield timestamp, rows, positions, diagnostics
 
     def sampled_dates(self, interval, start, end):
@@ -411,7 +438,7 @@ class TvlDataset:
                            'strategies':by_parent[key(r)]} for r in rows],
                 'crossChainVaults':[{'address':r['vault'],'chainId':r['chain_id'],'targetChainId':r['bridge_target_chain'],
                                     'name':r.get('name'),'category':r.get('category',r['version']),
-                                    'tvlUsd':float(decimal(r['bridge_excluded_usd'])),'label':'Retired bridge registry'}
+                                    'tvlUsd':float(decimal(r['bridge_excluded_usd'])),'label':'Dated pre-deposit migration' if r.get('bridge_migration_timestamp') is not None else 'Retired bridge registry'}
                                    for r in rows if r.get('bridge_excluded_usd') is not None], 'datasetId':self.id}
 
     def curation(self, chain_id=None):

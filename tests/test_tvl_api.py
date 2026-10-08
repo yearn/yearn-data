@@ -289,3 +289,52 @@ def test_reference_skips_a_full_window_of_rejected_prices(source, monkeypatch):
                                      'priceUsd':1,'source':'stored-tvl','depegCandidateSkipped':False}]
     assert result['constantPriceChart'][-1]['Ethereum'] == 10
     assert all(row == {'timestamp':DAY+index*86400} for index,row in enumerate(result['actualChart'][:-1]))
+
+
+def test_dated_bridge_cutoff_preserves_pre_migration_and_pinned_selection(source, monkeypatch):
+    import yearn_data.tvl_api as api
+    conn,path,root = source
+    cutoff=DAY+86400
+    monkeypatch.setattr(api,'BRIDGE_MIGRATIONS',[{'sourceChainId':1,'sourceVaultAddress':BRIDGE,
+                                               'targetChainId':10,'migrationTimestamp':cutoff}])
+    run(conn,1,DAY,[(PARENT,'100'),(BRIDGE,'50')])
+    store=TvlStore(path,root,current_bridge_policy='retired-registry',refresh_seconds=0)
+    old=store.get().id
+    # Today's inactive flag must not exclude a dated vault before its migration.
+    assert store.get().summary()['totalTvl'] == 150
+    run(conn,2,cutoff,[(PARENT,'100'),(BRIDGE,'50')])
+    run(conn,3,cutoff+86400,[(PARENT,'100'),(BRIDGE,'50')])
+    dataset=store.get()
+    assert dataset.id != old
+    assert store.get(old).summary()['totalTvl'] == 150
+    history=dataset.history(interval='daily',constant=True)
+    assert [r['Ethereum'] for r in history['actualChart']] == [150,100,100]
+    assert [r['Ethereum'] for r in history['constantPriceChart']] == [150,100,100]
+    assert [r['Ethereum'] for r in dataset.history(mode='raw',interval='daily')['chart']] == [150,150,150]
+    assert dataset.summary()['vaultBridgeExcluded'] == 50
+    assert dataset.summary(1)['totalTvl'] == 100
+    assert [r['Ethereum'] for r in dataset.history(chain_id=1,interval='daily')['chart']] == [150,100,100]
+
+
+def test_excluded_bridge_parent_does_not_also_deduct_child_holdings(source, monkeypatch):
+    import yearn_data.tvl_api as api
+    conn,path,root = source
+    monkeypatch.setattr(api,'BRIDGE_MIGRATIONS',[{'sourceChainId':1,'sourceVaultAddress':BRIDGE,
+                                               'targetChainId':10,'migrationTimestamp':DAY+86400}])
+    # Dated evidence remains authoritative if the live catalogue says active.
+    conn.execute('UPDATE tvl_vaults SET active=1 WHERE address=?',(BRIDGE,));conn.commit()
+    for number,timestamp in ((1,DAY),(2,DAY+86400)):
+        run(conn,number,timestamp,[(BRIDGE,'100'),(CHILD,'100')],[(CHILD,'50')])
+        row=conn.execute('SELECT data_json FROM tvl_positions WHERE run_id=?',(number,)).fetchone()
+        edge=json.loads(row[0]);edge['parent']=BRIDGE
+        conn.execute('UPDATE tvl_positions SET parent=?,data_json=? WHERE run_id=?',(BRIDGE,json.dumps(edge),number));conn.commit()
+    dataset=TvlStore(path,root).get()
+    assert [r['Ethereum'] for r in dataset.history(interval='daily')['chart']] == [150,100]
+    assert dataset.summary()['overlapExcluded'] == 0
+    assert dataset.summary()['vaultBridgeExcluded'] == 100
+    _,_,positions,diagnostics=dataset.frames((DAY+86400,))[0]
+    assert diagnostics['known_external_tvl_usd'] == '100'
+    assert diagnostics['known_bridge_excluded_usd'] == '100'
+    assert diagnostics['external_tvl_usd'] == '100'
+    assert positions[0]['accounting_excluded'] is True
+    assert positions[0]['overlap_usd'] == '0'

@@ -108,25 +108,45 @@
       "sourceVaultAddress": "0x7B5A0182E400b241b317e781a4e9dEdFc1429822",
       "label": "Katana Pre-Deposit USDC (v3)",
       "sourceChainId": 1,
-      "targetChainId": 747474
+      "targetChainId": 747474,
+      "migrationTimestamp": 1751288807,
+      "migrationBlock": 22817424,
+      "migrationTx": "0x6896487aac1fe132614719e7758719d55d11036bb163d1a959ed9500d8cd30f0",
+      "destinationNetworkId": 20,
+      "migrationEvidence": "Deposit limits set to zero and all four Vault Bridge asset positions bridged to Katana in the same transaction"
     },
     {
       "sourceVaultAddress": "0xcc6a16Be713f6a714f68b0E1f4914fD3db15fBeF",
       "label": "Katana Pre-Deposit WETH (v3)",
       "sourceChainId": 1,
-      "targetChainId": 747474
+      "targetChainId": 747474,
+      "migrationTimestamp": 1751288807,
+      "migrationBlock": 22817424,
+      "migrationTx": "0x6896487aac1fe132614719e7758719d55d11036bb163d1a959ed9500d8cd30f0",
+      "destinationNetworkId": 20,
+      "migrationEvidence": "Deposit limits set to zero and all four Vault Bridge asset positions bridged to Katana in the same transaction"
     },
     {
       "sourceVaultAddress": "0x48c03B6FfD0008460F8657Db1037C7e09dEedfcb",
       "label": "Katana Pre-Deposit USDT (v3)",
       "sourceChainId": 1,
-      "targetChainId": 747474
+      "targetChainId": 747474,
+      "migrationTimestamp": 1751288807,
+      "migrationBlock": 22817424,
+      "migrationTx": "0x6896487aac1fe132614719e7758719d55d11036bb163d1a959ed9500d8cd30f0",
+      "destinationNetworkId": 20,
+      "migrationEvidence": "Deposit limits set to zero and all four Vault Bridge asset positions bridged to Katana in the same transaction"
     },
     {
       "sourceVaultAddress": "0x92C82f5F771F6A44CfA09357DD0575B81BF5F728",
       "label": "Katana Pre-Deposit WBTC (v3)",
       "sourceChainId": 1,
-      "targetChainId": 747474
+      "targetChainId": 747474,
+      "migrationTimestamp": 1751288807,
+      "migrationBlock": 22817424,
+      "migrationTx": "0x6896487aac1fe132614719e7758719d55d11036bb163d1a959ed9500d8cd30f0",
+      "destinationNetworkId": 20,
+      "migrationEvidence": "Deposit limits set to zero and all four Vault Bridge asset positions bridged to Katana in the same transaction"
     }
   ]
 }

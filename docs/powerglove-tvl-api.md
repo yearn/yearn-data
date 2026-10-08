@@ -93,9 +93,23 @@ observation outlier rule. It applies the dated external fraction to those values
 It measures asset-unit change at frozen prices, not independently reconstructed
 net deposit flows; share-token assets retain their stored share-unit definition.
 
-Current retired bridge/pre-deposit exclusions are preserved at the latest published
-close. They are not projected into earlier history using today's retirement flag.
-Reconstructing migration dates remains deferred. Fee charges at different layers
+The four Ethereum Katana pre-deposit vaults are excluded from external TVL from
+June 30, 2025 at 13:06:47 UTC (09:06:47 Eastern), inclusive. Before that cutoff,
+their TVL remains included even though today's catalogue marks them inactive.
+Raw history retains the stored balances throughout. Both actual and constant-price
+history apply the same dated external fraction.
+
+The registry stores the migration timestamp, Ethereum block 22817424, destination
+network ID 20 and transaction
+`0x6896487aac1fe132614719e7758719d55d11036bb163d1a959ed9500d8cd30f0`.
+This transaction set all four deposit limits to zero and bridged their USDC, USDT,
+WBTC and ETH positions to Katana. The publication freezes this evidence under
+`bridgeMigrations`; older dataset IDs retain their original accounting context.
+Excluded parent positions remain in diagnostics but no longer deduct child TVL.
+
+Undated bridge registry entries retain the optional latest-close retirement
+fallback. It is never projected backward into history. Verified migration dates
+take precedence over that fallback and over today's active flag. Fee charges at different layers
 remain separate charges; reported earnings remain contract-level P&L rather than
 consolidated nested economic yield.
 
