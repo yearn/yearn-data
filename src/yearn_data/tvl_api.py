@@ -322,6 +322,10 @@ class TvlDataset:
         return self.compute_once(('rows',timestamps,chain_id), lambda:self._history_rows(timestamps,chain_id))
 
     def _history_rows(self, timestamps, chain_id):
+        if chain_id is not None:
+            # Main charts and drilldowns share one dated accounting calculation.
+            return tuple((timestamp,selected) for timestamp,rows in self.history_rows(timestamps,None)
+                         if (selected := tuple(row for row in rows if row['chain_id']==chain_id)))
         # Keep only the fields charts need, never full snapshot/position payloads.
         # Version, chain and constant-price views share this dated accounting.
         fields = ('chain_id','vault','name','category','version','asset_units','tvl_usd','external_tvl_usd')
@@ -333,6 +337,10 @@ class TvlDataset:
         return self.compute_once(('references',window,chain_id), lambda:self._price_references(window,chain_id))
 
     def _price_references(self, window, chain_id):
+        if chain_id is not None:
+            references, prices = self.price_references(window,None)
+            return ({identity:reference for identity,reference in references.items() if identity[0]==chain_id},
+                    {identity:price for identity,price in prices.items() if identity[0]==chain_id})
         candidates = defaultdict(list)
         with closing(read_db(self.database)) as conn:
             for row in self.reference_candidates(conn, window, chain_id):

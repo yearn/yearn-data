@@ -338,3 +338,26 @@ def test_excluded_bridge_parent_does_not_also_deduct_child_holdings(source, monk
     assert diagnostics['external_tvl_usd'] == '100'
     assert positions[0]['accounting_excluded'] is True
     assert positions[0]['overlap_usd'] == '0'
+
+
+def test_chain_drilldown_reuses_all_chain_valuations_and_references(source, monkeypatch):
+    conn,path,root = source
+    run(conn,1,DAY,[(PARENT,'100'),(CHILD,'100')],[(CHILD,'50')])
+    # Include a second chain with the same vault address to exercise chain identity.
+    other={'chain_id':10,'vault':CHILD,'timestamp':DAY,'block_number':100+DAY,
+           'version':'v3','category':'v3','asset_units':'10','tvl_usd':'300'}
+    conn.execute('INSERT INTO tvl_snapshots VALUES (?,?,?,?,?,?)',(1,10,CHILD,DAY,100+DAY,json.dumps(other)));conn.commit()
+    dataset=TvlStore(path,root).get()
+    main=dataset.history(constant=True)
+    def unexpected_scan(*args,**kwargs):
+        pytest.fail('chain drilldown rescanned stored source observations')
+    monkeypatch.setattr(dataset,'iter_frames',unexpected_scan)
+    monkeypatch.setattr(dataset,'reference_candidates',unexpected_scan)
+    drilldown=dataset.history(group='vault',chain_id=1,constant=True)
+    assert sum(v for k,v in drilldown['actualChart'][0].items() if k!='timestamp') == main['actualChart'][0]['Ethereum']
+    assert sum(v for k,v in drilldown['constantPriceChart'][0].items() if k!='timestamp') == main['constantPriceChart'][0]['Ethereum']
+    assert {r['vault'] for r in drilldown['references']} == {'1:'+PARENT,'1:'+CHILD}
+    optimism=dataset.history(group='vault',chain_id=10,constant=True)
+    assert sum(v for k,v in optimism['actualChart'][0].items() if k!='timestamp') == main['actualChart'][0]['Optimism']
+    assert len(optimism['references']) == 1
+    assert optimism['references'][0]['vault'] == '10:'+CHILD

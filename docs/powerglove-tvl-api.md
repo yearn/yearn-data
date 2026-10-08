@@ -127,7 +127,9 @@ source data changes; TVL collection does not regenerate those analyses.
 ## Historical query performance
 
 Chain, version and constant-price charts reuse compact, dated valuation rows
-within a dataset. The shared row cache is bounded to four windows of at most 400
+within a dataset. Chain drilldowns filter those cached all-chain valuations and
+reference prices before grouping by vault or version, rather than rescanning the
+database. The shared row cache is bounded to four windows of at most 400
 observed dates; longer histories keep streaming. Reference prices are cached
 separately for eight daily windows, independent of chart grouping. Explicit
 all-time first/last bounds share the same response cache as omitted bounds.
