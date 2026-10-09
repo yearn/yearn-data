@@ -3,9 +3,10 @@
 The read-only pairing server can serve TVL alongside fees and reported earnings from
 `data/yearn.sqlite`. Powerglove's `codex/stats-page` uses this source for current TVL,
 history, constant-price history, curation products, the vault audit tree and the
-Yearn side of the DefiLlama comparison. Fee-stack and profitability analytics retain
-the existing fees service. Supplementary graph endpoints retain the existing TVL
-service until those consumers migrate.
+Yearn side of the DefiLlama comparison. With `--analytics`, prepared fee-stack,
+profitability and DefiLlama membership/comparison results also come from Postgres.
+See [owned Powerglove analytics](powerglove-analytics.md) for the complete cutover.
+Unused supplementary graph routes retain their fallback configuration.
 
 ## Start the API
 
@@ -34,6 +35,47 @@ VITE_PUBLIC_YEARN_DATA_API_URL=https://your-data-api.example
 
 Existing TVL and fee service settings continue to serve supplementary analytics.
 Without a Yearn Data target, the TVL proxy retains its existing TVL-service fallback.
+
+## Hosted database connection
+
+The Neon-capable checkout on `ross/neon-postgres` supports the same API contracts
+with a hosted database. Keep `NEON_DB_URL` in Yearn Data's ignored environment file;
+never put this credential into a `VITE_*` variable or the browser bundle. The
+Powerglove consumer talks to the API, which opens Neon read-only.
+
+From that checkout, publish the imported completed analyses separately from the
+SQLite publications, then start the API:
+
+```bash
+python -m yearn_data.cli --env /path/to/yearn-data/.env --db neon select-pairing \
+  --earnings-run-id 13 --fees-run-id 12 --out data/powerglove-neon
+
+python -m yearn_data.cli --env /path/to/yearn-data/.env serve-pairing \
+  --publication data/powerglove-neon --tvl-publication data/powerglove-tvl-neon \
+  --current-bridge-policy retired-registry \
+  --comparison-db /path/to/defillama-reference.sqlite \
+  --host 127.0.0.1 --port 3491
+```
+
+The example run IDs match the imported current financial publication. Fee dataset
+identity is preserved when the imported outputs are identical. The TVL dataset ID
+changes because its publication records the logical database reference `neon`.
+Restart the consumer when switching the target so it obtains the new TVL selection;
+do not reuse a SQLite TVL dataset ID against a separate Neon publication.
+
+Set Powerglove's ignored `.env.local` to
+`VITE_YEARN_DATA_API_TARGET=http://127.0.0.1:3491` and restart its local server or
+preview. For a remotely deployed consumer, configure the public **API** URL using
+`VITE_PUBLIC_YEARN_DATA_API_URL`; a hosted database alone does not deploy an API.
+
+The core-only example above retains a separate DefiLlama reference database.
+For the completed active-consumer cutover, use the collection/preparation commands
+and `--analytics` startup in [owned analytics](powerglove-analytics.md), omit
+`--comparison-db`, and target port 3493. All active stats requests then use Yearn
+Data; the legacy services and their databases are no longer required.
+Keep the previous SQLite API/publications available for rollback. Before switching,
+compare TVL, core fees, weekly history and comparison results, ignoring only source
+publication identity; verify the new IDs through the actual consumer proxy.
 
 ## Publication and automatic selection
 

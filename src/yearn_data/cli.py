@@ -144,6 +144,11 @@ def build_parser() -> argparse.ArgumentParser:
     pairing_p.add_argument("--fees-run-id", type=int, required=True)
     pairing_p.add_argument("--out", type=Path, default=Path("data/powerglove"))
 
+    collect_p = sub.add_parser('collect-analytics', help='Collect owned DefiLlama references, membership and declared fee configurations')
+    prepare_p = sub.add_parser('prepare-analytics', help='Publish remaining Powerglove analytics in the selected database')
+    prepare_p.add_argument('--publication', type=Path, required=True)
+    prepare_p.add_argument('--tvl-publication', type=Path, required=True)
+
     serve_p = sub.add_parser("serve-pairing", help="Serve read-only selected Powerglove views")
     serve_p.add_argument("--publication", type=Path, default=Path("data/powerglove"))
     serve_p.add_argument("--host", default="127.0.0.1")
@@ -152,6 +157,7 @@ def build_parser() -> argparse.ArgumentParser:
     serve_p.add_argument("--tvl-publication", type=Path, help="Automatically publish accumulated finished TVL results too")
     serve_p.add_argument("--published-tvl-only", action="store_true", help="Serve only the updater's selected TVL publication")
     serve_p.add_argument("--current-bridge-policy", choices=["none", "retired-registry"], default="retired-registry")
+    serve_p.add_argument("--analytics", action="store_true", help="Serve prepared owned analytics and comparison without legacy services")
     serve_p.add_argument("--comparison-db", type=Path, help="Read-only external DefiLlama reference database")
 
     catchup_p = sub.add_parser("catch-up", help="Acquire one bounded chain window; no pricing or analysis")
@@ -306,6 +312,20 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["space_sufficient"] else 2
     load_environment(args.env)
     args.db = args.db or os.environ.get('YEARN_DATA_DB', str(DEFAULT_DB_PATH))
+    if args.command == 'collect-analytics':
+        from .analytics_collect import collect
+        print(json.dumps(collect(args.db), sort_keys=True))
+        return 0
+    if args.command == 'prepare-analytics':
+        from .analytics import prepare
+        from .pairing import PairingStore
+        from .tvl_api import TvlStore
+        financial = PairingStore(args.publication).get()
+        if str(financial.database) != str(args.db):
+            raise ValueError('financial publication database must match --db')
+        tvl = TvlStore(args.db, args.tvl_publication, current_bridge_policy='retired-registry').get()
+        print(json.dumps({'publicationId':prepare(args.db,financial,tvl)}))
+        return 0
     if args.command == 'migrate-postgres':
         from .postgres_migration import migration_plan, migrate_sqlite
         result = (migration_plan(args.source, args.db) if args.check_only else
@@ -325,7 +345,8 @@ def main(argv: list[str] | None = None) -> int:
         from .pairing import serve_pairing
         serve_pairing(args.publication, host=args.host, port=args.port, cors_origin=args.cors_origin,
                       tvl_publication=args.tvl_publication, current_bridge_policy=args.current_bridge_policy,
-                      comparison_database=args.comparison_db, published_tvl_only=args.published_tvl_only)
+                      comparison_database=args.comparison_db, published_tvl_only=args.published_tvl_only,
+                      analytics=args.analytics)
         return 0
     if args.command=='tvl' and args.tvl_command=='prepare-history':
         from .tvl_api import TvlStore
