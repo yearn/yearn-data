@@ -333,3 +333,14 @@ the database credentials currently exist only in the Preview environment.
 A later production deployment created after connecting GitHub lacks those
 preview-only credentials and returns 503. Powerglove continues to use the pinned,
 verified preview URL above, not the production alias.
+
+## TVL overlap graph deployment
+
+The October 9 TVL graph deployment is protected preview
+`https://yearn-data-api-preview-5v92arw2b-rossgalloways-projects.vercel.app`
+(`dpl_D4RfgHNM4uftVXGSmmztUdjC2RN3`, source commit `0d904de`). It includes the
+canonical-history serving contract and `/api/tvl/graph`. The current private
+Powerglove build pins this deployment through its server-side proxy; protection
+bypass credentials remain server-only. The public production project environment
+was not changed. See [the overlap rollout](tvl-overlaps.md) for data scope and
+verification.
