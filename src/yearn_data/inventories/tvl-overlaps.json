@@ -36,35 +36,50 @@
       "strategyAddress": "0xA7496763F035e73ec6B56F4C86312cc1874a01e3",
       "targetVaultAddress": "0x028eC7330ff87667b6dfb0D94b954c820195336c",
       "label": "DAI V2 router \u2192 DAI-1 yVault",
-      "chainId": 1
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
     },
     {
       "sourceVaultAddress": "0xa354F35829Ae975e850e23e9615b11Da1B3dC4DE",
       "strategyAddress": "0xD5AAdCD054a00Eff71BCB922CDdc70752FA2bc68",
       "targetVaultAddress": "0xBe53A109B494E5c9f97b9Cd39Fe969BE68BF6204",
       "label": "USDC V2 router \u2192 USDC-1 yVault",
-      "chainId": 1
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
     },
     {
       "sourceVaultAddress": "0x3B27F92C0e212C671EA351827EDF93DB27cc0c65",
       "strategyAddress": "0xe07d1E27D93EdA41aB091Fc91a2026Df41763b56",
       "targetVaultAddress": "0x310B7Ea7475A0B449Cfd73bE81522F1B88eFAFaa",
       "label": "USDT V2 router \u2192 USDT-1 yVault",
-      "chainId": 1
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
     },
     {
       "sourceVaultAddress": "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E",
       "strategyAddress": "0x8b64692c42AC08A7275aFf3e2cc59e7401C471D5",
       "targetVaultAddress": "0x751F0cC6115410A3eE9eC92d08f46Ff6Da98b708",
       "label": "WBTC V2 router \u2192 WBTC-1 yVault",
-      "chainId": 1
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
     },
     {
       "sourceVaultAddress": "0xa258C4606Ca8206D8aA700cE2143D7db854D168c",
       "strategyAddress": "0x85907b1aF27Fd04a5EFaBC0Fb7162f8690a6B82F",
       "targetVaultAddress": "0xc56413869c6CDf96496f2b1eF801fEDBdFA7dDB0",
       "label": "WETH V2 router \u2192 WETH-1 yVault",
-      "chainId": 1
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
     },
     {
       "strategyAddress": "0x0e297dE4005883C757c9F09fdF7cF1363C20e626",
@@ -101,6 +116,146 @@
       "targetVaultAddress": "0x4284d4F9f4d61eA57B8F0943547c7C19C5B9B249",
       "label": "Morpho Yearn OG v2 USDT Compounder \u2192 Yearn OG USDT",
       "chainId": 747474
+    },
+    {
+      "sourceVaultAddress": "0x132d8d2c76db3812403431facb00f3453fc42125",
+      "strategyAddress": "0x901fe4d83c5475bf9bdbcf0dc2574d5db1ca9cda",
+      "targetVaultAddress": "0x774b4cbc2703ce83fb3b828b7c782d1cd983b04a",
+      "label": "Curve ankrETH Pool yVault router to Curve ankrETH Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0x1635b506a88fbf428465ad65d00e8d6b6e5846c3",
+      "strategyAddress": "0xdd38062704b09b897fd8ad652ce8294985fb3d33",
+      "targetVaultAddress": "0x75a291f0232add37d72dd1dcff55b715755ecdee",
+      "label": "Curve CVX-ETH Pool yVault router to Curve CVX-ETH Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0x2a38b9b0201ca39b17b460ed2f11e4929559071e",
+      "strategyAddress": "0x7320541570ad6fec3ebc67685268948a50d4cb48",
+      "targetVaultAddress": "0x63bd3bbb6c5cb6e457c3f3cbb2d8aa2536e319f1",
+      "label": "Curve GUSD Pool yVault router to Curve GUSD Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0x2dfb14e32e2f8156ec15a2c21c3a6c053af52be8",
+      "strategyAddress": "0x47128518d9cad921af60ed42568a69781d710cd5",
+      "targetVaultAddress": "0xa540744dedbda9ef64cf753f0e851efe4a419ea9",
+      "label": "Curve MIM Pool yVault router to Curve MIM Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0x5fa5b62c8af877cb37031e0a3b2f34a78e3c56a6",
+      "strategyAddress": "0x343a52634b2464a87146c44ed8005577937f885c",
+      "targetVaultAddress": "0xad86df2e8f989c828b25a7da5eb1ec363283fa3f",
+      "label": "Curve LUSD Pool yVault router to Curve LUSD Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0x7da96a3891add058ada2e826306d812c638d87a7",
+      "strategyAddress": "0xb0eb24077563db8b88384949011dc46410c0a31d",
+      "targetVaultAddress": "0x3b27f92c0e212c671ea351827edf93db27cc0c65",
+      "label": "USDT yVault router to USDT yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0x8cc94ccd0f3841a468184aca3cc478d2148e1757",
+      "strategyAddress": "0x199cffcc256d4195a81b10eb7695bf02d43e3b02",
+      "targetVaultAddress": "0x944d749017053e0d37ec206c9898716a21e0b2e2",
+      "label": "Curve mUSD Pool yVault router to Curve mUSD Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0xa74d4b67b3368e83797a35382afb776baae4f5c8",
+      "strategyAddress": "0x85b360dee557135d8903225939699dd644d33cb8",
+      "targetVaultAddress": "0x4cbb6a5ec00ceec252a7091559484f7adb83165f",
+      "label": "Curve alUSD Pool yVault router to Curve alUSD Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0xb4ada607b9d6b2c9ee07a275e9616b84ac560139",
+      "strategyAddress": "0xaad21781fe48048264d89da52423097e4397ff36",
+      "targetVaultAddress": "0xb37094c1b5614bd6ece40afb295c26f4377069d3",
+      "label": "Curve FRAX Pool yVault router to Curve FRAX Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0xbfedbcbe27171c418cdabc2477042554b1904857",
+      "strategyAddress": "0xa7074434aa4419ed18f220152bcaa989b3b9d8c1",
+      "targetVaultAddress": "0x77e829fff18c14ad9bb88963acb0010a0506de88",
+      "label": "Curve rETH Pool yVault router to Curve StaFi rETH Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0xd6ea40597be05c201845c0bfd2e96a60bacde267",
+      "strategyAddress": "0xb2f45226d0b1ebe7ce3c7b0a53eb4a82e032060d",
+      "targetVaultAddress": "0xae6ed98b1bd9aadd3185160324e0e011159b61d3",
+      "label": "Curve Compound Pool yVault router to Curve Compound Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0xe14d13d8b3b85af791b2aadd661cdbd5e6097db1",
+      "strategyAddress": "0x0a5157244e4f82f100a461ca65c7b05c8dacf835",
+      "targetVaultAddress": "0xdb25ca703181e7484a155dd612b06f57e12be5f0",
+      "label": "YFI yVault router to YFI yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0xe537b5cc158eb71037d4125bdd7538421981e6aa",
+      "strategyAddress": "0x906a5fb545d177ba441a57b3a24eaeda555d29e3",
+      "targetVaultAddress": "0x8078198fc424986ae89ce4a910fc109587b6abf3",
+      "label": "Curve 3Crypto Pool yVault router to Curve 3Crypto Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0x30fcf7c6cdfc46ec237783d94fc78553e79d4e9c",
+      "strategyAddress": "0xe67d1705e37968d8b3671ffdd0b18ebaa41f7e11",
+      "targetVaultAddress": "0x65346970f0f66ccad8a5bfc3a03c96836c1897be",
+      "label": "Curve DUSD Pool yVault router to Curve DUSD Factory yVault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26156469,
+      "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
     }
   ],
   "bridges": [
@@ -147,6 +302,20 @@
       "migrationTx": "0x6896487aac1fe132614719e7758719d55d11036bb163d1a959ed9500d8cd30f0",
       "destinationNetworkId": 20,
       "migrationEvidence": "Deposit limits set to zero and all four Vault Bridge asset positions bridged to Katana in the same transaction"
+    }
+  ],
+  "crossChainStrategies": [
+    {
+      "chainId": 1,
+      "sourceVaultAddress": "0x696d02Db93291651ED510704c9b286841d506987",
+      "strategyAddress": "0xc5b16E7eFe1CA05714477b8edcAb4deE9b93a27C",
+      "targetChainId": 747474,
+      "remoteStrategyAddress": "0xEfEEBaAcdC5640A123Fe282652503ea4Fd499d14",
+      "targetVaultAddress": "0x80c34BD3A3569E126e7055831036aa7b212cB159",
+      "label": "yvUSD Katana compounder to Katana USDC vault",
+      "verifiedSourceBlock": 26156464,
+      "verifiedTargetBlock": 44825516,
+      "verification": "REMOTE_CHAIN_ID and reciprocal REMOTE_COUNTERPART getters; remote vault getter; reverify at both collection blocks"
     }
   ]
 }

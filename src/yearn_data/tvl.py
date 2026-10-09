@@ -187,11 +187,12 @@ def _account(snapshots, positions, *, include_curation):
                 edge['overlap_usd'] = '0'
             continue
         parent = by_key.get((edge['chain_id'], edge['parent'].lower()))
-        child = by_key.get((edge['chain_id'], edge['child'].lower()))
+        child_chain = edge.get('child_chain_id',edge['chain_id'])
+        child = by_key.get((child_chain, edge['child'].lower()))
         if parent is None or child is None:
             edge['reason'] = 'endpoint_outside_selection'
             continue
-        if edge['parent'].lower() == edge['child'].lower():
+        if edge['chain_id'] == child_chain and edge['parent'].lower() == edge['child'].lower():
             edge['reason'] = 'self_edge'
             continue
         if not include_curation and child.get('category',child['version']) == 'curation':
@@ -217,24 +218,24 @@ def _account(snapshots, positions, *, include_curation):
         owned = {}
         for e in group:
             debts[e['parent'].lower()] = decimal(e['debt_usd'])
-            owned[e['child'].lower()] = decimal(e['owned_usd'])
+            owned[(e.get('child_chain_id',e['chain_id']),e['child'].lower())] = decimal(e['owned_usd'])
         total_debt = sum(debts.values(), Decimal(0))
         total_owned = sum(owned.values(), Decimal(0))
         budget = min(total_debt, total_owned)
         for e in group:
             value = (budget * debts[e['parent'].lower()] / total_debt
-                     * owned[e['child'].lower()] / total_owned) if total_debt and total_owned else Decimal(0)
+                     * owned[(e.get('child_chain_id',e['chain_id']),e['child'].lower())] / total_owned) if total_debt and total_owned else Decimal(0)
             candidates.append((e, value))
 
     # Cap all incoming ownership at the child's TVL, and all outgoing at parent TVL.
     incoming = defaultdict(lambda: Decimal(0))
     outgoing = defaultdict(lambda: Decimal(0))
     for e, value in candidates:
-        incoming[(e['chain_id'], e['child'].lower())] += value
+        incoming[(e.get('child_chain_id',e['chain_id']), e['child'].lower())] += value
         outgoing[(e['chain_id'], e['parent'].lower())] += value
     for e, value in candidates:
         pk = (e['chain_id'], e['parent'].lower())
-        ck = (e['chain_id'], e['child'].lower())
+        ck = (e.get('child_chain_id',e['chain_id']), e['child'].lower())
         scale = min(Decimal(1), decimal(by_key[ck]['tvl_usd']) / incoming[ck] if incoming[ck] else Decimal(1),
                     decimal(by_key[pk]['tvl_usd']) / outgoing[pk] if outgoing[pk] else Decimal(1))
         value *= scale

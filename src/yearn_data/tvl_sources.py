@@ -332,6 +332,24 @@ def candidate_edges(conn,vaults):
         child = (v['asset'] or '').lower()
         if (chain,child) in catalog_keys and child != parent:
             edges[(chain,parent,parent,child)] = {'chain_id':chain,'parent':parent,'strategy':parent,'child':child,'method':'vault-asset'}
+    # Registry entries are candidates only. Collection verifies the destination
+    # and both remote counterparts at the actual historical blocks.
+    for entry in REGISTRY['targets']:
+        if not entry.get('vaultGetter'):
+            continue
+        for edge in edges.values():
+            if (edge['chain_id']==entry['chainId'] and edge['strategy']==entry['strategyAddress'].lower()
+                    and edge['child']==entry['targetVaultAddress'].lower()):
+                edge['vault_getter'] = entry['vaultGetter']
+    for entry in REGISTRY.get('crossChainStrategies',[]):
+        chain, parent, strategy, child = (entry['chainId'],entry['sourceVaultAddress'].lower(),
+                                          entry['strategyAddress'].lower(),entry['targetVaultAddress'].lower())
+        if (chain,parent) not in by_key:
+            continue
+        edges.pop((chain,parent,strategy,strategy),None)
+        edges[(chain,parent,strategy,child)] = {'chain_id':chain,'parent':parent,'strategy':strategy,'child':child,
+            'child_chain_id':entry['targetChainId'],'remote_holder':entry['remoteStrategyAddress'].lower(),
+            'method':'cross-chain-shares'}
     return list(edges.values())
 
 
@@ -342,12 +360,15 @@ def defaultdict_targets(conn):
     return targets
 
 
-def _position(edge,timestamp,reader,snapshots):
+def _position(edge,timestamp,reader,snapshots,readers=None):
     data = dict(edge,timestamp=timestamp,status='unavailable',debt_raw=None,debt_usd=None,
                 owned_usd=None,balance_raw=None,ownership_ratio=None)
     parent = snapshots[(edge['chain_id'],edge['parent'])]
-    child = snapshots.get((edge['chain_id'],edge['child']))
+    child_chain = edge.get('child_chain_id',edge['chain_id'])
+    child = snapshots.get((child_chain,edge['child']))
     data['block_number'] = parent['block_number']
+    if edge.get('child_chain_id') is not None and child is not None:
+        data['child_block_number'] = child.get('block_number')
     try:
         block = parent['block_number']
         if parent['status']=='not_deployed' or (child is not None and child['status']=='not_deployed'):
@@ -361,6 +382,10 @@ def _position(edge,timestamp,reader,snapshots):
         if debt == 0:
             data.update(status='ok',debt_usd='0',owned_usd='0',ownership_ratio='0')
             return data
+        if edge.get('vault_getter'):
+            destination = reader.uint(edge['strategy'],edge['vault_getter'],block)
+            if destination != int(edge['child'],16):
+                raise ValueError('historical router destination mismatch')
         if edge['method']=='vault-asset' and child is None:
             raise ValueError('nested-share child must be selected for valuation')
         if edge['method']=='vault-asset':
@@ -369,9 +394,13 @@ def _position(edge,timestamp,reader,snapshots):
             balance = reader.uint(edge['child'],'balanceOf(address)',block,edge['parent'])
             with localcontext() as ctx:
                 ctx.prec=78
-                ratio = Decimal(min(debt,balance))/Decimal(supply) if supply else Decimal(0)
+                # totalAssets is denominated in child shares, including shares
+                # deployed outside the wrapper's own wallet (e.g. Ajna).
+                if not supply:
+                    raise ValueError('positive wrapper assets without child supply')
+                ratio = Decimal(min(debt,supply))/Decimal(supply)
                 data.update(debt_usd=str(decimal(child['tvl_usd'])*ratio),owned_usd=str(decimal(child['tvl_usd'])*ratio),
-                            balance_raw=str(balance),ownership_ratio=str(ratio),status='ok')
+                            balance_raw=str(balance),ownership_ratio=str(ratio),status='ok',ownership_basis='total-assets-shares')
             return data
         if parent['price_usd'] is None:
             raise ValueError('missing parent asset price')
@@ -386,6 +415,24 @@ def _position(edge,timestamp,reader,snapshots):
                     data.update(status='ok',mapping_status='no_known_child')
             elif child is None:
                 data.update(status='ok',mapping_status='child_outside_selection')
+            elif edge['method']=='cross-chain-shares':
+                remote = (readers or {}).get(child_chain)
+                remote_block = child.get('block_number')
+                data['child_block_number'] = remote_block
+                if remote is None or remote_block is None:
+                    raise ValueError('missing remote historical state')
+                if (reader.uint(edge['strategy'],'REMOTE_CHAIN_ID()',block)!=child_chain
+                        or reader.uint(edge['strategy'],'REMOTE_COUNTERPART()',block)!=int(edge['remote_holder'],16)
+                        or remote.uint(edge['remote_holder'],'REMOTE_COUNTERPART()',remote_block)!=int(edge['strategy'],16)
+                        or remote.uint(edge['remote_holder'],'vault()',remote_block)!=int(edge['child'],16)):
+                    raise ValueError('historical remote counterpart mismatch')
+                balance = remote.uint(edge['child'],'balanceOf(address)',remote_block,edge['remote_holder'])
+                supply = int(child['total_supply_raw'])
+                if balance > supply or (balance and not supply):
+                    raise ValueError('invalid remote ownership')
+                ratio = Decimal(balance)/Decimal(supply) if supply else Decimal(0)
+                data.update(balance_raw=str(balance),ownership_ratio=str(ratio),
+                            owned_usd=str(decimal(child['tvl_usd'])*ratio) if ratio else '0',status='ok')
             elif edge['method']=='direct-strategy':
                 # Tokenized Strategy shares need not be held by the allocator.
                 if (parent['asset'] or '').lower() != (child['asset'] or '').lower():
@@ -478,7 +525,7 @@ def collect_tvl(conn,from_timestamp,to_timestamp,*,interval=86400,chain_ids=None
                     point.update(reason='archive_rpc_setup_failed',failure_class=reader_errors[chain])
                 points[(chain,vault['address'].lower())] = point
             _value_nested_shares(points)
-            position_rows = [_position(e,timestamp,readers[e['chain_id']],points) for e in edges]
+            position_rows = [_position(e,timestamp,readers[e['chain_id']],points,readers) for e in edges]
             with conn:
                 # Pipeline each day's records across the remote DB connection
                 # while retaining the same atomic date boundary.
