@@ -1,7 +1,8 @@
 # Powerglove and Neon branch stack
 
-Prepared October 9, 2026. All branches below are local; this organization did not
-push branches, create pull requests, or change existing GitHub PR bases.
+Updated October 9, 2026. All seven branch heads are published to the
+`rossgalloway/yearn-data` fork, with draft PRs #13–#19 targeting
+`yearn/yearn-metrics:main`, matching the existing PRs. Existing PR bases are unchanged.
 
 ## Review order
 
@@ -9,19 +10,20 @@ The foundation is `ross/tvl-history` at `cd0e120`, already represented by
 [PR #12](https://github.com/yearn/yearn-metrics/pull/12). Earlier historical
 indexing, pricing and accounting PR branches are preserved.
 
-The numeric branch labels indicate local review order, not assigned PR numbers.
-Each new branch contains the preceding row as an ancestor; review its diff
-against that immediate base.
+Each branch contains the preceding row as an ancestor. Its PR description links
+to the preceding PR and the incremental fork comparison. GitHub’s default PR diff
+is cumulative because all PRs target main. The assigned PR numbers happen to match
+the local branch numbering.
 
 | Branch | Immediate base | Tip | Review scope |
 | --- | --- | --- | --- |
-| `ross/pr-13-powerglove-fees` | `ross/tvl-history` | `5986b9d` | Selected fee/earnings API, weekly buckets and vault filters |
-| `ross/pr-14-powerglove-tvl` | `ross/pr-13-powerglove-fees` | `4dff58c` | TVL API integration, historical exclusions, quote rejection and chart reuse |
-| `ross/pr-15-neon-storage` | `ross/pr-14-powerglove-tvl` | `55e7db7` | PostgreSQL storage/migration and prepared TVL history |
-| `ross/pr-16-neon-operations` | `ross/pr-15-neon-storage` | `cab174c` | Staging selection, bounded updater, published-only serving and service definitions |
-| `ross/pr-17-tvl-price-repairs` | `ross/pr-16-neon-operations` | `f160226` | Additional rejected quotes and incremental prepared-history repair |
-| `ross/pr-18-powerglove-analytics` | `ross/pr-17-tvl-price-repairs` | `b77623a` | Owned DefiLlama references/membership, fee stacks, profitability and API routing |
-| `ross/pr-19-yvusd-fees` | `ross/pr-18-powerglove-analytics` | `e0896bc` | Receipt-bound locker redistribution separated from fee revenue |
+| `ross/pr-13-powerglove-fees` | `ross/tvl-history` | `5986b9d` | [#13](https://github.com/yearn/yearn-metrics/pull/13) — Selected fee/earnings API, weekly buckets and vault filters |
+| `ross/pr-14-powerglove-tvl` | `ross/pr-13-powerglove-fees` | `4dff58c` | [#14](https://github.com/yearn/yearn-metrics/pull/14) — TVL API integration, historical exclusions, quote rejection and chart reuse |
+| `ross/pr-15-neon-storage` | `ross/pr-14-powerglove-tvl` | `55e7db7` | [#15](https://github.com/yearn/yearn-metrics/pull/15) — PostgreSQL storage/migration and prepared TVL history |
+| `ross/pr-16-neon-operations` | `ross/pr-15-neon-storage` | `cab174c` | [#16](https://github.com/yearn/yearn-metrics/pull/16) — Staging selection, bounded updater, published-only serving and service definitions |
+| `ross/pr-17-tvl-price-repairs` | `ross/pr-16-neon-operations` | `f160226` | [#17](https://github.com/yearn/yearn-metrics/pull/17) — Additional rejected quotes and incremental prepared-history repair |
+| `ross/pr-18-powerglove-analytics` | `ross/pr-17-tvl-price-repairs` | `b77623a` | [#18](https://github.com/yearn/yearn-metrics/pull/18) — Owned DefiLlama references/membership, fee stacks, profitability and API routing |
+| `ross/pr-19-yvusd-fees` | `ross/pr-18-powerglove-analytics` | `e0896bc` | [#19](https://github.com/yearn/yearn-metrics/pull/19) — Receipt-bound locker redistribution separated from fee revenue |
 
 Example local review:
 
@@ -29,13 +31,12 @@ Example local review:
 git diff ross/pr-18-powerglove-analytics...ross/pr-19-yvusd-fees
 ```
 
-Existing PR #12 is from the `rossgalloway/yearn-data` fork into
-`yearn/yearn-metrics:main`. GitHub PR bases must exist in the target repository.
-For incremental upstream stacked PRs, the base branches above must first be
-published in that target repository. Otherwise merge the foundation and open
-subsequent layers in order against the updated upstream main, adjusting ancestry
-if upstream uses squash merges. Do not open all layers against main and describe
-the resulting cumulative diffs as isolated changes.
+Existing PR #12 and the new drafts come from `rossgalloway/yearn-data` into
+`yearn/yearn-metrics:main`. The current account cannot push base branches upstream.
+At the user's request, the new PRs match the existing main-targeted draft layout.
+Review each incremental comparison and merge in dependency order. If upstream
+uses squash merges, restack later branches on the resulting main commits before
+merging them to avoid carrying already-merged history in their diffs.
 
 ## Working checkouts
 
