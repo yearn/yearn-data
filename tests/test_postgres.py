@@ -186,7 +186,8 @@ def test_existing_discovery_and_collection_on_postgres(pg,tmp_path,monkeypatch,c
     fn(**{name:available[name] for name in inspect.signature(fn).parameters})
 
 
-def test_existing_lifetime_yield_analysis_on_postgres(pg,tmp_path,monkeypatch):
+@pytest.mark.parametrize('pipeline',[False,True])
+def test_existing_lifetime_yield_analysis_on_postgres(pg,tmp_path,monkeypatch,pipeline):
     import test_analysis as cases
     from yearn_data.storage import seed_chains
     from yearn_data.config import CHAINS
@@ -195,7 +196,9 @@ def test_existing_lifetime_yield_analysis_on_postgres(pg,tmp_path,monkeypatch):
     seed_chains(conn,CHAINS)
     # Reuse the financial regression's data and expectations with a PG writer.
     monkeypatch.setattr(cases,'connect',lambda _:conn)
-    cases.test_lifetime_yield_uses_net_gain_minus_loss(tmp_path)
+    from contextlib import nullcontext
+    with conn.raw.pipeline() if pipeline else nullcontext():
+        cases.test_lifetime_yield_uses_net_gain_minus_loss(tmp_path)
 
 
 def test_fee_price_retry_replaces_missing_with_exact_price(pg,monkeypatch):

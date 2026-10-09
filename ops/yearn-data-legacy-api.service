@@ -1,0 +1,7 @@
+[Unit]
+Description=Forward the former SQLite API port to Neon
+Requires=yearn-data-neon-api.service
+After=yearn-data-neon-api.service
+
+[Service]
+ExecStart=/usr/lib/systemd/systemd-socket-proxyd 127.0.0.1:3491

@@ -266,25 +266,29 @@ CREATE TABLE IF NOT EXISTS analysis_outputs (
 """
 
 
+POSTGRES_ENV = {'neon': 'NEON_DB_URL', 'staging': 'STAGING_DB_URL'}
+
+
 def is_postgres(database) -> bool:
-    return str(database) == 'neon' or str(database).startswith(('postgresql://', 'postgres://'))
+    return str(database) in POSTGRES_ENV or str(database).startswith(('postgresql://', 'postgres://'))
 
 
 def database_reference(database) -> str:
     """Publication manifests contain a logical name, never database credentials."""
     if is_postgres(database):
-        if str(database) != 'neon':
-            raise ValueError('use the logical database name neon for publications; URLs contain credentials')
-        return 'neon'
+        if str(database) not in POSTGRES_ENV:
+            raise ValueError('use a logical database name for publications; URLs contain credentials')
+        return str(database)
     return str(Path(database).resolve())
 
 
 def connect(path: str | Path = DEFAULT_DB_PATH, *, readonly=False, schema=None, direct=False):
     if is_postgres(path):
         from .postgres import Connection
-        url = os.environ.get('NEON_DB_URL') if str(path) == 'neon' else str(path)
+        env = POSTGRES_ENV.get(str(path))
+        url = os.environ.get(env) if env else str(path)
         if not url:
-            raise ValueError('NEON_DB_URL is required for --db neon')
+            raise ValueError(f'{env} is required for --db {path}')
         return Connection(url, readonly=readonly,
                           schema=schema or os.environ.get('YEARN_DATA_DB_SCHEMA', 'public'), direct=direct)
     db_path = Path(path)

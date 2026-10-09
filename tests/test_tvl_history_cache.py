@@ -87,3 +87,16 @@ def test_prepared_histories_keep_chain_identity_and_window_reference_changes(tmp
     cached=TvlDataset(source.manifest)
     assert cached.history(chain_id=10,interval='daily',constant=True,start=DAY+5*86400)==old
     assert all(r['vault']=='10:'+PARENT for r in old['references'])
+
+
+def test_published_only_reader_keeps_selection_until_updater_publishes(tmp_path):
+    path=tmp_path/'history.sqlite';publication=tmp_path/'publication'
+    with closing(connect(path)) as conn:
+        init_db(conn);run(conn,1,DAY,[(PARENT,'100')])
+    previous=TvlStore(path,publication).get().id
+    with closing(connect(path)) as conn:run(conn,2,DAY+86400,[(PARENT,'200')])
+    reader=TvlStore(path,publication,auto_publish=False)
+    assert reader.get().id==previous
+    assert reader.get().summary()['totalTvl']==100
+    new=TvlStore(path,publication).get()
+    assert new.id!=previous and reader.get().id==new.id
