@@ -15,7 +15,7 @@ from . import pricing
 POLICY = 'fee-usd-yearn-eod-1'
 FIELDS = ('gross_gain_raw', 'loss_raw', 'total_fees_paid_raw', 'management_fee_raw',
           'performance_fee_raw', 'strategist_fee_raw', 'protocol_fee_raw',
-          'manager_fee_raw', 'total_refunds_raw')
+          'manager_fee_raw', 'total_refunds_raw', 'locker_bonus_raw', 'reported_total_fees_raw')
 
 
 def endpoint_identity():
