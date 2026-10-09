@@ -12,7 +12,7 @@ from .storage import DATABASE_ERRORS
 
 FEE_PATHS = {'/api/fees', '/api/fees/', '/api/fees/history', '/api/fees/vaults'}
 TVL_PATHS = {'/api/tvl', '/api/tvl/', '/api/tvl/history/runs/latest',
-             '/api/tvl/history/runs/latest/constant-price', '/api/tvl/curation-products', '/api/audit/tree'}
+             '/api/tvl/history/runs/latest/constant-price', '/api/tvl/curation-products', '/api/tvl/graph', '/api/audit/tree'}
 ANALYTICS_PATHS = {'/api/analytics/publication', '/api/fees/stack', '/api/profitability',
                    '/api/comparison', '/api/comparison/defillama-comparable'}
 

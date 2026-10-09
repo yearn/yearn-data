@@ -103,7 +103,13 @@ adding their full TVL to Yearn's inventory.
 - **Compounder → child vault:** retain this as a second nesting level. Use the
   compounder's asset value as its budget and measure its child shares.
 - **Vault with a vault-share asset:** value those shares from the dated child,
-  including when the price provider lacks a share-token price.
+  including when the price provider lacks a share-token price. Ownership uses
+  share-denominated `totalAssets`, including deployed shares, rather than only
+  the wrapper's idle wallet balance.
+- **Registered cross-chain strategy:** verify both remote-counterpart getters
+  and the destination vault at the two dated blocks. Cap remote share ownership
+  by source debt and both vaults' TVL. Both chains must be included in collection;
+  source and destination accounting can differ because bridge reports lag.
 - **Morpho V2 adapters:** verify historical `isAdapter` membership and read
   `realAssets()` before valuing the adapter's child holdings. See the
   [Morpho contract reference](https://docs.morpho.org/developers/contracts/morpho-vaults-v2/)

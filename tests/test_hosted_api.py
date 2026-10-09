@@ -104,9 +104,19 @@ def test_request_connections_are_readonly(published, monkeypatch):
     for module in (hosted_publications, pairing, analytics, tvl_api, tvl_history_cache):
         monkeypatch.setattr(module, 'connect', reader)
     api = HostedAPI(published[0])
-    for route in ['/api/fees', '/api/tvl', '/api/fees/stack', '/api/publication']:
+    for route in ['/api/fees', '/api/tvl', '/api/tvl/graph', '/api/fees/stack', '/api/publication']:
         assert api.response(route)[0] == 200
     assert calls
+
+
+def test_hosted_graph_uses_selected_tvl_release_and_rejects_retired_pin(published):
+    database,_,history,release=published
+    api=HostedAPI(database)
+    expected=tvl_response(TvlStore(database,history,auto_publish=False),'/api/tvl/graph')
+    assert api.response('/api/tvl/graph')==expected
+    pin=expected[1]['datasetId']
+    assert api.response('/api/tvl/graph?datasetId='+pin)==expected
+    assert api.response('/api/tvl/graph?datasetId='+'f'*64)[0]==410
 
 
 @pytest.mark.parametrize('url,status,expected', [
