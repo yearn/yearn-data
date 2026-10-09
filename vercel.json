@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 60,
+      "excludeFiles": "{data/**,artifacts/**,exports/**,tests/**,docs/**,scripts/**,ops/**,cache/**,build/**,.agents/**,.aws/**,.codex/**,.github/**,.pytest_cache/**,.vscode/**,.venv/**,.env,.env.*,**/*.sqlite,**/*.sqlite-*,**/*.db,**/*.zst}"
+    }
+  },
+  "framework": null,
+  "routes": [
+    {
+      "src": "/api(?:/.*)?",
+      "dest": "/api/index"
+    },
+    {
+      "src": "/.*",
+      "status": 404
+    }
+  ],
+  "git": {
+    "deploymentEnabled": false
+  }
+}

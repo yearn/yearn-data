@@ -135,7 +135,8 @@ def test_prepare_freezes_inputs_and_retains_old_selection(tmp_path):
     store=AnalyticsStore(db)
     assert store.get()['meta']['publicationId']==old
     put_input(conn,'membership',{'vaults':[{'chainId':1,'address':A,'included':False}]},observed_at=2)
-    new=prepare(db,financial,tvl)
+    new=prepare(db,financial,tvl,select=False)
+    assert store.get()['meta']['publicationId']==old
     assert new!=old
     assert store.get(old)['comparable']['includedVaults'][0]['vaultAddress']==A
     assert store.get(new)['comparable']['diff']['missingFromDefillama'][0]['vaultAddress']==A

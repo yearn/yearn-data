@@ -267,7 +267,7 @@ def dated_rows(tvl,dates):
             yield from tvl.history_rows(dates[offset:offset+31],None)
 
 
-def prepare(database, financial, tvl):
+def prepare(database, financial, tvl, *, select=True):
     with closing(connect(database)) as conn:
         conn.executescript(SCHEMA)
         inputs={kind:selected_input(conn,kind) for kind in ('defillama','membership','fee-config')}
@@ -294,8 +294,9 @@ def prepare(database, financial, tvl):
             'profitability':profits,'comparison':owned_comparison(tvl,rows,references)}
         with closing(connect(database)) as conn,conn:
             conn.execute('INSERT INTO analytics_publications VALUES (?,?,?) ON CONFLICT DO NOTHING',(identity,int(time.time()),encoded(publication)))
-    with closing(connect(database)) as conn,conn:
-        conn.execute("INSERT INTO analytics_selection VALUES ('powerglove',?) ON CONFLICT(name) DO UPDATE SET publication_id=excluded.publication_id",(identity,))
+    if select:
+        with closing(connect(database)) as conn,conn:
+            conn.execute("INSERT INTO analytics_selection VALUES ('powerglove',?) ON CONFLICT(name) DO UPDATE SET publication_id=excluded.publication_id",(identity,))
     return identity
 
 

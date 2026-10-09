@@ -165,6 +165,16 @@ class PairingDataset:
         }
         self.id = hashlib.sha256(_json(self.context | {'vaultNames': vault_names}).encode()).hexdigest()
 
+    def view_rows(self, since, end, chains, vault_address):
+        def included(row):
+            return ((since is None or row['block_timestamp'] >= since) and row['block_timestamp'] < end
+                    and (not chains or row['chain_id'] in chains)
+                    and (vault_address is None or row['vault_address'].lower() == vault_address))
+        fees = [row for row in self.fees if included(row)]
+        earnings = [row for row in self.earnings if included(row)]
+
+        return fees, earnings
+
     @lru_cache(maxsize=128)
     def view(self, name, since=None, until=None, chains=(), interval='monthly', vault_address=None):
         if name not in ('summary', 'history', 'vaults'):
@@ -188,12 +198,7 @@ class PairingDataset:
         if since is not None and since >= self.cutoff:
             raise ValueError('requested range starts outside this dataset')
         end = min(self.cutoff, until if until is not None else self.cutoff)
-        def included(row):
-            return ((since is None or row['block_timestamp'] >= since) and row['block_timestamp'] < end
-                    and (not chains or row['chain_id'] in chains)
-                    and (vault_address is None or row['vault_address'].lower() == vault_address))
-        fees = [row for row in self.fees if included(row)]
-        earnings = [row for row in self.earnings if included(row)]
+        fees, earnings = self.view_rows(since, end, chains, vault_address)
 
         def totals(fee_rows, report_rows):
             pnl = _earnings(report_rows)

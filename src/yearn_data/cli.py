@@ -144,6 +144,15 @@ def build_parser() -> argparse.ArgumentParser:
     pairing_p.add_argument("--fees-run-id", type=int, required=True)
     pairing_p.add_argument("--out", type=Path, default=Path("data/powerglove"))
 
+    hosted_p = sub.add_parser('publish-hosted', help='Validate and atomically select database-backed API publications')
+    hosted_p.add_argument('--publication', type=Path, required=True)
+    hosted_p.add_argument('--tvl-publication', type=Path, required=True)
+    hosted_choice = hosted_p.add_mutually_exclusive_group()
+    hosted_choice.add_argument('--analytics-publication-id')
+    hosted_choice.add_argument('--prepare-analytics', action='store_true', help='Prepare coherent analytics without changing the legacy selection')
+    restore_p = sub.add_parser('select-hosted-release', help='Select a retained hosted API release for rollback')
+    restore_p.add_argument('--release-id', required=True)
+
     collect_p = sub.add_parser('collect-analytics', help='Collect owned DefiLlama references, membership and declared fee configurations')
     prepare_p = sub.add_parser('prepare-analytics', help='Publish remaining Powerglove analytics in the selected database')
     prepare_p.add_argument('--publication', type=Path, required=True)
@@ -312,6 +321,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["space_sufficient"] else 2
     load_environment(args.env)
     args.db = args.db or os.environ.get('YEARN_DATA_DB', str(DEFAULT_DB_PATH))
+    if args.command == 'select-hosted-release':
+        from .hosted_publications import select_release
+        print(json.dumps({'releaseId':select_release(args.db, args.release_id)}))
+        return 0
+    if args.command == 'publish-hosted':
+        from .hosted_publications import publish
+        print(json.dumps({'releaseId': publish(args.db, args.publication, args.tvl_publication,
+                                               args.analytics_publication_id, prepare_analytics=args.prepare_analytics)}))
+        return 0
     if args.command == 'collect-analytics':
         from .analytics_collect import collect
         print(json.dumps(collect(args.db), sort_keys=True))
