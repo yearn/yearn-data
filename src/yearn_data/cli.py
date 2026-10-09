@@ -98,6 +98,10 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("init-db")
 
+    canonical_p = sub.add_parser('consolidate-history', help='Keep one canonical history, verifying every historical key')
+    canonical_p.add_argument('--apply', action='store_true', help='Apply atomically; the default only reports the plan')
+    canonical_p.add_argument('--receipt', type=Path, help='Write key/value preservation counts and selected revision')
+
     postgres_p = sub.add_parser('migrate-postgres', help='Stream the shared SQLite history into an empty Postgres database')
     postgres_p.add_argument('--source', required=True, type=Path)
     postgres_p.add_argument('--check-only', action='store_true')
@@ -321,6 +325,15 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if result["space_sufficient"] else 2
     load_environment(args.env)
     args.db = args.db or os.environ.get('YEARN_DATA_DB', str(DEFAULT_DB_PATH))
+    if args.command == 'consolidate-history':
+        from .canonical_history import consolidate
+        result = consolidate(args.db, apply=args.apply, progress=progress)
+        body = json.dumps(result, sort_keys=True, indent=2)
+        if args.receipt:
+            args.receipt.parent.mkdir(parents=True, exist_ok=True)
+            args.receipt.write_text(body+'\n')
+        print(body)
+        return 0
     if args.command == 'select-hosted-release':
         from .hosted_publications import select_release
         print(json.dumps({'releaseId':select_release(args.db, args.release_id)}))

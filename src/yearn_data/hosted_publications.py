@@ -99,7 +99,13 @@ def publish(database, financial_directory, tvl_directory, analytics_id=None, *, 
                 if not dates:
                     raise ValueError('prepared TVL dates are unavailable')
                 conn.execute('INSERT INTO api_tvl_dates VALUES (?,?) ON CONFLICT DO NOTHING', (tvl.id, encoded(dates)))
-        return save_release(conn, fees, manifest, analytics['publicationId'])
+        release = save_release(conn, fees, manifest, analytics['publicationId'])
+    # Retire superseded values only after a complete coherent publication exists.
+    # A verification failure rolls back consolidation and keeps both revisions
+    # for inspection; the newly published, already validated release stays usable.
+    from .canonical_history import consolidate
+    consolidate(database, apply=True)
+    return release
 
 
 class Registry:

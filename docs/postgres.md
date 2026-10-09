@@ -148,8 +148,10 @@ Yearn-only pricing, paired analyses, one full-catalog TVL close and chart
 preparation. Select block bounds and a closed UTC cutoff explicitly. A report
 window covers the selected chain; it does not claim all-chain fee freshness.
 The publication root contains `fees/` and `tvl/` directories. Preparation uses a
-separate pointer before publishing the serving TVL selection. Historical
-publications remain available for pinned clients.
+separate pointer before publishing the serving TVL selection. The updater then
+publishes a coherent hosted release and performs
+[verified canonical-history consolidation](canonical-history.md). Daily historical
+coverage is retained; obsolete publication editions are retired.
 
 ```bash
 python scripts/update_postgres.py --db neon --env /path/to/.env \

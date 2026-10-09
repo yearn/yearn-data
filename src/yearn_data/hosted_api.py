@@ -42,12 +42,29 @@ class HostedAPI:
             if urlsplit(url).query:
                 return 400, {'error': 'unsupported filter'}
             return 200, selection
+        query = parse_qs(urlsplit(url).query)
+        field = ('feesDatasetId' if path in FEE_PATHS else
+                 'tvlDatasetId' if path in TVL_PATHS else 'analyticsPublicationId')
+        pin = 'publicationId' if path in ANALYTICS_PATHS else 'datasetId'
+        identity = query.get(pin, [])
+        if (len(identity) == 1 and len(identity[0]) == 64
+                and all(c in '0123456789abcdef' for c in identity[0]) and identity[0] != selection[field]):
+            return 410, {'error': 'Data was updated. Reload the page to use the current history.',
+                         'releaseId': selection['releaseId']}
         if path in FEE_PATHS:
             from .pairing import pairing_response
-            return pairing_response(SelectedStore(self.registry.fees, selection['feesDatasetId']), url)
-        if path in TVL_PATHS:
-            return tvl_response(SelectedStore(self.registry.tvl, selection['tvlDatasetId']), url)
-        return analytics_response(SelectedStore(self.analytics.get, selection['analyticsPublicationId']), url)
+            response = pairing_response(SelectedStore(self.registry.fees, selection['feesDatasetId']), url)
+        elif path in TVL_PATHS:
+            response = tvl_response(SelectedStore(self.registry.tvl, selection['tvlDatasetId']), url)
+        else:
+            response = analytics_response(SelectedStore(self.analytics.get, selection['analyticsPublicationId']), url)
+        # A request can span multiple read connections. If publishing retired its
+        # revision mid-request, never return a partial or mixed successful view.
+        current = self.registry.selection()
+        if current['releaseId'] != selection['releaseId']:
+            return 410, {'error': 'Data was updated. Reload the page to use the current history.',
+                         'releaseId': current['releaseId']}
+        return response
 
 
 def cache_headers(url, status):

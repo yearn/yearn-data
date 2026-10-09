@@ -20,8 +20,10 @@ validated on Vercel.
 The explicit writer command validates the selected financial analysis, requires
 prepared TVL rows/totals, and checks that analytics reference those same two datasets.
 It stores financial and TVL manifests in `api_manifests`, a coherent set of IDs in
-`api_releases`, and atomically updates `api_selection`. Earlier manifests remain
-addressable. Conflicting content for an existing identity is rejected.
+`api_releases`, and atomically updates `api_selection`. It then performs verified
+[canonical-history consolidation](canonical-history.md): current historical
+coverage remains complete, while superseded outputs and publications are retired.
+Conflicting content for an existing identity is rejected.
 
 ```bash
 PYTHONPATH=src python -m yearn_data.cli --db staging publish-hosted \
@@ -38,7 +40,8 @@ creates schema, collects data, refreshes prices, or publishes a new selection.
 Every request reads the small selected release record. Object caches are keyed by
 immutable dataset IDs; selecting another release does not require a restart.
 `GET /api/publication` returns the selected release and fee/TVL/analytics IDs.
-Existing Powerglove discovery routes and explicitly pinned dataset URLs still work.
+Existing Powerglove discovery routes and URLs pinned to the current dataset work.
+A superseded pin returns HTTP 410; reload the selection and retry related views.
 
 ## Local entry point
 

@@ -40,6 +40,18 @@ def key(row):
     return row['chain_id'], row['vault'].lower()
 
 
+def observation_selection(table):
+    """The canonical identity and quality order used by reads and consolidation."""
+    if table == 'tvl_snapshots':
+        return ('chain_id,vault,timestamp',
+                "CASE WHEN json_extract(data_json,'$.tvl_usd') IS NOT NULL THEN 2 "
+                "WHEN json_extract(data_json,'$.asset_units') IS NOT NULL THEN 1 ELSE 0 END")
+    if table == 'tvl_positions':
+        return ('chain_id,parent,strategy,child,timestamp',
+                "CASE WHEN json_extract(data_json,'$.status')='ok' THEN 1 ELSE 0 END")
+    raise ValueError('unsupported observation table')
+
+
 def money(rows, field):
     if not rows:
         return 0.0
@@ -177,12 +189,7 @@ class TvlDataset:
         Successful later repairs supersede earlier values only at the same identity
         and timestamp. Positions remain dated and must match the selected block.
         """
-        dimensions = ('chain_id,vault,timestamp' if table == 'tvl_snapshots'
-                      else 'chain_id,parent,strategy,child,timestamp')
-        quality = ("CASE WHEN json_extract(data_json,'$.tvl_usd') IS NOT NULL THEN 2 "
-                   "WHEN json_extract(data_json,'$.asset_units') IS NOT NULL THEN 1 ELSE 0 END"
-                   if table == 'tvl_snapshots' else
-                   "CASE WHEN json_extract(data_json,'$.status')='ok' THEN 1 ELSE 0 END")
+        dimensions, quality = observation_selection(table)
         run_marks = ','.join('?' for _ in self.run_ids)
         date_marks = ','.join('?' for _ in timestamps)
         where = f'run_id IN ({run_marks}) AND timestamp IN ({date_marks})'
@@ -191,11 +198,14 @@ class TvlDataset:
             where += ' AND chain_id=?'
             args += (chain_id,)
         joins = ' AND '.join('s.'+field+'=w.'+field for field in dimensions.split(','))
+        # A table rewrite can change the order of rows sharing a close and chain.
+        # Use the full identity so API collections stay stable after compaction.
+        order = 's.timestamp,'+','.join('s.'+field for field in dimensions.split(',') if field != 'timestamp')
         sql = f'''WITH winners AS (
             SELECT {dimensions},MAX(({quality})*{self.base}+run_id) AS rank
             FROM {table} WHERE {where} GROUP BY {dimensions})
             SELECT s.run_id,s.data_json FROM {table} s JOIN winners w
-            ON {joins} AND s.run_id=w.rank%{self.base} ORDER BY s.timestamp,s.chain_id'''
+            ON {joins} AND s.run_id=w.rank%{self.base} ORDER BY {order}'''
         records=conn.stream(sql,args) if hasattr(conn,'raw') else conn.execute(sql,args)
         for row in records:
             data = json.loads(row['data_json'])

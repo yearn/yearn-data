@@ -27,6 +27,7 @@ def main():
     from yearn_data.pairing import select_pairing,PairingDataset
     from yearn_data.tvl_api import publish_tvl,TvlDataset
     from yearn_data.tvl_history_cache import prepare
+    from yearn_data.hosted_publications import publish
     from contextlib import closing
     load_environment([args.env])
     closed_cutoff(args.cutoff)
@@ -48,7 +49,8 @@ def main():
     prepare(TvlDataset(tvl),progress=lambda message:print(message,flush=True))
     publish_tvl(args.db,args.publication_root/'tvl',current_bridge_policy='retired-registry')
     pair=select_pairing(args.db,ids['lifetime-yield'],ids['fee-usd'],args.publication_root/'fees')
-    print(json.dumps({'database':args.db,'cutoff':args.cutoff,'earningsRunId':ids['lifetime-yield'],'feesRunId':ids['fee-usd'],'feeDatasetId':pair['datasetId'],'tvlDatasetId':tvl['datasetId']},sort_keys=True))
+    release=publish(args.db,args.publication_root/'fees',args.publication_root/'tvl',prepare_analytics=True)
+    print(json.dumps({'database':args.db,'cutoff':args.cutoff,'earningsRunId':ids['lifetime-yield'],'feesRunId':ids['fee-usd'],'feeDatasetId':pair['datasetId'],'tvlDatasetId':tvl['datasetId'],'releaseId':release},sort_keys=True))
 
 
 if __name__=='__main__':main()

@@ -57,7 +57,7 @@ def test_fileless_routes_match_existing_contracts(published):
     assert api.response('/api/fees/stack')[1]['chains'] == []
     assert api.response('/api/analytics/publication')[1]['feesDatasetId'] == expected_fees[1]['datasetId']
     assert api.response('/api/fees?chainId=bad')[0] == 400
-    assert api.response('/api/fees?datasetId='+'f'*64)[0] == 400
+    assert api.response('/api/fees?datasetId='+'f'*64)[0] == 410
     assert api.response('/api/fees/stack?publicationId=bad')[0] == 400
     assert api.response('/api/publication?unknown=yes')[0] == 400
     assert api.response('/unknown')[0] == 404
