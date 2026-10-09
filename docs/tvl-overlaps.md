@@ -112,3 +112,29 @@ Powerglove must classify `/api/tvl/graph` in its Yearn Data lane and proxy it to
 the Yearn Data target. The old explicit graph proxy otherwise overrides the
 broader `/api/tvl` proxy. Standalone graphs may use the current selection; a graph
 paired with a selected TVL view should pass that view's `datasetId`.
+
+## October 9 private Powerglove rollout
+
+The protected hosted API was deployed from commit `0d904de`. The private
+Powerglove build routes the graph to that API and displays explicit
+`deductedTvlUsd` amounts, including zero-deduction curation flows.
+
+Repair run `488` stores the 27 reviewed positions at their original October 8
+blocks. It does not replace historical snapshots or use current RPC balances for
+past dates. Dataset
+`c09c5663cb62c7178b5d34764e764bcbb537e0ea98ecbf5b3adafece4e0e472c`
+contains 1,153,961 chart rows spanning 2,265 closes. An exhaustive comparison
+found 17 changed chart rows, all at `1791503999`; every earlier chart row remains
+identical. Broader historical router/wrapper recollection remains separate work.
+
+A fresh recovery dump and local rollout receipts are retained under ignored
+`data/tvl-overlap-recovery-20261009.dump` and
+`artifacts/tvl-overlap-release/`. The latter includes the guarded repair,
+publication and verification scripts, input hashes, before/after totals, and
+historical identity checks. Credentials are not included in these receipts.
+
+Validation: 588 backend tests passed (23 skipped), 332 Powerglove tests passed,
+and the Powerglove production build and changed-file Biome checks passed. Eight
+API route checks and desktop/mobile browser checks confirmed the selected graph,
+including the $928,357.17 cross-chain deduction. The private proxy protection
+credential is absent from the browser build.
