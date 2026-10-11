@@ -29,6 +29,7 @@ FEE_FIELDS = {
     'managementFeesUsd': 'management_fee_usd',
     'strategistFeesUsd': 'strategist_fee_usd',
     'totalRefundsUsd': 'total_refunds_usd',
+    'stakerDistributionUsd': 'staker_distribution_usd',
     'lockerBonusUsd': 'locker_bonus_usd',
     'reportedTotalFeesUsd': 'reported_total_fees_usd',
 }
