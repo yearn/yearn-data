@@ -15,7 +15,7 @@ from .config import CHAINS
 from .indexing import _receipt_with_retry
 from .storage import to_json
 
-METHOD_VERSION = 'canonical-fees-7'
+METHOD_VERSION = 'canonical-fees-8'
 FEE_TOPIC = '0x' + keccak(text='FeeReport(uint256,uint256,uint256,uint256)').hex()
 REPORT_TOPICS = {
     '0x' + keccak(text='StrategyReported(address,' + ','.join(['uint256'] * n) + ')').hex(): n
@@ -51,7 +51,7 @@ def _amounts(gain, loss, total) -> dict[str, Any]:
     }
 
 
-def normalize_allocator_fees(report, locker_split=None) -> dict[str, Any]:
+def normalize_allocator_fees(report, locker_split=None, staker_distribution=None) -> dict[str, Any]:
     gain, loss = unsigned(report['gain_raw']), unsigned(report['loss_raw'])
     total = unsigned(report['total_fees_raw'])
     protocol = unsigned(report['protocol_fees_raw'])
@@ -61,6 +61,9 @@ def normalize_allocator_fees(report, locker_split=None) -> dict[str, Any]:
     from .yvusd_fees import applies
     if applies(dict(report)) and locker_split is None:
         raise ValueError('yvUSD requires verified locker distribution evidence')
+    from .ybold_fees import applies as is_ybold
+    if is_ybold(dict(report)) and staker_distribution is None:
+        raise ValueError('yBOLD requires verified staker distribution evidence')
     self_report = report['strategy_address'].lower() == report['vault_address'].lower()
     result = {
         **_amounts(gain, loss, total), 'protocol_fee_raw': str(protocol),
@@ -78,6 +81,12 @@ def normalize_allocator_fees(report, locker_split=None) -> dict[str, Any]:
                       total_fees_paid_raw=str(management + performance),
                       manager_fee_raw=str(management + performance),
                       management_fee_raw=str(management), performance_fee_raw=str(performance))
+    if staker_distribution is not None:
+        if not is_ybold(dict(report)) or unsigned(staker_distribution) != total - protocol:
+            raise ValueError('unreconciled staker distribution')
+        result.update(reported_total_fees_raw=str(total), staker_distribution_raw=str(staker_distribution),
+                      total_fees_paid_raw=str(protocol), manager_fee_raw='0',
+                      management_fee_raw='0', performance_fee_raw='0')
     return result
 
 
@@ -235,6 +244,7 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
         scope += """ AND EXISTS (SELECT 1 FROM fee_filtered_log_evidence e WHERE
             e.chain_id=r.chain_id AND e.tx_hash=r.tx_hash AND e.report_log_index=r.log_index)"""
     from .yvusd_fees import VAULT, applies as is_yvusd
+    from .ybold_fees import VAULT as YBOLD_VAULT, applies as is_ybold
     retry = " OR f.status='unresolved'" if retry_unresolved else ''
     retry += " OR (r.version='v2' AND r.gain_raw='0' AND f.method_version<>?)"
     params.insert(0, METHOD_VERSION)
@@ -242,7 +252,7 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
         retry += " OR (f.method_version<>? AND json_extract(f.accounting_json,'$.amount_source')='derived-contract')"
         # These placeholders precede the optional chain scope in the query.
         params.insert(1, METHOD_VERSION)
-    retry += f" OR (r.chain_id=1 AND lower(r.vault_address)='{VAULT}' AND f.method_version<>'{METHOD_VERSION}')"
+    retry += f" OR (r.chain_id=1 AND lower(r.vault_address) IN ('{VAULT}','{YBOLD_VAULT}') AND f.method_version<>'{METHOD_VERSION}')"
     query = f'''SELECT r.*,v.api_version,f.evidence_json AS previous_evidence FROM strategy_reports r
         LEFT JOIN vaults v ON v.chain_id=r.chain_id AND v.address=r.vault_address
         LEFT JOIN canonical_fee_reports f ON f.chain_id=r.chain_id AND f.tx_hash=r.tx_hash AND f.report_log_index=r.log_index
@@ -275,7 +285,7 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
                         filtered[r['log_index']] = value
                 except (ValueError, KeyError, TypeError):
                     filtered[r['log_index']] = None
-        if any((r['version']=='v2' and r['log_index'] not in filtered) or is_yvusd(dict(r)) for r in reports):
+        if any((r['version']=='v2' and r['log_index'] not in filtered) or is_yvusd(dict(r)) or is_ybold(dict(r)) for r in reports):
             try:
                 cached = None if refresh_evidence else conn.execute(
                     'SELECT receipt_json,block_number,block_hash FROM fee_receipt_evidence WHERE chain_id=? AND tx_hash=?',
@@ -307,7 +317,20 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
             evidence = {'report_log_index':report['log_index'], 'report_inputs':report_inputs(report)}
             try:
                 if report['version']=='v3':
-                    if is_yvusd(dict(report)):
+                    if is_ybold(dict(report)):
+                        from .ybold_fees import accounting, collect
+                        if receipt_error:
+                            raise ValueError(receipt_error)
+                        previous = json.loads(report['previous_evidence'] or '{}').get('ybold')
+                        if previous and not refresh_evidence and previous.get('block_hash') == _hex(receipt['blockHash']):
+                            evidence['ybold'] = dict(previous, receipt=json.loads(Web3.to_json(receipt)))
+                        else:
+                            try:
+                                evidence['ybold'] = collect(report, receipt, client_for(chain_id))
+                            except Exception:
+                                raise ValueError('historical yBOLD configuration unavailable') from None
+                        amounts = accounting(report, evidence['ybold'])
+                    elif is_yvusd(dict(report)):
                         from .yvusd_fees import accounting
                         if receipt_error:
                             raise ValueError(receipt_error)
