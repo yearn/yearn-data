@@ -63,3 +63,15 @@ The new financial dataset is
 The prior selected release is retained for rollback:
 `3c59947823e61cfa85b6f4ffd45c7762ef878363f6154a89857d813fed9a6dae`.
 Use `select-hosted-release` with that ID to restore the previous published view.
+
+Selected hosted release:
+`5a7b195dca6e2561fa0d8437e15a6ae78db545c8b590b666c7d930af12dec319`.
+The running Powerglove proxy was verified to return this financial dataset and
+zero yBOLD allocator fees. Existing API code reads the corrected fee total
+immediately; exposing the additional `stakerDistributionUsd` response field
+requires deploying this branch's API code.
+
+Automatic post-publication history consolidation was stopped before deletion
+for this rollout. Both releases and all 122,825 output rows of each fee run
+(18 and 20) were verified retained. A later consolidation can retire the rollback
+publication; check retention before using the rollback command.
