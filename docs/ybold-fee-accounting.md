@@ -75,3 +75,45 @@ Automatic post-publication history consolidation was stopped before deletion
 for this rollout. Both releases and all 122,825 output rows of each fee run
 (18 and 20) were verified retained. A later consolidation can retire the rollback
 publication; check retention before using the rollback command.
+
+## Product reporting and staking catch-up
+
+The yBOLD product comprises the allocator and ysyBOLD staking contract. ysyBOLD
+charges the genuine performance fee; its Tokenized Strategy `Reported` events
+record that fee separately from the allocator's redistribution. A contract-only
+view of yBOLD therefore has zero fees while the product has real staking fees.
+
+The three financial endpoints (`/api/fees`, `/api/fees/vaults`, and
+`/api/fees/history`) accept `scope=product`. The default remains `scope=contract`.
+Product scope groups both addresses under the yBOLD allocator address, returns
+`productId`, `memberAddresses`, and `earningsAddress` on the vault row, and sums
+fee events at their original timestamps. Filtering either member address in
+product scope selects the complete product. `byContractFamily` preserves the
+actual fee charging layer. Product scope does not append an extra aggregate row
+to the contract rows, so total fees do not increase when switching scope.
+
+Only the allocator supplies product earnings. Recognizing the same yield at the
+staking layer does not create another earnings contribution. Powerglove requests
+product scope for comparison rankings, its picker, and filtered history; its
+contract-level fee stack retains contract scope.
+
+The full ysyBOLD scan covers deployment block 22569894 through block 26151122,
+strictly before October 9, 2026 UTC, in 72 finalized ranges. It found 315 reports,
+including three absent from the previous publication: September 5, September 8,
+and October 8. All three missing asset-days were valued by Yearn Prices.
+Fee run **21** preserves every existing field on all **117,382 prior fee events**
+and adds exactly these three staking reports. Product fees are now
+**62476.7470954600074323642847755392061047 USD**, with unchanged earnings run 15.
+The October 11 report is outside this publication's cutoff.
+
+The bounded Postgres updater now ingests the product's staking fee events within
+its explicit block range before pricing and publication. Evidence and reconciliation
+for this refresh are retained under ignored `artifacts/ybold-product/`.
+
+Selected product refresh release:
+`272ee4d686f91b721f7abec74bc1ed77af9920dbf5ed2a6f1189b13d6b9e3581`.
+Financial dataset:
+`b1f5a2ff1b1d55d93124ebdbff844f6cab9005c7c63adec9b8f038207514800d`.
+The deployed personal preview API was verified through Powerglove: contract scope
+returns zero allocator fees; product scope returns the combined fee amount above;
+both return identical allocator earnings. The previous release remains retained.
