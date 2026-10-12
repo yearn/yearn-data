@@ -18,6 +18,7 @@ import time
 from urllib.parse import parse_qs, urlsplit
 
 from .tvl import account, decimal
+from .tvl_policy import VAULT_POLICIES, classify_vault
 from .storage import connect, database_reference, table_exists, DATABASE_ERRORS
 
 CHAINS = {1: 'Ethereum', 10: 'Optimism', 100: 'Gnosis', 137: 'Polygon', 250: 'Fantom',
@@ -106,13 +107,15 @@ def publish_tvl(database, publication, *, current_bridge_policy='none'):
             raise ValueError('no finished TVL observations')
         if not conn.execute("SELECT 1 FROM tvl_snapshots s JOIN tvl_runs r ON r.id=s.run_id WHERE r.status IN ('complete','incomplete') AND r.completed_at IS NOT NULL LIMIT 1").fetchone():
             raise ValueError('no stored finished TVL observations')
-        catalog = [dict(r) for r in conn.execute('SELECT * FROM tvl_vaults ORDER BY chain_id,address')]
+        catalog = [classify_vault(r) for r in conn.execute('SELECT * FROM tvl_vaults ORDER BY chain_id,address')]
         # Allocator recognition uses positive report evidence, not a V3 display label.
         allocator_keys = []
         if table_exists(conn, 'strategy_reports'):
             allocator_keys = [list(r) for r in conn.execute(
                 "SELECT DISTINCT chain_id,lower(vault_address) FROM strategy_reports WHERE version='v3'")]
     context = {'runs': runs, 'catalog': catalog, 'allocatorKeys': sorted(allocator_keys),
+               'deductInternalCuration': True,
+               'vaultPolicies': VAULT_POLICIES,
                'currentBridgePolicy': current_bridge_policy, 'selectionPolicy': 'known-value-then-newest-finished-common-close-6', 'bridgeMigrations': BRIDGE_MIGRATIONS, 'priceRejections': PRICE_REJECTIONS,
                'historicalBridgePolicy': 'dated-evidence-only', 'database': database_reference(database)}
     dataset_id = hashlib.sha256(encoded(context).encode()).hexdigest()
@@ -304,7 +307,10 @@ class TvlDataset:
                 excluded_positions = [edge for edge in positions if (edge['chain_id'],edge['parent'].lower()) in excluded]
                 included_positions = [edge for edge in positions if (edge['chain_id'],edge['parent'].lower()) not in excluded]
                 account_points = [dict(point,bridge_target_chain=None) if key(point) in self.bridge_migrations else point for point in points]
-                rows, positions, diagnostics = account(account_points, included_positions, include_curation=include_curation)
+                rows, positions, diagnostics = account(account_points, included_positions,
+                    include_curation=include_curation,
+                    deduct_internal_curation=self.manifest.get('deductInternalCuration',False),
+                    vault_policies=self.manifest.get('vaultPolicies',[]))
                 positions.extend(dict(edge,overlap_usd='0',accounting_excluded=True,reason='bridge_parent_excluded') for edge in excluded_positions)
                 for row in rows:
                     migration = self.bridge_migrations.get(key(row))

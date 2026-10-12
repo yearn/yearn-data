@@ -8,6 +8,7 @@ from decimal import Decimal, localcontext
 from pathlib import Path
 
 from .storage import to_json
+from .tvl_policy import VAULT_POLICIES, classify_vault
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS tvl_vaults (
@@ -156,19 +157,27 @@ def asset_units(raw, decimals):
         return Decimal(int(raw)) / Decimal(10) ** int(decimals)
 
 
-def account(snapshots, positions, *, include_curation=False):
+def account(snapshots, positions, *, include_curation=False, deduct_internal_curation=True,
+            vault_policies=VAULT_POLICIES):
     """Deduct each actual holding once, capped by parent debt and child TVL.
 
     A shared holder's balance is split among its parents by recorded debt. Several
     child positions share that same debt budget. This prevents duplicate deductions.
-    Curation remains a separate product category unless explicitly combined.
+    Curation remains a separate product layer unless explicitly combined, but
+    holdings within curation are always netted in new publications.
     """
+    excluded = {(p['chainId'],p['address'].lower()) for p in vault_policies if p.get('excludeFromTvl')}
+    snapshots = [classify_vault(s,vault_policies) for s in snapshots
+                 if (s['chain_id'],s['vault'].lower()) not in excluded]
+    positions = [p for p in positions if (p['chain_id'],p['parent'].lower()) not in excluded
+                 and (p.get('child_chain_id',p['chain_id']),p['child'].lower()) not in excluded]
     with localcontext() as ctx:
         ctx.prec = 78
-        return _account(snapshots, positions, include_curation=include_curation)
+        return _account(snapshots, positions, include_curation=include_curation,
+                        deduct_internal_curation=deduct_internal_curation)
 
 
-def _account(snapshots, positions, *, include_curation):
+def _account(snapshots, positions, *, include_curation, deduct_internal_curation):
     by_key = {(s['chain_id'], s['vault'].lower()): s for s in snapshots}
     adjustments = defaultdict(lambda: Decimal(0))
     edges = [dict(p, overlap_usd=None) for p in positions]
@@ -195,7 +204,9 @@ def _account(snapshots, positions, *, include_curation):
         if edge['chain_id'] == child_chain and edge['parent'].lower() == edge['child'].lower():
             edge['reason'] = 'self_edge'
             continue
-        if not include_curation and child.get('category',child['version']) == 'curation':
+        if (not include_curation and child.get('category',child['version']) == 'curation'
+                and not (deduct_internal_curation
+                         and parent.get('category',parent['version']) == 'curation')):
             edge['reason'] = 'curation_separate_product'
             continue
         # A known zero needs no child valuation. Missing prices must not mask it.

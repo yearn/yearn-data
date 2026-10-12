@@ -14,6 +14,7 @@ from .config import get_rpc_url_by_chain_id, TVL_EXCLUDED_CHAIN_IDS
 from .pricing import fetch_yearn_price, fetch_defillama_price
 from .storage import to_json
 from .tvl import asset_units, decimal
+from .tvl_policy import classify_vault, correct_catalog
 
 REGISTRY = json.loads((Path(__file__).parent / 'inventories/tvl-overlaps.json').read_text())
 
@@ -54,6 +55,7 @@ def import_service_catalog(conn, path):
                 conn.execute('UPDATE tvl_vaults SET tvl_category=? WHERE chain_id=? AND address=?',
                              (row['category'],row['chain_id'],address))
                 count += 1
+            correct_catalog(conn)
             for row in source.execute('''SELECT s.chain_id,s.address,s.name,v.category,v.address AS parent
                                         FROM strategies s JOIN vaults v ON v.id=s.vault_id'''):
                 # The service stored the child as strategy.address for Morpho V2
@@ -167,6 +169,7 @@ def refresh_kong_catalog(conn, *, chain_ids=None, with_summary=False):
                 break
     with conn:
         seed_targets(conn)
+        correct_catalog(conn,chain_ids)
     count = sum(chain not in TVL_EXCLUDED_CHAIN_IDS for chain,_ in seen)
     if with_summary:
         return {'source':'kong','discovered':count,'enriched':count-sum(f['stage']=='metadata' for f in failures),
@@ -254,6 +257,7 @@ class ArchiveReader:
 
 
 def _snapshot(vault,timestamp,reader,price_cache,price_source):
+    vault = classify_vault(vault)
     data = {k:vault[k] for k in ('chain_id','version','asset','asset_decimals','name')}
     data['category'] = vault.get('tvl_category') or vault['version']
     data.update(vault=vault['address'].lower(),timestamp=timestamp,block_number=None,

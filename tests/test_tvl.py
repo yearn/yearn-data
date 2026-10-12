@@ -57,6 +57,27 @@ def test_curation_is_an_explicit_accounting_choice():
     assert account(points,[edge(1,9,2,'100','100')],include_curation=True)[2]['external_tvl_usd']=='100'
 
 
+def test_curation_nesting_is_deducted_without_merging_product_layers():
+    points=[snapshot(1,'100'),snapshot(2,'100','morpho-v2') | {'category':'curation'},
+            snapshot(3,'110','morpho-v1') | {'category':'curation'}]
+    positions=[edge(1,8,2,'100','100'),edge(2,9,3,'100','105')]
+    rows,edges,total=account(points,positions)
+    assert [r['external_tvl_usd'] for r in rows]==['100','100','10']
+    assert total['external_tvl_usd']=='210'
+    assert edges[0]['reason']=='curation_separate_product'
+    assert edges[1]['overlap_usd']=='100'
+    assert account(points,positions,include_curation=True)[2]['external_tvl_usd']=='110'
+    assert account(points,positions,deduct_internal_curation=False)[2]['external_tvl_usd']=='310'
+
+
+def test_internal_curation_missing_price_is_unavailable_not_zero_overlap():
+    points=[snapshot(1,'100','curation'),snapshot(2,None,'curation')]
+    _,edges,total=account(points,[edge(1,9,2,'100',None)])
+    assert edges[0]['overlap_usd'] is None
+    assert edges[0]['reason']=='missing_position_valuation'
+    assert total['status']=='incomplete'
+
+
 def test_missing_values_are_not_zero_or_complete_totals():
     points=[snapshot(1,'100'),snapshot(2,None)]
     total=account(points,[edge(1,9,2,'100',None)])[2]
