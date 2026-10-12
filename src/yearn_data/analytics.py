@@ -16,7 +16,7 @@ from .tvl_api import CHAINS, encoded, key, money
 
 DAY = 86400
 YEAR = 365 * DAY
-VERSION = 'powerglove-analytics-4'
+VERSION = 'powerglove-analytics-5'
 SCHEMA = '''
 CREATE TABLE IF NOT EXISTS analytics_inputs (
  id TEXT PRIMARY KEY, kind TEXT NOT NULL, observed_at INTEGER NOT NULL,
@@ -140,18 +140,25 @@ def fee_stack(rows, positions, configurations):
             return sum(r[0]*r[index] for r in leaves)/sum(r[0] for r in leaves)
         return weighted(1),weighted(2)
     def depth(node):return 1+max((depth(c) for c in node['children']),default=0)
-    chains=[]
+    # Direct-deposit entries also cover vaults without a nested vault allocation.
+    chains=[]; standalone=[]
     for identity in sorted(by_key):
         row=by_key[identity]
-        if row.get('tvl_usd') is None or float(row['tvl_usd'])<=0 or not by_parent[identity]:continue
-        root=build(identity,float(row['tvl_usd']),set());perf,mgmt=effective(root)
-        chains.append({'root':root,'maxDepth':depth(root),'effectivePerfFee':perf,'effectiveMgmtFee':mgmt})
+        if row.get('tvl_usd') is None or float(row['tvl_usd'])<=0:continue
+        root=build(identity,float(row['tvl_usd']),set())
+        if by_parent[identity]:
+            perf,mgmt=effective(root)
+        else:
+            available = root['availability']['state']=='available'
+            perf,mgmt = (root['perfFee'],root['mgmtFee']) if available else (None,None)
+        target = chains if by_parent[identity] else standalone
+        target.append({'root':root,'maxDepth':depth(root),'effectivePerfFee':perf,'effectiveMgmtFee':mgmt})
     rates=[c['effectivePerfFee'] for c in chains if c['effectivePerfFee'] is not None]
     # External fractions attribute the same capital only once even with nested roots.
     identities={(c['root']['vault']['chainId'],c['root']['vault']['address']) for c in chains}
     capital=money([by_key[i] for i in identities],'external_tvl_usd')
     from .fee_views import fee_view_entries
-    return {'chains':chains,'entries':fee_view_entries(chains, rows),'maxDepth':max((c['maxDepth'] for c in chains),default=0),
+    return {'chains':chains,'entries':fee_view_entries(chains + standalone, rows),'maxDepth':max((c['maxDepth'] for c in chains),default=0),
             'maxEffectivePerfFee':max(rates) if rates else None,'avgEffectivePerfFee':sum(rates)/len(rates) if rates else None,
             'totalStackedCapital':capital,'availability':{'state':'available' if len(rates)==len(chains) and not issues else 'partial',
              'knownStacks':len(rates),'expectedStacks':len(chains),'unresolvedAllocations':issues}}

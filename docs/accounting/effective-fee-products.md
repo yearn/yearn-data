@@ -67,5 +67,32 @@ The financial dataset is unchanged, as are the product fee rates and combined
 yvUSD external TVL. The previous TVL release
 `b04af26bf93ac8065d439063d2c788abb9274f3728b80d2ba0b6faba8c32c113` is retained.
 
-Future publication jobs must use `powerglove-analytics-4` from this change so
+Future publication jobs must use `powerglove-analytics-5` from this change so
 refreshing the TVL dataset also retains the canonical fee entries.
+
+
+## Standalone direct-deposit entries
+
+Canonical `entries` include every positive, priced vault in the selected TVL
+snapshot, even if it has no allocation into another cataloged vault. A factory
+vault's ordinary strategy does not have to be a recognized child vault for the
+factory vault to appear. Standalone entries use the existing fee configuration
+and external TVL; unavailable fee configurations still produce unavailable rates.
+Raw `chains` and their summary statistics continue to describe nested stacks.
+Existing product grouping, nested breakdowns and historical fee/earnings data
+are preserved. Zero-TVL and unpriced standalone vaults retain their existing
+eligibility; historical pricing repair is a separate task.
+
+The methodology version is `powerglove-analytics-5` so preparation cannot reuse
+a cached stack-only publication with the same inputs.
+
+The selected standalone-entry release is
+`01a0d47cbf1ef5a03c0beac08691b7b378cbe1ad89814a09ecbb64c881ea5805`, with analytics
+`1287c6e2f00e2ea235c801a14de8eae7404741d358deb51e0ab9b61b781dd99a`.
+It adds 434 direct-deposit entries (99 to 533 total) using the same financial
+dataset, TVL dataset, pricing observations, fee configurations and cutoff as
+the carry-forward release above. Existing displayed fee rates, adjusted TVL,
+yBOLD/yvUSD grouping, raw nested chains, stack statistics, profitability,
+comparison and membership payloads are unchanged. Curve DOLA-sUSDe Factory
+yVault now appears with 1000 basis points performance fee, zero management
+fee and $12,931,950.31586179 external TVL. The prior release is retained for rollback.
