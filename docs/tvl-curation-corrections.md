@@ -114,13 +114,13 @@ vault. Existing non-excluded raw chart values are unchanged.
 Active TVL dataset:
 `9f5d1262367eb80c55793f6041c7973d9ecdee383b0d5ae7fb665c48e1de1f57`
 
-Matching analytics:
+Initially matched analytics:
 `a2eea3d82611b11d5dd05d3da1292abc95e9abf11775bf95046a0c9a43138f88`
 
-Active hosted release:
+Initially activated hosted release:
 `b04af26bf93ac8065d439063d2c788abb9274f3728b80d2ba0b6faba8c32c113`
 
-The corrected API is deployed and this release is selected in Neon. The fees
+The corrected API is deployed and this TVL dataset is selected in Neon. The fees
 dataset is unchanged; the prior release remains available for rollback.
 
 API deployment:
@@ -130,7 +130,10 @@ Powerglove PR 50 was rebuilt from commit
 `2ddb6bbf57c0059378a568b95fd8fcd5f8a592f9` with the corrected API target:
 https://yearn-powerglove-9lx3vlzda-yearn.vercel.app/stats
 
-Its publication endpoint returns the active release above. Its curation graph
+Its publication endpoint verified the rollout release above. A concurrent analytics
+publication subsequently advanced the coherent release to
+`a3878f2f580a44587e2b95aaf23c9440374593341e29f76f2482e0460f549681`,
+retaining the same corrected TVL and unchanged fees datasets. Its curation graph
 returns known net TVL of $51,976,346.23 for the October 8 UTC close. Preview
 access remains protected by Vercel authentication. Future CI previews use the
 stable API alias, which also points to this API deployment. HyperEVM prices
