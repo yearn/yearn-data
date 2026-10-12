@@ -87,3 +87,64 @@ def test_yvusd_reads_actual_fee_config_separately_from_locker_bonus(monkeypatch)
     r = reader(monkeypatch, LOCKED, '0x' + '0' * 64, [])
     with pytest.raises(ValueError, match='implementation'):
         custom_accountant_config(r, config)
+
+
+@pytest.mark.parametrize('positions', [
+    [],
+    [{'chain_id': 1, 'parent': LOAN, 'strategy': '0x' + '2' * 40,
+      'child': '0x' + '2' * 40, 'debt_usd': '100', 'status': 'ok'}],
+])
+def test_standalone_vaults_have_direct_deposit_entries_without_a_nested_stack(positions):
+    rows = [{'chain_id': 1, 'vault': LOAN, 'name': 'Curve DOLA-sUSDe Factory yVault',
+             'tvl_usd': '100', 'external_tvl_usd': '100'}]
+    configs = {'vaults': [{'chainId': 1, 'address': LOAN, 'performanceFee': 1000,
+                           'managementFee': 0, 'fixedRateSupported': True}]}
+    result = fee_stack(rows, positions, configs)
+    assert result['chains'] == []  # Legacy stack statistics still describe nesting.
+    assert result['totalStackedCapital'] == 0
+    assert len(result['entries']) == 1
+    entry = result['entries'][0]
+    assert entry['vault']['address'] == LOAN
+    assert entry['performanceFee'] == pytest.approx(1000)
+    assert entry['managementFee'] == 0
+    assert entry['adjustedTvlUsd'] == 100
+    assert entry['roots'][0]['children'] == []
+    configs['vaults'][0]['performanceFee'] = None
+    assert fee_stack(rows, positions, configs)['entries'][0]['performanceFee'] is None
+
+
+def test_adding_standalone_entries_preserves_nested_stacks_and_counts_each_vault_once():
+    from copy import deepcopy
+    rows = [{'chain_id': 1, 'vault': a, 'name': a, 'tvl_usd': str(gross),
+             'external_tvl_usd': str(external)}
+            for a, gross, external in [(YVUSD, 100, 100), (LOAN, 60, 0)]]
+    configs = {'vaults': [{'chainId': 1, 'address': a, 'performanceFee': fee, 'managementFee': 0}
+                         for a, fee in [(YVUSD, 0), (LOAN, 500)]]}
+    positions = [{'chain_id': 1, 'parent': YVUSD, 'strategy': LOAN, 'child': LOAN,
+                  'debt_usd': '60', 'status': 'ok'}]
+    previous = fee_stack(rows, positions, configs)
+    standalone = '0x' + '3' * 40
+    extended_rows = deepcopy(rows) + [{'chain_id': 1, 'vault': standalone, 'name': 'Standalone',
+                                     'tvl_usd': '40', 'external_tvl_usd': '40'}]
+    extended_configs = deepcopy(configs)
+    extended_configs['vaults'].append({'chainId': 1, 'address': standalone,
+                                     'performanceFee': 1000, 'managementFee': 200})
+    result = fee_stack(extended_rows, positions, extended_configs)
+    for field in ('chains', 'maxDepth', 'maxEffectivePerfFee', 'avgEffectivePerfFee',
+                  'totalStackedCapital', 'availability'):
+        assert result[field] == previous[field]
+    entries = {r['vault']['address']: r for r in result['entries']}
+    assert len(entries) == len(result['entries']) == 3
+    assert entries[standalone]['performanceFee'] == pytest.approx(1000)
+    assert entries[standalone]['managementFee'] == 200
+    assert entries[LOAN]['adjustedTvlUsd'] == 0  # Upstream-owned capital remains deducted.
+    assert entries[YVUSD]['performanceFee'] == 0
+    assert entries[YVUSD]['roots'][0]['children'][0]['perfFee'] == 500
+
+
+@pytest.mark.parametrize('tvl', [None, '0'])
+def test_standalone_entries_keep_existing_tvl_eligibility(tvl):
+    rows = [{'chain_id': 1, 'vault': LOAN, 'name': 'Standalone',
+             'tvl_usd': tvl, 'external_tvl_usd': tvl}]
+    configs = {'vaults': [{'chainId': 1, 'address': LOAN, 'performanceFee': 1000, 'managementFee': 0}]}
+    assert fee_stack(rows, [], configs)['entries'] == []
