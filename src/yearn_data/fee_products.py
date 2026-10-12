@@ -1,11 +1,14 @@
 """Explicit product membership; grouping never changes contract-level records."""
 from .ybold_fees import VAULT, STAKER
 from .yeth_fees import VAULT as YETH_VAULT, RECOVERY
+from .yvusd_fees import VAULT as YVUSD_VAULT, ACCOUNTANTS as YVUSD_LOCKERS
 
 PRODUCTS = ({'id': 'ybold', 'chainId': 1, 'address': VAULT, 'name': 'yBOLD',
              'memberAddresses': (VAULT, STAKER), 'earningsAddress': VAULT},
             {'id': 'yeth-recovery', 'chainId': 1, 'address': YETH_VAULT, 'name': 'yETH Recovery',
-             'memberAddresses': (YETH_VAULT, RECOVERY), 'earningsAddress': YETH_VAULT})
+             'memberAddresses': (YETH_VAULT, RECOVERY), 'earningsAddress': YETH_VAULT},
+            {'id': 'yvusd', 'chainId': 1, 'address': YVUSD_VAULT, 'name': 'yvUSD',
+             'memberAddresses': (YVUSD_VAULT, *sorted(YVUSD_LOCKERS)), 'earningsAddress': YVUSD_VAULT})
 
 
 def product_for(chain_id, address):

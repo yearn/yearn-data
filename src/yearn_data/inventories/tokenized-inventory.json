@@ -584,6 +584,18 @@
       "is_retired": 0
     },
     {
+      "address": "0xab9018a699003a777d690c156045dfc4a7ef3a96",
+      "api_version": "3.0.4",
+      "asset_address": "0x696d02db93291651ed510704c9b286841d506987",
+      "asset_decimals": 6,
+      "chain_id": 1,
+      "classification_source": "Sourcify exact-match src/LockedyvUSD.sol:LockedyvUSD and onchain asset/apiVersion; historical yvUSD accountant",
+      "classification_status": "complete",
+      "contract_family": "yearn-v3-tokenized-strategy",
+      "deployment_block": 24271898,
+      "is_retired": 1
+    },
+    {
       "address": "0xaf48f006e75af050c4136f5a32b69e3fe1c4140f",
       "api_version": "3.0.4",
       "asset_address": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
