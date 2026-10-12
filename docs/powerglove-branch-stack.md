@@ -1,95 +1,101 @@
 # Powerglove and Neon branch stack
 
-Updated October 9, 2026. All seven branch heads are published to the
-`rossgalloway/yearn-data` fork, with draft PRs #13–#19 targeting
-`yearn/yearn-metrics:main`, matching the existing PRs. Existing PR bases are unchanged.
+Updated October 12, 2026. The recent review stack uses source branches in
+`yearn/yearn-metrics`. A PR's **head/source** contains the proposed changes;
+its **base/target** receives them.
 
-## Review order
+## Recent review order
 
-The foundation is `ross/tvl-history` at `cd0e120`, already represented by
-[PR #12](https://github.com/yearn/yearn-metrics/pull/12). Earlier historical
-indexing, pricing and accounting PR branches are preserved.
-
-Each branch contains the preceding row as an ancestor. Its PR description links
-to the preceding PR and the incremental fork comparison. GitHub’s default PR diff
-is cumulative because all PRs target main. The assigned PR numbers happen to match
-the local branch numbering.
-
-| Branch | Immediate base | Tip | Review scope |
+| PR | Head / source branch | Base / target branch | Scope |
 | --- | --- | --- | --- |
-| `ross/pr-13-powerglove-fees` | `ross/tvl-history` | `5986b9d` | [#13](https://github.com/yearn/yearn-metrics/pull/13) — Selected fee/earnings API, weekly buckets and vault filters |
-| `ross/pr-14-powerglove-tvl` | `ross/pr-13-powerglove-fees` | `4dff58c` | [#14](https://github.com/yearn/yearn-metrics/pull/14) — TVL API integration, historical exclusions, quote rejection and chart reuse |
-| `ross/pr-15-neon-storage` | `ross/pr-14-powerglove-tvl` | `55e7db7` | [#15](https://github.com/yearn/yearn-metrics/pull/15) — PostgreSQL storage/migration and prepared TVL history |
-| `ross/pr-16-neon-operations` | `ross/pr-15-neon-storage` | `cab174c` | [#16](https://github.com/yearn/yearn-metrics/pull/16) — Staging selection, bounded updater, published-only serving and service definitions |
-| `ross/pr-17-tvl-price-repairs` | `ross/pr-16-neon-operations` | `f160226` | [#17](https://github.com/yearn/yearn-metrics/pull/17) — Additional rejected quotes and incremental prepared-history repair |
-| `ross/pr-18-powerglove-analytics` | `ross/pr-17-tvl-price-repairs` | `b77623a` | [#18](https://github.com/yearn/yearn-metrics/pull/18) — Owned DefiLlama references/membership, fee stacks, profitability and API routing |
-| `ross/pr-19-yvusd-fees` | `ross/pr-18-powerglove-analytics` | `e0896bc` | [#19](https://github.com/yearn/yearn-metrics/pull/19) — Receipt-bound locker redistribution separated from fee revenue |
+| [#38](https://github.com/yearn/yearn-metrics/pull/38) | `ross/powerglove-hosted-api` | `main` | Hosted Powerglove API and the integrated backend foundation |
+| [#41](https://github.com/yearn/yearn-metrics/pull/41) | `ross/canonical-history` | `ross/powerglove-hosted-api` | Preserve one verified record per historical key and retire superseded publications |
+| [#42](https://github.com/yearn/yearn-metrics/pull/42) | `ross/tvl-overlaps` | `ross/canonical-history` | Dated TVL graphs, overlap fixes, and the product/current fee changes from merged PR #39 |
+| [#40](https://github.com/yearn/yearn-metrics/pull/40) | `ross/curation-tvl-corrections` | `ross/tvl-overlaps` | Curation scope corrections, additional overlap mappings, and owned DefiLlama comparison evidence |
 
-Example local review:
+Merge in this order: **38 → 41 → 42 → 40**. Each recent source branch contains
+its immediate target as an ancestor. If a parent is squash-merged, restack its
+children onto the resulting target before merging them.
 
-```bash
-git diff ross/pr-18-powerglove-analytics...ross/pr-19-yvusd-fees
-```
+PR [#39](https://github.com/yearn/yearn-metrics/pull/39) was merged into
+`ross/tvl-overlaps`, not `main`. Its source, `ross/ybold-fee-classification`,
+ends at `6136221`. The parent merge is `a08fbe3`; PR #42 carries that retained
+fee work toward main. PR #39 stays merged and is not recreated.
 
-Existing PR #12 and the new drafts come from `rossgalloway/yearn-data` into
-`yearn/yearn-metrics:main`. The current account cannot push base branches upstream.
-At the user's request, the new PRs match the existing main-targeted draft layout.
-Review each incremental comparison and merge in dependency order. If upstream
-uses squash merges, restack later branches on the resulting main commits before
-merging them to avoid carrying already-merged history in their diffs.
+Canonical history is at `9a3aaf6`, one commit above the hosted API tip
+`bf9e902`. The curation branch has been restacked onto `a08fbe3`, including
+all five existing curation/comparison commits and the three latest fee-view
+commits. Its only rebase conflict was the analytics methodology version;
+the combined backend retains `powerglove-analytics-5`.
 
-## Working checkouts
-
-- `/home/dev/raaaws/yearn-data`: `ross/powerglove-accounting` remains the combined
-  integration checkout. It contains all product layers, the separately committed
-  local editor setting, and this documentation. Use the focused branches for PRs.
-- `/home/dev/raaaws/worktrees/yearn-data-neon`: `ross/neon-postgres` remains at
-  `cab174c`, with its operations changes committed. Its running API remains a
-  distinct deployment; committing/organizing branches does not retarget services.
-- Powerglove's frontend worktree and branches were not modified by this operation.
-
-The combined integration keeps both analytics routing and published-only TVL
-serving. The merged test file retains both independent regression cases.
-
-## Recovery and cleanup
-
-Original committed worktree tips are retained as:
-
-- `archive/20261009/accounting-before-stack` (`5934891`)
-- `archive/20261009/neon-before-stack` (`cab174c`)
-
-Eleven obsolete unoccupied local branches were removed after their exact tips
-were tagged under `archive/20261009/<original-branch-name>`:
-
-- `codex/add-fees-data`
-- `codex/defillama-rate-limit-retry`
-- `feat/add-yearn-prices`
-- `ross/archive-stack-746a582`
-- `ross/archive-stack-before-format-cleanup`
-- `ross/archive-stack-before-test-review`
-- `ross/backup-powerglove-before-shared-db-rebase-20261007`
-- `ross/backup-powerglove-before-tvl-rebase-20261007`
-- `ross/history-coverage`
-- `ross/history-source-routing`
-- `ross/history-sync`
-
-To restore a local branch, for example:
+For an incremental review, use the actual immediate base:
 
 ```bash
-git branch ross/history-sync archive/20261009/ross/history-sync
+git diff origin/ross/canonical-history...origin/ross/tvl-overlaps
+git diff origin/ross/tvl-overlaps...origin/ross/curation-tvl-corrections
 ```
 
-A pre-cleanup bundle is retained locally at
-`/tmp/yearn-stack-organize/before-cleanup.bundle`; the durable recovery references
-are the Git tags. Existing PR branches, older occupied worktrees, local databases,
-ignored environment files and unfinished experiments were retained.
+## Working checkouts and names
 
-## Validation
+- `/home/dev/raaaws/yearn-data`: `ross/curation-tvl-corrections`, tracking the
+  source of PR #40. This is the current combined recent-work checkout.
+- `/home/dev/raaaws/worktrees/yearn-data-effective-fee-products`:
+  `ross/ybold-fee-classification`, retaining the merged PR #39 snapshot at
+  `6136221`. The former local alias `ross/effective-fee-products` was removed
+  after preserving its exact tip. The worktree path stays the same.
+- Local `ross/tvl-overlaps` now matches its remote at `a08fbe3`.
+- Local `ross/canonical-history` tracks the source of PR #41.
+- Older occupied staging, Neon and historical-ingestion worktrees are retained.
+  Some older local branches diverge from their PR refs after the unpublished
+  October 9 rebase. Do not force-push them merely to clear an ahead/behind label.
 
-- Accounting checkout before integration: 525 passed, 19 skipped.
-- Neon operations checkout: 501 passed, 20 skipped.
-- Combined product stack: 528 passed, 20 skipped.
-- Hosted PostgreSQL integration: 16 passed in disposable test schemas; production
-  data was not changed by these tests.
-- The final product tree equals the integration tree except for its local editor
-  setting and this stack documentation.
+Start new work from the current combined branch rather than continuing a merged
+PR's snapshot. Git branches, running services and selected database publications
+are independent: this stack repair does not deploy code or change hosted data.
+
+## Earlier PRs
+
+PRs #22–#37 retain their existing main-targeted review layout. Local branch
+numbering does not match their current GitHub PR numbers. The replacement PRs
+use branches in `yearn/yearn-metrics`, not the earlier fork PRs:
+
+| Branch | Current PR |
+| --- | --- |
+| `ross/pr-01-envio-history` | [#22](https://github.com/yearn/yearn-metrics/pull/22) |
+| `ross/pr-02-bounded-catchup` | [#23](https://github.com/yearn/yearn-metrics/pull/23) |
+| `ross/pr-03-yearn-pricing` | [#24](https://github.com/yearn/yearn-metrics/pull/24) |
+| `ross/pr-04-canonical-fees` | [#25](https://github.com/yearn/yearn-metrics/pull/25) |
+| `ross/pr-05-verified-fee-recovery` | [#26](https://github.com/yearn/yearn-metrics/pull/26) |
+| `ross/pr-06-closed-day-exports` | [#27](https://github.com/yearn/yearn-metrics/pull/27) |
+| `ross/pr-07-price-fallbacks` | [#28](https://github.com/yearn/yearn-metrics/pull/28) |
+| `ross/pr-08-fantom-replay` | [#29](https://github.com/yearn/yearn-metrics/pull/29) |
+| `ross/tvl-history` | [#30](https://github.com/yearn/yearn-metrics/pull/30) |
+| `ross/pr-13-powerglove-fees` | [#31](https://github.com/yearn/yearn-metrics/pull/31) |
+| `ross/pr-14-powerglove-tvl` | [#32](https://github.com/yearn/yearn-metrics/pull/32) |
+| `ross/pr-15-neon-storage` | [#33](https://github.com/yearn/yearn-metrics/pull/33) |
+| `ross/pr-16-neon-operations` | [#34](https://github.com/yearn/yearn-metrics/pull/34) |
+| `ross/pr-17-tvl-price-repairs` | [#35](https://github.com/yearn/yearn-metrics/pull/35) |
+| `ross/pr-18-powerglove-analytics` | [#36](https://github.com/yearn/yearn-metrics/pull/36) |
+| `ross/pr-19-yvusd-fees` | [#37](https://github.com/yearn/yearn-metrics/pull/37) |
+
+These earlier branches were not rewritten by the recent-stack repair.
+
+## Recovery and validation
+
+Before the repair, exact local tips were saved under
+`refs/archive/20261012-recent-stack/` for the curation, yBOLD, TVL-overlap,
+canonical-history and former effective-fee branches. The pre-repair curation
+tip is `5725078`; the former local yBOLD tip is `0f2bd41`.
+
+Earlier recovery tags under `archive/20261009/` and the rebase references under
+`refs/archive/20261009-before-main-rebase/` remain intact. To recover the former
+fee alias without disturbing its occupied worktree:
+
+```bash
+git branch ross/effective-fee-products \
+  refs/archive/20261012-recent-stack/ross/effective-fee-products
+```
+
+The repaired combined backend passed **652 tests**, with **23 skipped**.
+Range comparison verified the five curation/comparison commits retain their
+changes; only the obsolete analytics-version assignment was dropped.
