@@ -303,3 +303,23 @@ def test_ybold_membership_keeps_only_allocator_earnings():
     assert earnings == rows[:1]
     assert product_for(10, base) is None
     assert rows[1]['vault_address'] == STAKER  # Raw data remains untouched.
+
+
+def test_yvusd_product_includes_both_lockers_and_preserves_underlying_earnings():
+    from yearn_data.fee_products import group_rows, product_for
+    from yearn_data.yvusd_fees import VAULT, ACCOUNTANTS
+    addresses = [VAULT, *sorted(ACCOUNTANTS)]
+    fees = [{'chain_id': 1, 'vault_address': a, 'total_fees_paid_usd': str(i + 1)}
+            for i, a in enumerate(addresses)]
+    earnings = [{'chain_id': 1, 'vault_address': a, 'net_yield_usd': '100'} for a in addresses]
+    grouped, gains = group_rows(fees, earnings)
+    assert gains == earnings[:1]
+    assert [r['total_fees_paid_usd'] for r in grouped] == ['1', '2', '3']
+    assert all(r['vault_address'] == VAULT for r in grouped)
+    for address in addresses:
+        product = product_for(1, address)
+        assert product['id'] == 'yvusd'
+        assert product['name'] == 'yvUSD'
+        assert product['memberAddresses'] == tuple(addresses)
+    assert product_for(10, VAULT) is None
+    assert fees[1]['vault_address'] != VAULT
