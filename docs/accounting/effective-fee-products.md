@@ -52,3 +52,20 @@ The hosted API serves immutable analytics bodies from Neon; it needs no code
 deployment for these additive fee-view fields. Prior publications remain intact
 for rollback. Tests cover incomplete allocations, genuine zero fees, grouped
 external TVL, unknown recipients/code, changing product rates and locker bonuses.
+
+## Carry-forward onto the newer TVL publication
+
+A concurrent TVL publication used the previous analytics method and omitted
+canonical fee entries. Carry the corrected entries forward without rolling back
+that publication's TVL work or changing its fee configurations and other analytics.
+
+The resulting selected release is
+`a3878f2f580a44587e2b95aaf23c9440374593341e29f76f2482e0460f549681`, with analytics
+`c316554dad535ea7e6702a9726be0a88f39550280da228b6660cfbcfde79cd4a` and the newer TVL
+dataset `9f5d1262367eb80c55793f6041c7973d9ecdee383b0d5ae7fb665c48e1de1f57`.
+The financial dataset is unchanged, as are the product fee rates and combined
+yvUSD external TVL. The previous TVL release
+`b04af26bf93ac8065d439063d2c788abb9274f3728b80d2ba0b6faba8c32c113` is retained.
+
+Future publication jobs must use `powerglove-analytics-4` from this change so
+refreshing the TVL dataset also retains the canonical fee entries.
