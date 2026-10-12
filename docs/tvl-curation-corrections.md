@@ -96,7 +96,7 @@ and newly discovered Morpho vaults at requested closes, publish/prepare a new TV
 dataset and matching analytics, then verify and activate that release. Historic
 V2 deductions require dated recollection; today's balances cannot fill old dates.
 
-## October 12 Neon preparation
+## October 12 deployment
 
 Repair run **489** is committed to Neon. It adds 5,165 dated V2 holdings and
 221 HyperEVM vault snapshots with 221 corresponding adapter positions. Six V2
@@ -111,20 +111,27 @@ across 1,886 dates**, all confined to approved exclusions, internal
 curation deductions, the three new V2 targets and the newly inventoried HyperEVM
 vault. Existing non-excluded raw chart values are unchanged.
 
-Prepared TVL dataset:
+Active TVL dataset:
 `9f5d1262367eb80c55793f6041c7973d9ecdee383b0d5ae7fb665c48e1de1f57`
 
 Matching analytics:
 `a2eea3d82611b11d5dd05d3da1292abc95e9abf11775bf95046a0c9a43138f88`
 
-Prepared hosted release:
+Active hosted release:
 `b04af26bf93ac8065d439063d2c788abb9274f3728b80d2ba0b6faba8c32c113`
 
-**This release is staged, not selected.** The live API was verified to remain on
-release `55038855420476cccdfb745d808cb966ef7859c59c90f3d489c9d0c0a23706ae`.
-Production API deployment was blocked by automatic approval review because the
-authorized step covered commit/push, PR creation and Neon updates. Deployment and
-activation require approval. Deploy compatible API code before selecting the new
-release, then update/redeploy Powerglove PR 50 if its API target URL changes. Do
-not run canonical consolidation against the old active release while retaining
-this staged publication for rollout.
+The corrected API is deployed and this release is selected in Neon. The fees
+dataset is unchanged; the prior release remains available for rollback.
+
+API deployment:
+https://yearn-data-api-preview-1e3kl5qlz-rossgalloways-projects.vercel.app
+
+Powerglove PR 50 was rebuilt from commit
+`2ddb6bbf57c0059378a568b95fd8fcd5f8a592f9` with the corrected API target:
+https://yearn-powerglove-9lx3vlzda-yearn.vercel.app/stats
+
+Its publication endpoint returns the active release above. Its curation graph
+returns known net TVL of $51,976,346.23 for the October 8 UTC close. Preview
+access remains protected by Vercel authentication. Future CI previews use the
+stable API alias, which also points to this API deployment. HyperEVM prices
+remain unavailable pending the upstream pricing fix.
