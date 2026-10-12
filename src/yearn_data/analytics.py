@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS analytics_selection (
 def put_input(conn, kind, body, status='available', observed_at=None):
     observed_at = int(time.time()) if observed_at is None else observed_at
     previous = selected_input(conn,kind)
-    if previous['id']:
+    if previous['id'] and kind != 'comparison-evidence':
         body = dict(body)
         field = 'snapshots' if kind=='defillama' else 'vaults'
         def identity(row):
@@ -281,7 +281,7 @@ def dated_rows(tvl,dates):
 def prepare(database, financial, tvl, *, select=True):
     with closing(connect(database)) as conn:
         conn.executescript(SCHEMA)
-        inputs={kind:selected_input(conn,kind) for kind in ('defillama','membership','fee-config')}
+        inputs={kind:selected_input(conn,kind) for kind in ('defillama','membership','fee-config','comparison-evidence')}
     cutoff=min(financial.cutoff,(tvl.as_of()//DAY+1)*DAY)
     context={'methodologyVersion':VERSION,'tvlDatasetId':tvl.id,'feesDatasetId':financial.id,
              'inputIds':{k:v['id'] for k,v in inputs.items()},'cutoffTimestamp':cutoff,'tvlAsOfTimestamp':tvl.as_of()}
@@ -298,10 +298,12 @@ def prepare(database, financial, tvl, *, select=True):
             for row in points:history[key(row)].append((timestamp,row['tvl_usd']))
         configs=inputs['fee-config']['body']
         profits={str(c):profitability(financial,rows,history,configs,cutoff,c) for c in [None,*sorted({r['chain_id'] for r in rows})]}
+        from .tvl_comparison import discrepancy_details
+        details = discrepancy_details(rows, inputs['comparison-evidence']['body'], tvl.id)
         references=inputs['defillama']['body'].get('snapshots',[])
         publication={'meta':context|{'publicationId':identity,'publishedAt':int(time.time()),
                         'inputs':{k:{'id':v['id'],'observedAt':v['observed_at'],'availability':v['status']} for k,v in inputs.items()}},
-            'stack':fee_stack(rows,positions,configs),'comparable':comparable(rows,inputs['membership']['body']),
+            'stack':fee_stack(rows,positions,configs),'comparable':comparable(rows,inputs['membership']['body']) | {'reconciliation': details},
             'profitability':profits,'comparison':owned_comparison(tvl,rows,references)}
         with closing(connect(database)) as conn,conn:
             conn.execute('INSERT INTO analytics_publications VALUES (?,?,?) ON CONFLICT DO NOTHING',(identity,int(time.time()),encoded(publication)))
