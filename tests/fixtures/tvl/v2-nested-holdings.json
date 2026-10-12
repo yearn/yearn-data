@@ -1,0 +1,523 @@
+{
+  "timestamp": 1791503999,
+  "block": 26151122,
+  "snapshots": [
+    {
+      "category": "v2",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "900618.7333165133142230923876695248297",
+      "vault": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+      "version": "v2"
+    },
+    {
+      "category": "v2",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "3236149.09511100076164249378000040588553",
+      "vault": "0xda816459f1ab5631232fe5e97a05bbbb94970c95",
+      "version": "v2"
+    },
+    {
+      "category": "v2",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "1609858.286572761576124885980",
+      "vault": "0x5f18c75abdae578b483e5f43f12a39cf75b973a9",
+      "version": "v2"
+    },
+    {
+      "category": "v2",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "4835188.493732312829421825484",
+      "vault": "0xa354f35829ae975e850e23e9615b11da1b3dc4de",
+      "version": "v2"
+    },
+    {
+      "category": "v2",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "3662119.55094966732425774040902526923",
+      "vault": "0xdcd90c7f6324cfa40d7169ef80b12031770b4325",
+      "version": "v2"
+    },
+    {
+      "category": "v2",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "5597358.414532634312381772782356138159",
+      "vault": "0x5b8c556b8b2a78696f0b9b830b3d67623122e270",
+      "version": "v2"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "19312308.121877135480228785408",
+      "vault": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "version": "v3"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "95.973826729668552071748",
+      "vault": "0x00c8a649c9837523ebb406ceb17a6378ab5c74cf",
+      "version": "v3"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "2393247.537742955158852662284",
+      "vault": "0x074134a2784f4f66b6ced6f68849382990ff3215",
+      "version": "v3"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "10162364.5477805911482877584161584171763865",
+      "vault": "0x182863131f9a4630ff9e27830d945b1413e347e8",
+      "version": "v3"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "1.128361873080210496376",
+      "vault": "0x459f99d7c83bc3653b1913b62d2978b1deda01b5",
+      "version": "v3"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "2.577635260054878076460",
+      "vault": "0x602da189f5ada033e9ac7096fc39c7f44a77e942",
+      "version": "v3"
+    },
+    {
+      "category": "curation",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "6167004.958566308908333698768",
+      "vault": "0x68aea7b82df6ccdf76235d46445ed83f85f845a3",
+      "version": "morpho-v1"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "107547.120826629169894570296",
+      "vault": "0x694e47afd14a64661a04eee674fb331bcdef3737",
+      "version": "v3"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "15543.973730935112713735364",
+      "vault": "0x7ee351aa702c8fc735d77fb229b7676ac15d7c79",
+      "version": "v3"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "261.784664800826398826848",
+      "vault": "0x888239ffa9a0613f9142c808aa9f7d1948a14f75",
+      "version": "v3"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "1.316291900436316080376",
+      "vault": "0xbdb97ec319c41c6fa383e94ece6bdf383dfc7be4",
+      "version": "v3"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "59.594524962240014654952",
+      "vault": "0xf766c7293f4e0265ddfa8369f78a808df8ac70c1",
+      "version": "v3"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "0",
+      "vault": "0xfb7c06ddd70c74ac2f68d0f947be3b4c503e3d6c",
+      "version": "v3"
+    },
+    {
+      "category": "v3",
+      "chain_id": 1,
+      "timestamp": 1791503999,
+      "tvl_usd": "7293916.84194356689592129688661754717089",
+      "vault": "0x028ec7330ff87667b6dfb0d94b954c820195336c",
+      "version": "v3"
+    }
+  ],
+  "positions": [
+    {
+      "chain_id": 1,
+      "parent": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+      "strategy": "0x3d6532c589a11117a4494d9725bb8518c731f1be",
+      "child": "0xda816459f1ab5631232fe5e97a05bbbb94970c95",
+      "method": "service-registry",
+      "vault_getter": "yVault()",
+      "timestamp": 1791503999,
+      "status": "ok",
+      "debt_raw": "409793127965933244002320",
+      "debt_usd": "409721.7139757856160614052635318466856",
+      "owned_usd": "893658.689175309754720017092309343212675407658627377848853356210419525419756724",
+      "balance_raw": "724612655032000289003901",
+      "ownership_ratio": "0.276148799981249636335262146073225581886263271900681604471433646255332716448970",
+      "block_number": 26151122
+    },
+    {
+      "chain_id": 1,
+      "parent": "0x5f18c75abdae578b483e5f43f12a39cf75b973a9",
+      "strategy": "0x36822d0b11f4594380181ce6e76bd4986d46c389",
+      "child": "0xa354f35829ae975e850e23e9615b11da1b3dc4de",
+      "method": "service-registry",
+      "vault_getter": "yVault()",
+      "timestamp": 1791503999,
+      "status": "ok",
+      "debt_raw": "1482972878310",
+      "debt_usd": "1482420.92334660073008906108",
+      "owned_usd": "1613121.70913617760811145547056301218476466957305818825644343345578395040629494",
+      "balance_raw": "1353320823107",
+      "ownership_ratio": "0.333621266518815417455488393150296817068738016800181649567175007973280493793428",
+      "block_number": 26151122
+    },
+    {
+      "chain_id": 1,
+      "parent": "0xdcd90c7f6324cfa40d7169ef80b12031770b4325",
+      "strategy": "0x9084b5a98e3b4b257affd82ae4a1753f87906dce",
+      "child": "0x5b8c556b8b2a78696f0b9b830b3d67623122e270",
+      "method": "service-registry",
+      "vault_getter": "yVault()",
+      "timestamp": 1791503999,
+      "status": "ok",
+      "debt_raw": "21652936223660707981",
+      "debt_usd": "61067.411260912325834345933532099227",
+      "owned_usd": "3676764.72298426218476380226163988843054498814544705101946793856408085105505721",
+      "balance_raw": "1296624650899310773269",
+      "ownership_ratio": "0.656874984713885436202466198711248400205395839462056104117149776300802233765107",
+      "block_number": 26151122
+    },
+    {
+      "balance_raw": "4317584486232",
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "debt_raw": "4836988796362",
+      "debt_usd": "4835188.493731313201616739816",
+      "method": "service-registry",
+      "owned_usd": "4838101.85373974298512037026619661336525242504489550731987169094919797581374541",
+      "ownership_ratio": "0.250519089857472961293778514715752391315886834085512448890584568365186719588136",
+      "parent": "0xa354f35829ae975e850e23e9615b11da1b3dc4de",
+      "status": "ok",
+      "strategy": "0xd5aadcd054a00eff71bcb922cddc70752fa2bc68",
+      "timestamp": 1791503999,
+      "vault_getter": "yVault()"
+    },
+    {
+      "balance_raw": null,
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0x00c8a649c9837523ebb406ceb17a6378ab5c74cf",
+      "debt_raw": "0",
+      "debt_usd": "0",
+      "method": "direct-strategy",
+      "owned_usd": "0",
+      "ownership_ratio": "0",
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0x00c8a649c9837523ebb406ceb17a6378ab5c74cf",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": null,
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0x074134a2784f4f66b6ced6f68849382990ff3215",
+      "debt_raw": "0",
+      "debt_usd": "0",
+      "method": "direct-strategy",
+      "owned_usd": "0",
+      "ownership_ratio": "0",
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0x074134a2784f4f66b6ced6f68849382990ff3215",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": "4733859027931489120537323",
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0x182863131f9a4630ff9e27830d945b1413e347e8",
+      "debt_raw": "5261555921790",
+      "debt_usd": "5259597.59743443634365790572",
+      "method": "service-registry",
+      "owned_usd": "5263352.92361131815768655559019794114093467392145631670702851298710177698919824",
+      "ownership_ratio": "0.517926010119446829830333127865158092205913519573130240828426970476987920448036",
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0x39c0aec5738ed939876245224afc7e09c8480a52",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": null,
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0x459f99d7c83bc3653b1913b62d2978b1deda01b5",
+      "debt_raw": "0",
+      "debt_usd": "0",
+      "method": "direct-strategy",
+      "owned_usd": "0",
+      "ownership_ratio": "0",
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0x459f99d7c83bc3653b1913b62d2978b1deda01b5",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": null,
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0x602da189f5ada033e9ac7096fc39c7f44a77e942",
+      "debt_raw": "0",
+      "debt_usd": "0",
+      "method": "direct-strategy",
+      "owned_usd": "0",
+      "ownership_ratio": "0",
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0x602da189f5ada033e9ac7096fc39c7f44a77e942",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": null,
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0x68aea7b82df6ccdf76235d46445ed83f85f845a3",
+      "debt_raw": "5916708364607",
+      "debt_usd": "5914506.195844107669814152476",
+      "method": "direct-strategy",
+      "owned_usd": "6167004.958566308908333698768",
+      "ownership_ratio": null,
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0x68aea7b82df6ccdf76235d46445ed83f85f845a3",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": null,
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0x694e47afd14a64661a04eee674fb331bcdef3737",
+      "debt_raw": "0",
+      "debt_usd": "0",
+      "method": "direct-strategy",
+      "owned_usd": "0",
+      "ownership_ratio": "0",
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0x694e47afd14a64661a04eee674fb331bcdef3737",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": null,
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0x7ee351aa702c8fc735d77fb229b7676ac15d7c79",
+      "debt_raw": "0",
+      "debt_usd": "0",
+      "method": "direct-strategy",
+      "owned_usd": "0",
+      "ownership_ratio": "0",
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0x7ee351aa702c8fc735d77fb229b7676ac15d7c79",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": null,
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0x888239ffa9a0613f9142c808aa9f7d1948a14f75",
+      "debt_raw": "0",
+      "debt_usd": "0",
+      "method": "direct-strategy",
+      "owned_usd": "0",
+      "ownership_ratio": "0",
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0x888239ffa9a0613f9142c808aa9f7d1948a14f75",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": null,
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0xbdb97ec319c41c6fa383e94ece6bdf383dfc7be4",
+      "debt_raw": "0",
+      "debt_usd": "0",
+      "method": "direct-strategy",
+      "owned_usd": "0",
+      "ownership_ratio": "0",
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0xbdb97ec319c41c6fa383e94ece6bdf383dfc7be4",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": null,
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0xf766c7293f4e0265ddfa8369f78a808df8ac70c1",
+      "debt_raw": "0",
+      "debt_usd": "0",
+      "method": "direct-strategy",
+      "owned_usd": "0",
+      "ownership_ratio": "0",
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0xf766c7293f4e0265ddfa8369f78a808df8ac70c1",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": null,
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0xfb7c06ddd70c74ac2f68d0f947be3b4c503e3d6c",
+      "debt_raw": "0",
+      "debt_usd": "0",
+      "method": "direct-strategy",
+      "owned_usd": "0",
+      "ownership_ratio": "0",
+      "parent": "0xbe53a109b494e5c9f97b9cd39fe969be68bf6204",
+      "status": "ok",
+      "strategy": "0xfb7c06ddd70c74ac2f68d0f947be3b4c503e3d6c",
+      "timestamp": 1791503999
+    },
+    {
+      "balance_raw": "2860935079394054954798312",
+      "block_number": 26151122,
+      "chain_id": 1,
+      "child": "0x028ec7330ff87667b6dfb0d94b954c820195336c",
+      "debt_raw": "3236713151912754721393713",
+      "debt_usd": "3236149.09511100032294043100925185300329",
+      "method": "service-registry",
+      "owned_usd": "3238802.25856868240877248681224332201538107348009670684062878966388266239969322",
+      "ownership_ratio": "0.444041566246546062924766820310832627865449973168300399430480918001109443842012",
+      "parent": "0xda816459f1ab5631232fe5e97a05bbbb94970c95",
+      "status": "ok",
+      "strategy": "0xa7496763f035e73ec6b56f4c86312cc1874a01e3",
+      "timestamp": 1791503999,
+      "vault_getter": "yVault()"
+    }
+  ],
+  "verified": [
+    {
+      "block": 26151122,
+      "identity": {
+        "yVault()": [
+          "0xda816459f1ab5631232fe5e97a05bbbb94970c95"
+        ],
+        "vault()": [
+          "0x19d3364a399d251e894ac732651be8b0e4e85001"
+        ],
+        "delegatedAssets()": [
+          0
+        ]
+      },
+      "asset": "0x6b175474e89094c44da98b954eedeac495271d0f",
+      "position": {
+        "chain_id": 1,
+        "parent": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+        "strategy": "0x3d6532c589a11117a4494d9725bb8518c731f1be",
+        "child": "0xda816459f1ab5631232fe5e97a05bbbb94970c95",
+        "method": "service-registry",
+        "vault_getter": "yVault()",
+        "timestamp": 1791503999,
+        "status": "ok",
+        "debt_raw": "409793127965933244002320",
+        "debt_usd": "409721.7139757856160614052635318466856",
+        "owned_usd": "893658.689175309754720017092309343212675407658627377848853356210419525419756724",
+        "balance_raw": "724612655032000289003901",
+        "ownership_ratio": "0.276148799981249636335262146073225581886263271900681604471433646255332716448970",
+        "block_number": 26151122
+      }
+    },
+    {
+      "block": 26151122,
+      "identity": {
+        "yVault()": [
+          "0xa354f35829ae975e850e23e9615b11da1b3dc4de"
+        ],
+        "vault()": [
+          "0x5f18c75abdae578b483e5f43f12a39cf75b973a9"
+        ],
+        "delegatedAssets()": [
+          0
+        ]
+      },
+      "asset": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "position": {
+        "chain_id": 1,
+        "parent": "0x5f18c75abdae578b483e5f43f12a39cf75b973a9",
+        "strategy": "0x36822d0b11f4594380181ce6e76bd4986d46c389",
+        "child": "0xa354f35829ae975e850e23e9615b11da1b3dc4de",
+        "method": "service-registry",
+        "vault_getter": "yVault()",
+        "timestamp": 1791503999,
+        "status": "ok",
+        "debt_raw": "1482972878310",
+        "debt_usd": "1482420.92334660073008906108",
+        "owned_usd": "1613121.70913617760811145547056301218476466957305818825644343345578395040629494",
+        "balance_raw": "1353320823107",
+        "ownership_ratio": "0.333621266518815417455488393150296817068738016800181649567175007973280493793428",
+        "block_number": 26151122
+      }
+    },
+    {
+      "block": 26151122,
+      "identity": {
+        "yVault()": [
+          "0x5b8c556b8b2a78696f0b9b830b3d67623122e270"
+        ],
+        "vault()": [
+          "0xdcd90c7f6324cfa40d7169ef80b12031770b4325"
+        ],
+        "delegatedAssets()": [
+          0
+        ]
+      },
+      "asset": "0x06325440d014e39736583c165c2963ba99faf14e",
+      "position": {
+        "chain_id": 1,
+        "parent": "0xdcd90c7f6324cfa40d7169ef80b12031770b4325",
+        "strategy": "0x9084b5a98e3b4b257affd82ae4a1753f87906dce",
+        "child": "0x5b8c556b8b2a78696f0b9b830b3d67623122e270",
+        "method": "service-registry",
+        "vault_getter": "yVault()",
+        "timestamp": 1791503999,
+        "status": "ok",
+        "debt_raw": "21652936223660707981",
+        "debt_usd": "61067.411260912325834345933532099227",
+        "owned_usd": "3676764.72298426218476380226163988843054498814544705101946793856408085105505721",
+        "balance_raw": "1296624650899310773269",
+        "ownership_ratio": "0.656874984713885436202466198711248400205395839462056104117149776300802233765107",
+        "block_number": 26151122
+      }
+    }
+  ]
+}

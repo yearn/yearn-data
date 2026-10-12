@@ -258,3 +258,68 @@ def test_invalid_or_unindexed_vault_scope_is_rejected(publication, query):
     db, runs, root = publication
     select_pairing(db.execute('PRAGMA database_list').fetchone()[2], *runs, root)
     assert pairing_response(PairingStore(root), '/api/fees/history?interval=weekly&'+query)[0] == 400
+
+
+def test_product_views_group_fees_without_duplicating_earnings(publication, monkeypatch):
+    from yearn_data import fee_products
+    from yearn_data.hosted_fees import prepare, PublishedFees
+    db, runs, root = publication
+    product = {'id': 'test-product', 'chainId': 1, 'address': VAULT, 'name': 'Product',
+               'memberAddresses': (VAULT, TOKENIZED), 'earningsAddress': VAULT}
+    monkeypatch.setattr(fee_products, 'PRODUCTS', (product,))
+    path = db.execute('PRAGMA database_list').fetchone()[2]
+    dataset = PairingDataset(path, *runs)
+    prepare(db, dataset)
+    for view in (dataset, PublishedFees(path, dataset.id)):
+        contract = view.view('summary', chains=(1,), vault_address=VAULT)
+        combined = view.view('summary', chains=(1,), vault_address=VAULT, scope='product')
+        assert contract['totalFeesPaidUsd'] == '9'
+        assert combined['totalFeesPaidUsd'] == '19'
+        assert combined['netLifetimeEarningsUsd'] == contract['netLifetimeEarningsUsd'] == '105'
+        assert view.view('summary', chains=(1,), vault_address=TOKENIZED, scope='product') == combined
+        assert view.view('summary', scope='product')['totalFeesPaidUsd'] == view.view('summary')['totalFeesPaidUsd']
+        rows = view.view('vaults', scope='product')['vaults']
+        assert len(rows) == 2  # Product on chain 1; unrelated allocator on chain 10.
+        assert rows[0]['productId'] == 'test-product'
+        assert rows[0]['memberAddresses'] == [VAULT, TOKENIZED]
+        assert rows[0]['contractFamily'] == 'yearn-v3-allocator'
+        history = view.view('history', chains=(1,), vault_address=VAULT, scope='product', interval='weekly')
+        assert history['buckets'][0]['totalFeesPaidUsd'] == '19'
+        # Time filtering includes each leg's fees at the time it actually reported.
+        later = view.view('summary', since=DAY+86400, chains=(1,), vault_address=VAULT, scope='product')
+        assert later['totalFeesPaidUsd'] is None
+    select_pairing(path, *runs, root)
+    status, response = pairing_response(PairingStore(root), f'/api/fees?chainId=1&vaultAddress={VAULT}&scope=product')
+    assert status == 200 and response['totalFeesPaidUsd'] == '19'
+    assert pairing_response(PairingStore(root), '/api/fees?scope=unknown')[0] == 400
+
+
+def test_ybold_membership_keeps_only_allocator_earnings():
+    from yearn_data.fee_products import group_rows, product_for
+    from yearn_data.ybold_fees import VAULT as base, STAKER
+    rows = [{'chain_id': 1, 'vault_address': a, 'net_yield_usd': '100'} for a in (base, STAKER)]
+    fees, earnings = group_rows(rows, rows)
+    assert len(fees) == 2 and all(r['vault_address'] == base for r in fees)
+    assert earnings == rows[:1]
+    assert product_for(10, base) is None
+    assert rows[1]['vault_address'] == STAKER  # Raw data remains untouched.
+
+
+def test_yvusd_product_includes_both_lockers_and_preserves_underlying_earnings():
+    from yearn_data.fee_products import group_rows, product_for
+    from yearn_data.yvusd_fees import VAULT, ACCOUNTANTS
+    addresses = [VAULT, *sorted(ACCOUNTANTS)]
+    fees = [{'chain_id': 1, 'vault_address': a, 'total_fees_paid_usd': str(i + 1)}
+            for i, a in enumerate(addresses)]
+    earnings = [{'chain_id': 1, 'vault_address': a, 'net_yield_usd': '100'} for a in addresses]
+    grouped, gains = group_rows(fees, earnings)
+    assert gains == earnings[:1]
+    assert [r['total_fees_paid_usd'] for r in grouped] == ['1', '2', '3']
+    assert all(r['vault_address'] == VAULT for r in grouped)
+    for address in addresses:
+        product = product_for(1, address)
+        assert product['id'] == 'yvusd'
+        assert product['name'] == 'yvUSD'
+        assert product['memberAddresses'] == tuple(addresses)
+    assert product_for(10, VAULT) is None
+    assert fees[1]['vault_address'] != VAULT

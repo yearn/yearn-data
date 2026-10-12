@@ -340,6 +340,50 @@ def test_excluded_bridge_parent_does_not_also_deduct_child_holdings(source, monk
     assert positions[0]['overlap_usd'] == '0'
 
 
+def test_turtle_policy_excludes_all_history_and_preserves_raw_evidence(source):
+    from yearn_data.tvl_policy import VAULT_POLICIES
+    from yearn_data.tvl_api import TvlDataset
+    conn,path,root = source
+    turtle=VAULT_POLICIES[0]['address'].lower()
+    conn.execute("INSERT INTO tvl_vaults(chain_id,address,version,tvl_category,updated_at) VALUES (1,?,'erc4626','curation',1)",(turtle,))
+    for number,timestamp in ((1,DAY),(2,DAY+86400)):
+        run(conn,number,timestamp,[(turtle,'100'),(CHILD,'100')],[(CHILD,'50')])
+        raw=json.loads(conn.execute('SELECT data_json FROM tvl_positions WHERE run_id=?',(number,)).fetchone()[0])
+        raw['parent']=turtle
+        conn.execute('UPDATE tvl_positions SET parent=?,data_json=? WHERE run_id=?',(turtle,json.dumps(raw),number))
+    conn.commit()
+    dataset=TvlStore(path,root).get()
+    for mode in ('raw','external'):
+        assert [r['Ethereum'] for r in dataset.history(mode=mode,interval='daily')['chart']]==[100,100]
+    assert dataset.summary()['overlapExcluded']==0
+    assert dataset.catalog[(1,turtle)]['tvl_category']=='v3'
+    assert dataset.catalog[(1,turtle)]['version']=='v3'
+    assert conn.execute('SELECT COUNT(*) FROM tvl_snapshots WHERE vault=?',(turtle,)).fetchone()[0]==2
+    assert all(n.get('address','').lower()!=turtle for n in dataset.graph()['nodes'])
+    # Old manifests have no exclusion policy, even after the code is deployed.
+    legacy=dict(dataset.manifest);legacy.pop('vaultPolicies');legacy['datasetId']='legacy'
+    assert TvlDataset(legacy).summary()['totalTvl']==150
+
+
+def test_internal_curation_policy_is_pinned_and_prepared_history_matches(source):
+    from yearn_data.tvl_api import TvlDataset
+    from yearn_data.tvl_history_cache import prepare
+    conn,path,root=source
+    run(conn,1,DAY,[(PARENT,'100'),(CHILD,'110')],[(CHILD,'100')])
+    for stored in conn.execute('SELECT vault,data_json FROM tvl_snapshots').fetchall():
+        row=json.loads(stored['data_json']);row['category']='curation'
+        conn.execute('UPDATE tvl_snapshots SET data_json=? WHERE vault=?',(json.dumps(row),stored['vault']))
+    conn.commit()
+    dataset=TvlStore(path,root).get()
+    assert dataset.summary()['totalTvl']==110
+    assert dataset.summary()['curationTvl']==210  # Existing summary field is gross.
+    history=dataset.history(interval='daily',group='category')
+    prepare(dataset)
+    assert dataset.history(interval='daily',group='category')['chart']==history['chart']
+    legacy=dict(dataset.manifest);legacy.pop('deductInternalCuration');legacy['datasetId']='legacy'
+    assert TvlDataset(legacy).summary()['totalTvl']==210
+
+
 def test_chain_drilldown_reuses_all_chain_valuations_and_references(source, monkeypatch):
     conn,path,root = source
     run(conn,1,DAY,[(PARENT,'100'),(CHILD,'100')],[(CHILD,'50')])

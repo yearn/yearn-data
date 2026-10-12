@@ -29,6 +29,8 @@ FEE_FIELDS = {
     'managementFeesUsd': 'management_fee_usd',
     'strategistFeesUsd': 'strategist_fee_usd',
     'totalRefundsUsd': 'total_refunds_usd',
+    'recoveryDistributionUsd': 'recovery_distribution_usd',
+    'stakerDistributionUsd': 'staker_distribution_usd',
     'lockerBonusUsd': 'locker_bonus_usd',
     'reportedTotalFeesUsd': 'reported_total_fees_usd',
 }
@@ -176,7 +178,9 @@ class PairingDataset:
         return fees, earnings
 
     @lru_cache(maxsize=128)
-    def view(self, name, since=None, until=None, chains=(), interval='monthly', vault_address=None):
+    def view(self, name, since=None, until=None, chains=(), interval='monthly', vault_address=None, scope='contract'):
+        if scope not in ('contract', 'product'):
+            raise ValueError('scope must be contract or product')
         if name not in ('summary', 'history', 'vaults'):
             raise ValueError('unsupported pairing view')
         if any(chain not in self.chains for chain in chains):
@@ -198,7 +202,18 @@ class PairingDataset:
         if since is not None and since >= self.cutoff:
             raise ValueError('requested range starts outside this dataset')
         end = min(self.cutoff, until if until is not None else self.cutoff)
-        fees, earnings = self.view_rows(since, end, chains, vault_address)
+        from .fee_products import product_for, group_rows
+        product = product_for(chains[0], vault_address) if scope == 'product' and vault_address else None
+        if product:
+            fees, earnings = [], []
+            for member in product['memberAddresses']:
+                member_fees, member_earnings = self.view_rows(since, end, chains, member)
+                fees.extend(member_fees)
+                earnings.extend(member_earnings)
+        else:
+            fees, earnings = self.view_rows(since, end, chains, vault_address)
+        if scope == 'product':
+            fees, earnings = group_rows(fees, earnings)
 
         def totals(fee_rows, report_rows):
             pnl = _earnings(report_rows)
@@ -240,11 +255,16 @@ class PairingDataset:
             for (chain_id, address), (fee_rows, report_rows) in sorted(buckets.items()):
                 family = fee_rows[0]['contract_family'] if fee_rows else (
                     FAMILIES[0] if report_rows[0]['version'] == 'v2' else FAMILIES[1])
-                vaults.append({'chainId': chain_id, 'address': address,
-                               'name': self.vault_names.get(f'{chain_id}:{address}'), 'contractFamily': family}
+                product = product_for(chain_id, address) if scope == 'product' else None
+                metadata = ({'productId': product['id'], 'memberAddresses': list(product['memberAddresses']),
+                             'earningsAddress': product['earningsAddress']} if product else {})
+                if product:
+                    family = FAMILIES[1]  # The product is represented by its allocator, not by its staking contract.
+                vaults.append(metadata | {'chainId': chain_id, 'address': address,
+                               'name': product['name'] if product else self.vault_names.get(f'{chain_id}:{address}'), 'contractFamily': family}
                               | totals(fee_rows, report_rows))
             result = {'count': len(vaults), 'vaults': vaults}
-        return result | {'datasetId': self.id}
+        return result | {'datasetId': self.id, 'aggregationScope': scope}
 
 
 def select_pairing(database, earnings_run_id, fees_run_id, publication):
@@ -297,7 +317,7 @@ def pairing_response(store, url):
         return 404, {'error': 'Not found'}
     try:
         query = parse_qs(request.query, keep_blank_values=True)
-        if set(query) - {'since', 'until', 'chainId', 'interval', 'datasetId', 'vaultAddress'}:
+        if set(query) - {'since', 'until', 'chainId', 'interval', 'datasetId', 'vaultAddress', 'scope'}:
             raise ValueError('unsupported filter')
         if any(len(values) != 1 for values in query.values()):
             raise ValueError('filters must appear only once')
@@ -318,7 +338,7 @@ def pairing_response(store, url):
         chains = tuple(sorted({int(chain) for chain in raw_chains.split(',')})) if raw_chains else ()
         dataset = store.get(value('datasetId'))
         return 200, dataset.view(paths[request.path], timestamp('since'), timestamp('until'), chains,
-                                 value('interval') or 'monthly', value('vaultAddress'))
+                                 value('interval') or 'monthly', value('vaultAddress'), value('scope') or 'contract')
     except ValueError as error:
         return 400, {'error': str(error)}
 

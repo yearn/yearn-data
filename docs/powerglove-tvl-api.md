@@ -115,6 +115,7 @@ addressable after a subsequent collection publishes another one.
 | `/api/tvl/history/runs/latest` | Sampled historical TVL |
 | `/api/tvl/history/runs/latest/constant-price` | Actual and constant-price history |
 | `/api/tvl/curation-products` | Morpho and positively identified V3 allocator products |
+| `/api/tvl/graph` | Dated vault/holder/child flows with the same TVL accounting |
 | `/api/audit/tree` | Dated vault/strategy positions and current bridge exclusions |
 | `/api/comparison` | Native Yearn figures versus stored DefiLlama references |
 
@@ -126,6 +127,9 @@ The legacy `includeCurrent` parameter is accepted; current means the latest stor
 close, never a live RPC snapshot.
 
 Native accounting caps verified nested holdings by both parent and child TVL.
+The graph accepts `chainId`, `category`, `includeRetired`, and `datasetId`.
+See [TVL overlap conditions](tvl-overlaps.md) for its flow-versus-deduction fields,
+router and wrapper corrections, cross-chain verification, and review procedure.
 The headline retains the existing service's separate curation-layer convention;
 the curation-product view explicitly deducts verified curated child ownership.
 Powerglove uses external TVL directly rather than scaling raw historical values to
