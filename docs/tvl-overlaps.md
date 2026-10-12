@@ -81,10 +81,10 @@ invented zero deduction. No prices or catalog membership were altered.
 
 The report's stale Optimism data, Fantom pricing differences, V1/LP coverage,
 and parent-level curation scope do not establish additional deductible amounts
-in this dataset. The four curation-category Katana pre-deposit vaults also retain
-their existing treatment; applying new historical bridge exclusions requires
-dated migration evidence for those specific contracts. They are not covered by
-the existing four dated V3 bridge entries.
+in this dataset. The four Turtle Club predeposit vaults were not covered by the original four
+dated bridge entries. The later approved all-history exclusion and V3
+classification are documented in [curation corrections](tvl-curation-corrections.md);
+this reporting policy does not infer a historical migration date.
 
 ## Reproduce locally without changing the active publication
 

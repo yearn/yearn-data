@@ -22,7 +22,8 @@ def build_graph(dataset, rows, positions, diagnostics, *, chain_id=None, categor
 def _build_graph(dataset, rows, positions, diagnostics, *, chain_id, category):
     # Flows into curation exist even when that layer is intentionally counted
     # separately. Keep physical flow and headline deduction as distinct fields.
-    _, flows, _ = account(rows, [p for p in positions if not p.get('accounting_excluded')], include_curation=True)
+    _, flows, _ = account(rows, [p for p in positions if not p.get('accounting_excluded')], include_curation=True,
+                          vault_policies=dataset.manifest.get('vaultPolicies',[]))
     deductions = {(p['chain_id'],p['parent'],p['strategy'],p['child']):p.get('overlap_usd') for p in positions}
     nodes, bridges, unavailable = {}, [], []
     gross_by_id = {node_id(r['chain_id'],r['vault']):decimal(r.get('tvl_usd')) for r in rows}

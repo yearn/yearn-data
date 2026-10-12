@@ -10,6 +10,7 @@ from web3 import Web3
 from .config import TVL_EXCLUDED_CHAIN_IDS
 from .storage import to_json
 from .tvl_sources import ArchiveReader
+from .tvl_policy import classify_vault, correct_catalog
 
 INVENTORIES = Path(__file__).parent / 'inventories'
 V1_REGISTRY = json.loads((INVENTORIES / 'tvl-v1.json').read_text())
@@ -82,6 +83,8 @@ def store_candidate(conn, chain_id, address, family, category, source, *, metada
                     status='unavailable', evidence=None, deployment_block=None):
     """Keep known candidates even when enrichment fails; never erase good metadata."""
     address = Web3.to_checksum_address(address)
+    identity = classify_vault({'chain_id':chain_id,'address':address,'version':family,'tvl_category':category})
+    family, category = identity['version'], identity['tvl_category']
     metadata = metadata or {}
     now = int(time.time())
     existing = conn.execute('SELECT address FROM tvl_vaults WHERE chain_id=? AND lower(address)=?',
@@ -358,6 +361,8 @@ def discover_curation(conn, *, chain_ids=None, reader_factory=DiscoveryReader, r
             continue
         merged[key] = candidate
     enrichment = enrich_candidates(conn,list(merged.values()),'curation-discovery',reader_factory=reader_factory)
+    with conn:
+        correct_catalog(conn,chain_ids)
     result.update(enrichment)
     result['failures'] = failures+result['failures']
     result['status'] = 'incomplete' if result['failures'] else 'complete'

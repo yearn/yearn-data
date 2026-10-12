@@ -256,6 +256,36 @@
       "vaultGetter": "yVault()",
       "verifiedAtBlock": 26156469,
       "verification": "withdrawalQueue membership, yVault destination, positive delegatedAssets and child shares; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+      "strategyAddress": "0x3d6532c589a11117a4494d9725bb8518c731f1be",
+      "targetVaultAddress": "0xda816459f1ab5631232fe5e97a05bbbb94970c95",
+      "label": "DAI yVault V2 strategy to newer V2 vault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26151122,
+      "verification": "vault() parent, yVault() destination, matching underlying asset, positive recorded debt and child shares; delegatedAssets() is zero and is not an ownership gate; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0x5f18c75abdae578b483e5f43f12a39cf75b973a9",
+      "strategyAddress": "0x36822d0b11f4594380181ce6e76bd4986d46c389",
+      "targetVaultAddress": "0xa354f35829ae975e850e23e9615b11da1b3dc4de",
+      "label": "USDC yVault V2 strategy to newer V2 vault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26151122,
+      "verification": "vault() parent, yVault() destination, matching underlying asset, positive recorded debt and child shares; delegatedAssets() is zero and is not an ownership gate; reverify destination at collection block"
+    },
+    {
+      "sourceVaultAddress": "0xdcd90c7f6324cfa40d7169ef80b12031770b4325",
+      "strategyAddress": "0x9084b5a98e3b4b257affd82ae4a1753f87906dce",
+      "targetVaultAddress": "0x5b8c556b8b2a78696f0b9b830b3d67623122e270",
+      "label": "Curve stETH Pool yVault V2 strategy to newer V2 vault",
+      "chainId": 1,
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26151122,
+      "verification": "vault() parent, yVault() destination, matching underlying asset, positive recorded debt and child shares; delegatedAssets() is zero and is not an ownership gate; reverify destination at collection block"
     }
   ],
   "bridges": [

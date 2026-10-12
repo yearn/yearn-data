@@ -1,4 +1,4 @@
-from decimal import Decimal
+from decimal import Decimal, localcontext
 
 import pytest
 
@@ -86,3 +86,29 @@ def test_cross_chain_registry_replaces_unresolved_allocation_candidate(db,monkey
     edges=[e for e in candidate_edges(db,vaults) if e['strategy']==address(9)]
     assert len(edges)==1 and edges[0]['child_chain_id']==747474
     assert edges[0]['method']=='cross-chain-shares'
+
+
+def test_v2_holdings_with_zero_delegated_assets_are_mapped_and_capped(db):
+    import json
+    from pathlib import Path
+    from yearn_data.tvl_sources import REGISTRY,seed_targets
+    fixture=json.loads((Path(__file__).parent/'fixtures/tvl/v2-nested-holdings.json').read_text())
+    registry={(r['chainId'],r['strategyAddress'].lower(),r['targetVaultAddress'].lower()):r for r in REGISTRY['targets']}
+    seed_targets(db)
+    for item in fixture['verified']:
+        p=item['position']
+        assert item['identity']['delegatedAssets()']==[0]
+        assert registry[(1,p['strategy'],p['child'])]['vaultGetter']=='yVault()'
+        assert db.execute('SELECT 1 FROM tvl_targets WHERE chain_id=1 AND strategy=? AND child=?',(p['strategy'],p['child'])).fetchone()
+    rows,positions,total=account(fixture['snapshots'],fixture['positions'])
+    by={(p['parent'],p['strategy'],p['child']):p for p in positions}
+    with localcontext() as ctx:
+        ctx.prec=78
+        deducted=Decimal(0)
+        for item in fixture['verified']:
+            p=item['position'];e=by[(p['parent'],p['strategy'],p['child'])]
+            # Ownership exceeds retained debt; never deduct the full wallet value.
+            assert abs(Decimal(e['overlap_usd'])-Decimal(p['debt_usd'])) < Decimal('1e-60')
+            deducted+=Decimal(e['overlap_usd'])
+        assert deducted.quantize(Decimal('.01'))==Decimal('1953210.05')
+    assert all(Decimal(r['external_tvl_usd'])>=0 for r in rows)
