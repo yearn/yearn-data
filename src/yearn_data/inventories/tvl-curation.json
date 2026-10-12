@@ -74,33 +74,27 @@
       "address": "0x6b46fa3cc9EBF8aB230aBAc664E37F2966Bf7971",
       "from_block": 387016724,
       "family": "morpho-v2"
+    },
+    {
+      "chain_id": 747474,
+      "address": "0xFcb8b57E56787bB29e130Fca67f3c5a1232975D1",
+      "from_block": 13096629,
+      "family": "morpho-v2"
+    },
+    {
+      "chain_id": 999,
+      "address": "0xec051b19d654C48c357dC974376DeB6272f24e53",
+      "from_block": 1988677,
+      "family": "morpho-v1"
+    },
+    {
+      "chain_id": 999,
+      "address": "0xD7217E5687FF1071356C780b5fe4803D9D967da7",
+      "from_block": 14188393,
+      "family": "morpho-v2"
     }
   ],
   "extra_vaults": [
-    {
-      "chain_id": 1,
-      "address": "0xF470EB50B4a60c9b069F7Fd6032532B8F5cC014d",
-      "label": "Turtle Club",
-      "family": "erc4626"
-    },
-    {
-      "chain_id": 1,
-      "address": "0xA5DaB32DbE68E6fa784e1e50e4f620a0477D3896",
-      "label": "Turtle Club",
-      "family": "erc4626"
-    },
-    {
-      "chain_id": 1,
-      "address": "0xe1Ac97e2616Ad80f69f705ff007A4bbb3655544a",
-      "label": "Turtle Club",
-      "family": "erc4626"
-    },
-    {
-      "chain_id": 1,
-      "address": "0x77570CfEcf83bc6bB08E2cD9e8537aeA9F97eA2F",
-      "label": "Turtle Club",
-      "family": "erc4626"
-    },
     {
       "chain_id": 1,
       "address": "0x3Dfe70B05657949A5dB340754aD664810ac63b21",

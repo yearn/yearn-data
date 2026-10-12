@@ -516,3 +516,35 @@ def test_fresh_catalog_collect_and_export_without_migration(db,monkeypatch,tmp_p
     assert data['history'][0]['status']=='complete'
     assert float(data['history'][0]['external_tvl_usd'])==160
     assert any(p['strategy']==addr(9).lower() and float(p['overlap_usd'])==40 for p in data['positions'])
+
+
+def test_turtle_predeposits_cannot_be_reclassified_as_curation(db,monkeypatch):
+    from yearn_data.tvl_discovery import store_candidate,discover_curation,CURATION_REGISTRY
+    from yearn_data.tvl_policy import VAULT_POLICIES
+    turtles={p['address'].lower() for p in VAULT_POLICIES}
+    assert not turtles & {v['address'].lower() for v in CURATION_REGISTRY['extra_vaults']}
+    for p in VAULT_POLICIES:
+        # Simulate the legacy import, then an omitted-vault discovery refresh.
+        db.execute("INSERT INTO tvl_vaults(chain_id,address,version,tvl_category,updated_at) VALUES (1,?,'erc4626','curation',1)",(p['address'],))
+    monkeypatch.setattr('yearn_data.tvl_discovery.CURATION_REGISTRY',{'owners':[],'factories':[],'extra_vaults':[]})
+    discover_curation(db,chain_ids=[1])
+    for p in VAULT_POLICIES:
+        # A stale upstream category cannot undo the explicit correction.
+        store_candidate(db,1,p['address'],'erc4626','curation','legacy-extra')
+    assert {tuple(r) for r in db.execute('SELECT version,tvl_category,protocol FROM tvl_vaults')}=={('v3','v3',None)}
+
+
+def test_hyperevm_factory_discovery_retains_unpriced_ousd_candidates(db,monkeypatch):
+    from yearn_data.tvl_discovery import CURATION_REGISTRY,discover_curation
+    factories=[f for f in CURATION_REGISTRY['factories'] if f['chain_id']==999]
+    assert {f['family'] for f in factories}=={'morpho-v1','morpho-v2'}
+    # Real factory configuration must allow chain 999 independently of pricing support.
+    registry={'owners':[{'address':addr(50),'chain_ids':None}],
+              'factories':[dict(f,from_block=100) for f in factories],'extra_vaults':[]}
+    monkeypatch.setattr('yearn_data.tvl_discovery.CURATION_REGISTRY',registry)
+    def empty(query,variables):
+        return {('vaultV2s' if 'vaultV2s' in query else 'vaults'):{'items':[]}}
+    result=discover_curation(db,chain_ids=[999],reader_factory=FactoryReader,request=empty,chunk_size=10)
+    assert result['status']=='complete'
+    assert {tuple(r) for r in db.execute('SELECT chain_id,version,tvl_category FROM tvl_vaults')}=={
+        (999,'morpho-v1','curation'),(999,'morpho-v2','curation')}

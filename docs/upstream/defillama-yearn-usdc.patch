@@ -1,0 +1,11 @@
+--- a/registries/curators.js
++++ b/registries/curators.js
+@@ -1697,6 +1697,8 @@
+       methodology: 'Counts all assets that are deposited in all vaults curated by Yearn.',
+       blockchains: {
+         ethereum: {
++          // Adopted Yearn vault: its initial owner predates Yearn curation.
++          morpho: ['0x68Aea7b82Df6CcdF76235D46445Ed83f85F845A3'],
+           morphoVaultOwners: [
+             '0xFc5F89d29CCaa86e5410a7ad9D9d280d4455C12B',
+             '0x50B75d586929Ab2F75dC15f07E1B921b7C4Ba8fA',
