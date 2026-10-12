@@ -36,6 +36,20 @@ def main():
         subprocess.run(base+list(command),check=True)
     run('catch-up','--chain',args.chain,'--from-block',str(args.from_block),'--to-block',str(args.to_block))
     run('index-fees','--canonical','--chains',args.chain,'--limit','500')
+    # Product staking legs are Tokenized Strategies, not allocator reports.
+    # Keep their fee events current within the same explicitly bounded update.
+    from yearn_data.fee_products import PRODUCTS
+    from yearn_data.tokenized_fees import load_inventory, index_tokenized_fees
+    members = {(p['chainId'], address) for p in PRODUCTS for address in p['memberAddresses']
+               if address != p['earningsAddress']}
+    from yearn_data.config import CHAINS, normalize_chain_key
+    chain = normalize_chain_key(args.chain)
+    inventory = [v for v in load_inventory() if v['chain_id'] == CHAINS[chain].chain_id
+                 and (v['chain_id'], v['address']) in members]
+    if inventory:
+        with closing(connect(args.db)) as conn:
+            index_tokenized_fees(conn, inventory, chain, args.from_block, args.to_block, args.cutoff,
+                                 max_vaults=len(inventory))
     run('price','--source','yearn-prices','--no-provider-fallback','--no-onchain-fallbacks','--limit','500')
     run('price-fees','--before-timestamp',str(args.cutoff),'--limit','500')
     with closing(connect(args.db)) as conn, conn.raw.pipeline():
