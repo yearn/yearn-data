@@ -1,57 +1,60 @@
 # Powerglove and Neon branch stack
 
-Updated October 12, 2026. The recent review stack uses source branches in
-`yearn/yearn-metrics`. A PR's **head/source** contains the proposed changes;
-its **base/target** receives them.
+Updated October 15, 2026. Source branches live in `yearn/yearn-metrics`.
+A PR's **head/source** contains its changes; its **base/target** receives them.
 
-## Recent review order
+## Current review order
 
-| PR | Head / source branch | Base / target branch | Scope |
+| PR / branch | Head / source branch | Base / target branch | Status and scope |
 | --- | --- | --- | --- |
-| [#38](https://github.com/yearn/yearn-metrics/pull/38) | `ross/powerglove-hosted-api` | `main` | Hosted Powerglove API and the integrated backend foundation |
-| [#41](https://github.com/yearn/yearn-metrics/pull/41) | `ross/canonical-history` | `ross/powerglove-hosted-api` | Preserve one verified record per historical key and retire superseded publications |
-| [#42](https://github.com/yearn/yearn-metrics/pull/42) | `ross/tvl-overlaps` | `ross/canonical-history` | Dated TVL graphs, overlap fixes, and the product/current fee changes from merged PR #39 |
-| [#40](https://github.com/yearn/yearn-metrics/pull/40) | `ross/curation-tvl-corrections` | `ross/tvl-overlaps` | Curation scope corrections, additional overlap mappings, and owned DefiLlama comparison evidence |
+| [#38](https://github.com/yearn/yearn-metrics/pull/38) | `ross/powerglove-hosted-api` | `main` | Open draft; hosted API and integrated backend foundation |
+| Follow-up | `ross/tvl-comparison-followup` | `ross/powerglove-hosted-api` | Service retirement, current adapter comparison, mapping corrections and complete-position selection |
 
-Merge in this order: **38 → 41 → 42 → 40**. Each recent source branch contains
-its immediate target as an ancestor. If a parent is squash-merged, restack its
-children onto the resulting target before merging them.
-
+PRs [#40](https://github.com/yearn/yearn-metrics/pull/40),
+[#42](https://github.com/yearn/yearn-metrics/pull/42), and
+[#41](https://github.com/yearn/yearn-metrics/pull/41) merged on October 12,
+in that order. Their curation, overlap and canonical-history work is now
+contained in `origin/ross/powerglove-hosted-api` at `f6d723d`.
 PR [#39](https://github.com/yearn/yearn-metrics/pull/39) was merged into
-`ross/tvl-overlaps`, not `main`. Its source, `ross/ybold-fee-classification`,
-ends at `6136221`. The parent merge is `a08fbe3`; PR #42 carries that retained
-fee work toward main. PR #39 stays merged and is not recreated.
+`ross/tvl-overlaps` and is also included through those merges. These PRs
+do not need to be reopened or replayed.
 
-Canonical history is at `9a3aaf6`, one commit above the hosted API tip
-`bf9e902`. The curation branch has been restacked onto `a08fbe3`, including
-all five existing curation/comparison commits and the three latest fee-view
-commits. Its only rebase conflict was the analytics methodology version;
-the combined backend retains `powerglove-analytics-5`.
+The follow-up starts at `f6d723d`. That base has the same committed file tree
+as the former working branch, `ross/curation-tvl-corrections` at `f572814`;
+the difference is three merge commits. Its six commits separate:
 
-For an incremental review, use the actual immediate base:
+1. Legacy API service retirement and recovery documentation.
+2. PostgreSQL catalog active-flag compatibility.
+3. Current Yearn curation registry discovery.
+4. Finance adapter contribution replay and comparison evidence.
+5. Corrected overlap destinations and stale mapping suppression.
+6. Complete-position selection, preserving valid zero-debt updates.
+
+Review the follow-up against its immediate base:
 
 ```bash
-git diff origin/ross/canonical-history...origin/ross/tvl-overlaps
-git diff origin/ross/tvl-overlaps...origin/ross/curation-tvl-corrections
+git diff origin/ross/powerglove-hosted-api...ross/tvl-comparison-followup
 ```
+
+It may merge into the hosted API branch before #38 merges into `main`.
+If #38 lands first, retarget the follow-up to `main`, restacking if the
+merge method changed ancestry.
 
 ## Working checkouts and names
 
-- `/home/dev/raaaws/yearn-data`: `ross/curation-tvl-corrections`, tracking the
-  source of PR #40. This is the current combined recent-work checkout.
-- `/home/dev/raaaws/worktrees/yearn-data-effective-fee-products`:
-  `ross/ybold-fee-classification`, retaining the merged PR #39 snapshot at
-  `6136221`. The former local alias `ross/effective-fee-products` was removed
-  after preserving its exact tip. The worktree path stays the same.
-- Local `ross/tvl-overlaps` now matches its remote at `a08fbe3`.
-- Local `ross/canonical-history` tracks the source of PR #41.
-- Older occupied staging, Neon and historical-ingestion worktrees are retained.
-  Some older local branches diverge from their PR refs after the unpublished
-  October 9 rebase. Do not force-push them merely to clear an ahead/behind label.
+- `/home/dev/raaaws/yearn-data`: `ross/tvl-comparison-followup`.
+- `ross/curation-tvl-corrections` retains its merged tip at `f572814`.
+- The local `ross/powerglove-hosted-api` branch is older than its remote
+  tracking ref. Use `origin/ross/powerglove-hosted-api` when creating work.
+- `/home/dev/raaaws/worktrees/yearn-data-effective-fee-products` retains
+  `ross/ybold-fee-classification`, the merged PR #39 snapshot at `6136221`.
+- Older occupied Neon and historical-ingestion worktrees remain separate.
+  Do not force-push older local branches merely to clear ahead/behind labels.
 
-Start new work from the current combined branch rather than continuing a merged
-PR's snapshot. Git branches, running services and selected database publications
-are independent: this stack repair does not deploy code or change hosted data.
+Git branches, running services and selected database publications are
+independent. This branch organization does not deploy or select data.
+The original working tip is retained at
+`refs/archive/20261015-comparison-followup/curation`.
 
 ## Earlier PRs
 

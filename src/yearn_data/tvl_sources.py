@@ -424,7 +424,8 @@ def _position(edge,timestamp,reader,snapshots,readers=None):
                 else:
                     data.update(status='ok',mapping_status='no_known_child')
             elif child is None:
-                data.update(status='ok',mapping_status='child_outside_selection')
+                data.update(status='unavailable',mapping_status='child_outside_selection',
+                            reason='child_outside_selection')
             elif edge['method']=='cross-chain-shares':
                 remote = (readers or {}).get(child_chain)
                 remote_block = child.get('block_number')
