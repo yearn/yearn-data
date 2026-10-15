@@ -167,3 +167,40 @@ def test_no_fee_observations_do_not_become_known_zero_yield():
     assert result['feeYield'] is None
     assert result['quadrant'] is None
     assert result['availability']['fees']['state']=='unavailable'
+
+
+def test_current_curator_registry_is_scoped_to_yearn():
+    finance="""
+    buildNestedDebtByVault subtractNestedDebt get_default_queue withdrawalQueue
+    list/vaults/${api.chainId}?origin=yearn
+    const chains = ['ethereum','optimism','polygon','fantom','base','arbitrum','katana']
+    const v1Vaults = []
+    const blacklist = []
+    """
+    owner='0x0Dca0FDC170baA4CA9c1dCd37Ffe01f97bCfD504'
+    registry='''const configs = {
+  "other": {
+    config: { blockchains: { ethereum: {
+      morphoVaultOwners: ["OTHER"],
+    } } }
+  },
+  "yearn-curating": {
+    config: { blockchains: {
+      ethereum: {
+        morphoVaultOwners: ["OWNER"],
+        // turtleclub_erc4626: ["OTHER"],
+        morpho: ["VAULT"],
+      },
+      base: {
+        morphoVaultOwners: ["BASE"],
+      },
+    } }
+  },
+}'''.replace('OTHER',A).replace('OWNER',owner).replace('VAULT',B).replace('BASE',C)
+    policy=rules(finance,registry)
+    assert policy['owners'][1]=={owner.lower()}
+    assert policy['owners'][8453]=={C}
+    assert policy['explicit'][1]=={B}
+    assert policy['explicit'][747474]==set()
+    with pytest.raises(ValueError,match='missing yearn-curating'):
+        rules(finance,registry.replace('yearn-curating','unrelated'))
