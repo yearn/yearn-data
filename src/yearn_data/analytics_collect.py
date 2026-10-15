@@ -40,9 +40,14 @@ def rules(source,curation):
     declared=re.search(r"const chains = \[([^]]+)\]",source)
     if not declared or set(re.findall(r"'([^']+)'",declared[1]))!=set(FINANCE_CHAINS.values()):
         raise ValueError('unsupported finance adapter chain scope')
-    cross={}
-    for chain,parent,strategy,child in re.findall(r"chainId:\s*(\d+),\s*parent:\s*'(0x\w+)',\s*strategy:\s*'(0x\w+)',\s*child:\s*'(0x\w+)'",source):
-        cross[(int(chain),parent.lower(),strategy.lower())]=child.lower()
+    cross={};routes={}
+    for entry in re.findall(r'\{\s*chainId:\s*\d+,[^}]+\}',source):
+        fields=dict(re.findall(r"(\w+):\s*'([^']*)'",entry))
+        if not all(k in fields for k in ('parent','strategy','child')):continue
+        key=(int(re.search(r'chainId:\s*(\d+)',entry)[1]),fields['parent'].lower(),fields['strategy'].lower())
+        cross[key]=fields['child'].lower()
+        fields.update({k:int(v) for k,v in re.findall(r'(parentDecimals|childDecimals):\s*(\d+)',entry)})
+        routes[key]=fields
     # Chain names repeat across curators; only inspect the Yearn entry.
     section=re.search(r'^  "yearn-curating":\s*\{([\s\S]*?)(?=^  \},?\s*$)',curation,re.MULTILINE)
     if not section:raise ValueError('unsupported curation registry: missing yearn-curating')
@@ -56,7 +61,7 @@ def rules(source,curation):
         owners[chain]=set(a.lower() for a in re.findall(r'0x[0-9a-fA-F]{40}',owner[1] if owner else ''))
         explicit[chain]=set(a.lower() for a in re.findall(r'0x[0-9a-fA-F]{40}',' '.join(vaults)))
     return {'v1':js_array(source,'v1Vaults'),'blacklist':js_array(source,'blacklist')|js_array(source,'v1Vaults'),
-            'cross':cross,'owners':owners,'explicit':explicit}
+            'cross':cross,'routes':routes,'owners':owners,'explicit':explicit}
 
 
 class Reader:
@@ -122,6 +127,8 @@ def membership_chain(chain,local,candidates,policy,creation):
     balances=dict(zip(finance,reader.call(calls)))
     active={a:r for a,r in finance.items() if balances[a] and balances[a][0]>0}
     debts=default_debts(reader,active)
+    from .finance_membership import contributions
+    net,_=contributions(reader,chain,active,balances,debts,policy)
     def finance_included(address):
         if chain not in FINANCE_CHAINS:return False,'chain outside finance adapter'
         if chain==1 and address in policy['v1']:
@@ -131,17 +138,8 @@ def membership_chain(chain,local,candidates,policy,creation):
         balance=balances[address]
         if balance is None:return None,'totalAssets read unavailable'
         if balance[0]==0:return False,'zero assets'
-        if debts.get(address) is None:return None,'strategy queue/debt read unavailable'
-        parent_asset=(finance[address].get('asset') or {}).get('address','').lower()
-        if not parent_asset:return None,'parent asset unavailable'
-        nested=0
-        for strategy,debt in debts[address]:
-            child=policy['cross'].get((chain,address,strategy),strategy)
-            target=active.get(child)
-            if not target:continue
-            same=(target.get('asset') or {}).get('address','').lower()==parent_asset
-            if same or (chain,address,strategy) in policy['cross']:nested+=debt
-        return balance[0]>nested,'adapter raw assets minus nested debt'
+        value=net.get(address)
+        return (value>0 if value is not None else None),'adapter contribution after verified nested deductions; remote deductions require separate replay'
     for row,address in zip(local,addresses):
         finance_state,reason=finance_included(address)
         curation_state=False
