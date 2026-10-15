@@ -154,7 +154,7 @@ def refresh_kong_catalog(conn, *, chain_ids=None, with_summary=False):
                             (key[0],'v3' if row['v3'] else 'v2',Web3.to_checksum_address(row['address']),
                              Web3.to_checksum_address(asset['address']) if asset.get('address') else None,
                              asset.get('symbol'),asset.get('decimals'),row.get('name'),row.get('apiVersion'),
-                             not (row.get('meta') or {}).get('isRetired',False),now))
+                             int(not (row.get('meta') or {}).get('isRetired',False)),now))
                         for strategy in row.get('strategies') or []:
                             put_strategy(conn,key[0],key[1],strategy,'kong')
                 seen.update(page_seen)

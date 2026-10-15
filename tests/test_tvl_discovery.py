@@ -437,7 +437,15 @@ def test_kong_refresh_paginates_selected_chain_and_preserves_morpho_family(db,mo
                        for n in (range(1000,1100) if variables['skip']==0 else [1100])]
         return response
     monkeypatch.setattr('yearn_data.tvl_sources.requests.post',request)
-    summary=refresh_kong_catalog(db,chain_ids=[8453],with_summary=True)
+    class TypedConnection:
+        def __getattr__(self,name):return getattr(db,name)
+        def __enter__(self):db.__enter__();return self
+        def __exit__(self,*args):return db.__exit__(*args)
+        def execute(self,sql,params=()):
+            if 'INSERT INTO tvl_vaults' in sql:
+                assert type(params[-2]) is int  # PostgreSQL active is BIGINT.
+            return db.execute(sql,params)
+    summary=refresh_kong_catalog(TypedConnection(),chain_ids=[8453],with_summary=True)
     assert summary['status']=='complete' and summary['discovered']==101
     assert [v['skip'] for v in calls]==[0,100]
     assert db.execute('SELECT COUNT(*) FROM tvl_vaults').fetchone()[0]==101
