@@ -27,9 +27,10 @@
     },
     {
       "strategyAddress": "0x6164217CAa4Ff58fb722D726391875aC0C5Fb541",
-      "targetVaultAddress": "0x182863131F9a4630fF9E27830d945B1413e347E8",
-      "label": "DAI To Yearn Term USDS \u2192 USDS-1 yVault",
-      "chainId": 1
+      "targetVaultAddress": "0xe852db931ac6f02490a32695f09ee79a31f53821",
+      "label": "DAI to Yearn Term USDS",
+      "chainId": 1,
+      "vaultGetter": "vault()"
     },
     {
       "sourceVaultAddress": "0xdA816459F1AB5631232FE5e97a05BBBb94970c95",
@@ -286,6 +287,16 @@
       "vaultGetter": "yVault()",
       "verifiedAtBlock": 26151122,
       "verification": "vault() parent, yVault() destination, matching underlying asset, positive recorded debt and child shares; delegatedAssets() is zero and is not an ownership gate; reverify destination at collection block"
+    },
+    {
+      "chainId": 1,
+      "sourceVaultAddress": "0xa9fe4601811213c340e850ea305481aff02f5b28",
+      "strategyAddress": "0xe5f7f2e59b259e11ecf2ff76fdf5dc7438363a3f",
+      "targetVaultAddress": "0xa258c4606ca8206d8aa700ce2143d7db854d168c",
+      "label": "Verified V2 router to counted Yearn vault",
+      "vaultGetter": "yVault()",
+      "verifiedAtBlock": 26194188,
+      "verification": "Current upstream registered route; destination and child share ownership verified at October 14 close; reverify during collection"
     }
   ],
   "bridges": [

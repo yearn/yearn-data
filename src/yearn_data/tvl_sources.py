@@ -359,7 +359,13 @@ def candidate_edges(conn,vaults):
 
 def defaultdict_targets(conn):
     targets = {}
+    registered = {(e['chainId'],e['strategyAddress'].lower()):e['targetVaultAddress'].lower()
+                  for e in REGISTRY['targets']}
     for row in conn.execute('SELECT * FROM tvl_targets'):
+        # Retain stored evidence, but do not reactivate a corrected registry target.
+        expected = registered.get((row['chain_id'],row['strategy']))
+        if row['source']=='service-registry' and expected and row['child']!=expected:
+            continue
         targets.setdefault((row['chain_id'],row['strategy']),[]).append((row['child'],row['source']))
     return targets
 

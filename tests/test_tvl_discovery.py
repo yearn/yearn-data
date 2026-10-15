@@ -556,3 +556,16 @@ def test_hyperevm_factory_discovery_retains_unpriced_ousd_candidates(db,monkeypa
     assert result['status']=='complete'
     assert {tuple(r) for r in db.execute('SELECT chain_id,version,tvl_category FROM tvl_vaults')}=={
         (999,'morpho-v1','curation'),(999,'morpho-v2','curation')}
+
+
+def test_corrected_registry_target_does_not_reactivate_stored_candidate(monkeypatch):
+    from yearn_data import tvl_sources
+    monkeypatch.setattr(tvl_sources,'REGISTRY',{'targets':[{'chainId':1,'strategyAddress':'strategy','targetVaultAddress':'correct'}]})
+    class Connection:
+        def execute(self,query):
+            return [dict(chain_id=1,strategy='strategy',child='old',source='service-registry'),
+                    dict(chain_id=1,strategy='strategy',child='correct',source='service-registry'),
+                    dict(chain_id=1,strategy='other',child='retained',source='onchain')]
+    result=tvl_sources.defaultdict_targets(Connection())
+    assert result[(1,'strategy')]==[('correct','service-registry')]
+    assert result[(1,'other')]==[('retained','onchain')]
