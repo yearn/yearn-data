@@ -92,11 +92,16 @@ def open_db(path: str | Path):
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="yearn-data")
-    parser.add_argument("--db", default=str(DEFAULT_DB_PATH), help="SQLite database path")
+    parser.add_argument("--db", default=str(DEFAULT_DB_PATH), help="SQLite path, or neon to use NEON_DB_URL")
     parser.add_argument("--env", action="append", default=[], help="Extra .env file to load before defaults")
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("init-db")
+
+    postgres_p = sub.add_parser('migrate-postgres', help='Stream the shared SQLite history into an empty Neon database')
+    postgres_p.add_argument('--source', required=True, type=Path)
+    postgres_p.add_argument('--check-only', action='store_true')
+    postgres_p.add_argument('--receipt', type=Path, help='Write a credential-free migration receipt')
 
     merge_p = sub.add_parser("merge-databases", help="Combine fee/earnings and TVL in a new shared database")
     merge_p.add_argument("--fees-db", required=True)
@@ -107,6 +112,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     tvl_p = sub.add_parser("tvl", help="Historical vault TVL and nested positions")
     tvl_sub = tvl_p.add_subparsers(dest="tvl_command", required=True)
+    tvl_prepare=tvl_sub.add_parser('prepare-history',help='Prepare immutable TVL chart rows for fast reads')
+    tvl_prepare.add_argument('--publication',required=True,type=Path)
+    tvl_prepare.add_argument('--current-bridge-policy',choices=['none','retired-registry'],default='retired-registry')
     tvl_discover = tvl_sub.add_parser("discover", help="Create or refresh the TVL catalog independently")
     tvl_discover.add_argument("--sources", nargs="+", choices=["kong", "v1", "curation"], help="Default: all sources")
     tvl_discover.add_argument("--chain-ids", nargs="+", type=int)
@@ -296,6 +304,16 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result,sort_keys=True))
         return 0 if result["space_sufficient"] else 2
     load_environment(args.env)
+    if args.command == 'migrate-postgres':
+        from .postgres_migration import migration_plan, migrate_sqlite
+        result = (migration_plan(args.source, args.db) if args.check_only else
+                  migrate_sqlite(args.source, args.db, progress=progress))
+        body = json.dumps(result, sort_keys=True, indent=2)
+        if args.receipt:
+            args.receipt.parent.mkdir(parents=True, exist_ok=True)
+            args.receipt.write_text(body + '\n')
+        print(body)
+        return 0
     if args.command == "select-pairing":
         from .pairing import select_pairing
         manifest = select_pairing(args.db, args.earnings_run_id, args.fees_run_id, args.out)
@@ -306,6 +324,12 @@ def main(argv: list[str] | None = None) -> int:
         serve_pairing(args.publication, host=args.host, port=args.port, cors_origin=args.cors_origin,
                       tvl_publication=args.tvl_publication, current_bridge_policy=args.current_bridge_policy,
                       comparison_database=args.comparison_db)
+        return 0
+    if args.command=='tvl' and args.tvl_command=='prepare-history':
+        from .tvl_api import TvlStore
+        from .tvl_history_cache import prepare
+        dataset=TvlStore(args.db,args.publication,current_bridge_policy=args.current_bridge_policy).get()
+        print(json.dumps(prepare(dataset,progress=progress),sort_keys=True))
         return 0
     conn = open_db(args.db)
     event_source = get_event_source()
@@ -339,7 +363,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "init-db":
-        print(f"initialized {args.db}")
+        from .storage import database_reference
+        print(f"initialized {database_reference(args.db)}")
         return 0
 
     if args.command == "catch-up":

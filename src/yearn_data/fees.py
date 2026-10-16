@@ -282,7 +282,7 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
                     raise ValueError('invalid receipt identity/status')
                 from web3 import Web3
                 if all(_number(receipt['blockNumber'])==r['block_number'] for r in reports):
-                    conn.execute('INSERT OR REPLACE INTO fee_receipt_evidence VALUES (?,?,?,?,?)',
+                    conn.execute('INSERT INTO fee_receipt_evidence VALUES (?,?,?,?,?) ON CONFLICT(chain_id,tx_hash) DO UPDATE SET block_number=excluded.block_number, block_hash=excluded.block_hash, receipt_json=excluded.receipt_json',
                         (chain_id,tx_hash,_number(receipt['blockNumber']),_hex(receipt['blockHash']),Web3.to_json(receipt)))
             except Exception:
                 receipt_error = 'receipt_unavailable_or_invalid'  # Never persist provider URLs/credentials.
@@ -382,7 +382,7 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
                                     evidence['historical_state'] = state
                                     from .fee_acceptance import assess_candidate, normalize_candidate
                                     candidate = normalize_candidate(reconstruct_candidate(shares, state))
-                                    conn.execute('INSERT OR REPLACE INTO fee_state_evidence VALUES (?,?,?,?,?)',
+                                    conn.execute('INSERT INTO fee_state_evidence VALUES (?,?,?,?,?) ON CONFLICT(chain_id,tx_hash,report_log_index,block_hash) DO UPDATE SET evidence_json=excluded.evidence_json',
                                         (chain_id,tx_hash,report['log_index'],evidence['block_hash'],json.dumps(evidence)))
                                     if verifier and shares['status'] == 'found':
                                         verification = verifier.verify(report, receipt, shares)

@@ -225,7 +225,7 @@ class SelectiveFeeVerifier:
                 if any(l['address'].lower()!=vault.lower() or _hex(l['blockHash'])!=block_hash for l in logs):
                     raise ValueError('wrong block logs')
                 from web3 import Web3
-                self.conn.execute('INSERT OR REPLACE INTO fee_block_log_evidence VALUES (?,?,?,?)',(*block_key,Web3.to_json(logs)))
+                self.conn.execute('INSERT INTO fee_block_log_evidence VALUES (?,?,?,?) ON CONFLICT(chain_id,vault_address,block_hash) DO UPDATE SET logs_json=excluded.logs_json',(*block_key,Web3.to_json(logs)))
                 if not any(_number(l['logIndex'])>report['log_index'] for l in logs):
                     return {'status':'not_selected','reason':'no_later_vault_logs_detected'}
             except Exception:
@@ -250,7 +250,7 @@ class SelectiveFeeVerifier:
                     trace=(self.trace_fetcher(chain,tx,vault) if self.trace_fetcher else fetch_trace(self.client_for(chain),tx,vault))
                     # Only persist evidence after validating it against this receipt.
                     verify_receipt_mint(trace,receipt,vault,shares['mint_log_index'],shares['minted_shares_raw'])
-                    self.conn.execute('INSERT OR REPLACE INTO fee_execution_traces VALUES (?,?,?,?,?,?)',(*key,json.dumps(trace)))
+                    self.conn.execute('INSERT INTO fee_execution_traces VALUES (?,?,?,?,?,?) ON CONFLICT(chain_id,tx_hash,vault_address,block_hash,trace_version) DO UPDATE SET trace_json=excluded.trace_json',(*key,json.dumps(trace)))
                     self.traces[key]=trace
             trace=self.traces[key]
             if trace is None:

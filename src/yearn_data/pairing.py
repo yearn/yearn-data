@@ -2,21 +2,23 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from contextlib import closing
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal, localcontext
 from functools import lru_cache
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import hashlib
+import gzip
 import json
 from pathlib import Path
 import re
-import sqlite3
 import threading
 import time
 from urllib.parse import parse_qs, urlsplit
 
 from .analysis import closed_cutoff
 from .fee_valuation import POLICY
+from .storage import connect, database_reference, DATABASE_ERRORS
 
 FAMILIES = ('yearn-v2-vault', 'yearn-v3-allocator', 'yearn-v3-tokenized-strategy')
 FEE_FIELDS = {
@@ -85,9 +87,8 @@ class PairingDataset:
     """Immutable, bounded result set; queries make no RPC or price requests."""
 
     def __init__(self, database, earnings_run_id, fees_run_id, *, vault_names=None):
-        self.database = Path(database).resolve()
-        with sqlite3.connect(self.database.as_uri() + '?mode=ro', uri=True) as conn:
-            conn.row_factory = sqlite3.Row
+        self.database = database_reference(database)
+        with closing(connect(self.database, readonly=True)) as conn:
             runs = []
             for run_id, name in ((earnings_run_id, 'lifetime-yield'), (fees_run_id, 'fee-usd')):
                 row = conn.execute(
@@ -332,13 +333,25 @@ def serve_pairing(publication, *, host='127.0.0.1', port=3490, cors_origin=None,
                     status, payload = tvl_response(tvl_store, self.path)
                 else:
                     status, payload = pairing_response(store, self.path)
-            except (OSError, sqlite3.Error, KeyError, TypeError, json.JSONDecodeError) as error:
+            except (OSError, *DATABASE_ERRORS, KeyError, TypeError, json.JSONDecodeError) as error:
                 self.log_error('Pairing read failed: %s', error)
                 status, payload = 503, {'error': 'Data could not be loaded'}
             body = _json(payload).encode()
+            accept_encoding=self.headers.get('Accept-Encoding','')
+            gzip_allowed=False
+            for encoding in accept_encoding.split(','):
+                parts=encoding.strip().split(';')
+                if parts[0]=='gzip':
+                    quality=next((part.strip()[2:] for part in parts[1:] if part.strip().startswith('q=')),'1')
+                    try:gzip_allowed=0<float(quality)<=1
+                    except ValueError:pass
+            compressed=gzip_allowed and len(body)>1024
+            if compressed:body=gzip.compress(body,compresslevel=3,mtime=0)
             self.send_response(status)
             self.send_header('Content-Type', 'application/json')
             self.send_header('Content-Length', str(len(body)))
+            self.send_header('Vary','Accept-Encoding')
+            if compressed:self.send_header('Content-Encoding','gzip')
             self.send_header('Cache-Control', 'no-cache')
             if cors_origin:
                 self.send_header('Access-Control-Allow-Origin', cors_origin)

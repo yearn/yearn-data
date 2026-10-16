@@ -47,7 +47,7 @@ yearn-data run lifetime-yield
 yearn-data run vault-volume
 ```
 
-The SQLite database stores raw event rows, normalized strategy reports, prices, resumable cursors, and analysis outputs so later research jobs can reuse the same indexed data.
+The database stores raw event rows, normalized strategy reports, prices, resumable cursors, and analysis outputs so later research jobs can reuse the same indexed data. SQLite is the default; see the [Postgres operator guide](docs/postgres.md) for Neon setup and migration of the shared TVL and fee/earnings history.
 
 ## Lifetime Yield Outputs
 

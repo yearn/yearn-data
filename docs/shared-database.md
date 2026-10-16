@@ -1,6 +1,8 @@
 # One database for TVL, fees and earnings
 
-Use `data/yearn.sqlite` for all three pipelines. TVL owns `tvl_*` tables;
+Use `data/yearn.sqlite` for all three pipelines, or follow the
+[Postgres migration guide](postgres.md) to host the shared store on Neon.
+TVL owns `tvl_*` tables;
 fee/earnings tables keep their existing names, so selected analyses and consumers
 continue to work. The pipelines share the database file, not mutable catalogs or
 price caches.

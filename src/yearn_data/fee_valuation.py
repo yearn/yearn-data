@@ -79,9 +79,16 @@ def save_price(conn, target, result):
         price = format(value, 'f')
     else:
         price = None
-    conn.execute('''INSERT OR REPLACE INTO fee_daily_prices
+    conn.execute("""
+        INSERT INTO fee_daily_prices
         (chain_id,asset,eod_timestamp,policy,endpoint_id,price_usd,status,evidence_json,fetched_at)
-        VALUES (?,?,?,?,?,?,?,?,?)''', (*target, POLICY, endpoint_identity(), price, status,
+        VALUES (?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(chain_id,asset,eod_timestamp,policy,endpoint_id) DO UPDATE SET
+            price_usd=excluded.price_usd,
+            status=excluded.status,
+            evidence_json=excluded.evidence_json,
+            fetched_at=excluded.fetched_at
+    """, (*target, POLICY, endpoint_identity(), price, status,
                                       json.dumps(evidence, sort_keys=True), int(time.time())))
 
 

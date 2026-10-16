@@ -146,7 +146,7 @@ def index_tokenized_fees(conn, inventory, chain, from_block, to_block, before_ti
                     prior=conn.execute('SELECT event_json FROM tokenized_fee_events WHERE chain_id=? AND tx_hash=? AND log_index=?',identity).fetchone()
                     if prior and comparable_event(json.loads(prior[0])) != comparable_event(json.loads(encoded)):
                         raise ValueError('stored Tokenized event conflicts with acquired evidence')
-                    conn.execute('INSERT OR IGNORE INTO tokenized_fee_events VALUES (?,?,?,?)',(*identity,encoded))
+                    conn.execute('INSERT INTO tokenized_fee_events VALUES (?,?,?,?) ON CONFLICT DO NOTHING',(*identity,encoded))
                 conn.execute('INSERT INTO tokenized_fee_ranges (chain_id,vault_address,from_block,to_block,before_timestamp,inventory_hash,finality_policy) VALUES (?,?,?,?,?,?,?) ON CONFLICT(chain_id,vault_address,from_block,to_block,before_timestamp,inventory_hash) DO UPDATE SET finality_policy=excluded.finality_policy',(*key,policy))
             counts['completed_chunks']+=1;counts['events']+=len(events)
     return counts

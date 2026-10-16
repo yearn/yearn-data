@@ -82,8 +82,10 @@ def cached_block_timestamp(conn, chain: str, block_number: int) -> int:
     ts = block_timestamp(chain, block_number)
     conn.execute(
         """
-        INSERT OR REPLACE INTO block_timestamps (chain_id, block_number, timestamp)
-        VALUES (?, ?, ?)
+            INSERT INTO block_timestamps (chain_id, block_number, timestamp)
+            VALUES (?, ?, ?)
+            ON CONFLICT(chain_id,block_number) DO UPDATE SET
+                timestamp=excluded.timestamp
         """,
         (cfg.chain_id, int(block_number), ts),
     )
@@ -138,8 +140,10 @@ def cached_block_timestamps_many(conn, chain: str, block_numbers: list[int], max
 
     conn.executemany(
         """
-        INSERT OR REPLACE INTO block_timestamps (chain_id, block_number, timestamp)
-        VALUES (?, ?, ?)
+            INSERT INTO block_timestamps (chain_id, block_number, timestamp)
+            VALUES (?, ?, ?)
+            ON CONFLICT(chain_id,block_number) DO UPDATE SET
+                timestamp=excluded.timestamp
         """,
         [(cfg.chain_id, block_number, timestamp) for block_number, timestamp in fetched.items()],
     )

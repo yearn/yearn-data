@@ -11,6 +11,7 @@ from web3 import Web3
 from web3._utils.events import get_event_data
 
 from . import abis, envio
+from .storage import table_columns
 from .config import CHAINS, DEFAULT_CHAINS, V2_REGISTRIES_BY_CHAIN, V3_ROLE_MANAGERS
 from .coverage import Scope, fingerprint, insert_checked
 from .indexing import (
@@ -232,7 +233,7 @@ class HistoricalSource:
 
 
 def write_rows(conn, table, rows):
-    columns = [row["name"] for row in conn.execute(f"PRAGMA table_info({table})")]
+    columns = table_columns(conn, table)
     identity = ("chain_id", "tx_hash", "log_index")
     if table == "vault_inventory_events":
         identity += ("source_kind",)

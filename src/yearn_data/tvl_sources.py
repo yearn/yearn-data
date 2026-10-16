@@ -19,13 +19,13 @@ REGISTRY = json.loads((Path(__file__).parent / 'inventories/tvl-overlaps.json').
 
 
 def put_strategy(conn, chain_id, parent, strategy, source):
-    conn.execute('INSERT OR IGNORE INTO tvl_strategies VALUES (?,?,?,?)',
+    conn.execute('INSERT INTO tvl_strategies VALUES (?,?,?,?) ON CONFLICT DO NOTHING',
                  (chain_id, parent.lower(), strategy.lower(), source))
 
 
 def seed_targets(conn):
     for entry in REGISTRY['targets']:
-        conn.execute('INSERT OR IGNORE INTO tvl_targets VALUES (?,?,?,?)',
+        conn.execute('INSERT INTO tvl_targets VALUES (?,?,?,?) ON CONFLICT DO NOTHING',
                      (entry['chainId'], entry['strategyAddress'].lower(), entry['targetVaultAddress'].lower(), 'service-registry'))
         if entry.get('sourceVaultAddress'):
             put_strategy(conn, entry['chainId'], entry['sourceVaultAddress'], entry['strategyAddress'], 'service-router-registry')
@@ -64,7 +64,7 @@ def import_service_catalog(conn, path):
                     conn.execute("DELETE FROM tvl_strategies WHERE chain_id=? AND parent=? AND strategy=? AND source='service-catalog'",
                                  (row['chain_id'],row['parent'].lower(),row['address'].lower()))
                     put_strategy(conn,row['chain_id'],row['parent'],adapter,'service-morpho-adapter')
-                    conn.execute('INSERT OR IGNORE INTO tvl_targets VALUES (?,?,?,?)',
+                    conn.execute('INSERT INTO tvl_targets VALUES (?,?,?,?) ON CONFLICT DO NOTHING',
                                  (row['chain_id'],adapter.lower(),row['address'].lower(),'service-morpho-adapter'))
                 else:
                     put_strategy(conn,row['chain_id'],row['parent'],row['address'],'service-catalog')
@@ -124,16 +124,31 @@ def refresh_kong_catalog(conn, *, chain_ids=None, with_summary=False):
                         complete = bool(asset.get('address')) and asset.get('decimals') is not None
                         if not complete:
                             page_failures.append({'chain_id':key[0],'address':key[1],'stage':'metadata','reason':'missing_asset_metadata'})
-                        conn.execute('''INSERT INTO tvl_catalog_evidence VALUES (?,?,?,?,?,?)
-                            ON CONFLICT(chain_id,address,source) DO UPDATE SET metadata_status=excluded.metadata_status,
-                            evidence_json=excluded.evidence_json,updated_at=excluded.updated_at''',
+                        conn.execute("""
+                            INSERT INTO tvl_catalog_evidence VALUES (?,?,?,?,?,?)
+                            ON CONFLICT(chain_id,address,source) DO UPDATE SET
+                                metadata_status=excluded.metadata_status,
+                                evidence_json=excluded.evidence_json,
+                                updated_at=excluded.updated_at
+                        """,
                             (key[0],key[1],'kong','ok' if complete else 'unavailable',to_json({'source':'kong'}),now))
-                        conn.execute('''INSERT INTO tvl_vaults (chain_id,version,address,asset,asset_symbol,asset_decimals,
+                        conn.execute("""
+                            INSERT INTO tvl_vaults (chain_id,version,address,asset,asset_symbol,asset_decimals,
                             name,api_version,active,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)
-                            ON CONFLICT(chain_id,address) DO UPDATE SET version=CASE WHEN tvl_vaults.version IN ('morpho-v1','morpho-v2') THEN tvl_vaults.version ELSE excluded.version END,asset=COALESCE(excluded.asset,tvl_vaults.asset),
-                            asset_decimals=COALESCE(excluded.asset_decimals,tvl_vaults.asset_decimals),
-                            asset_symbol=COALESCE(excluded.asset_symbol,tvl_vaults.asset_symbol),
-                            name=excluded.name,api_version=excluded.api_version,active=excluded.active,updated_at=excluded.updated_at''',
+                            ON CONFLICT(chain_id,address) DO UPDATE SET
+                                version=CASE WHEN tvl_vaults.version IN ('morpho-v1',
+                                'morpho-v2') THEN tvl_vaults.version ELSE excluded.version END,
+                                asset=COALESCE(excluded.asset,
+                                tvl_vaults.asset),
+                                asset_decimals=COALESCE(excluded.asset_decimals,
+                                tvl_vaults.asset_decimals),
+                                asset_symbol=COALESCE(excluded.asset_symbol,
+                                tvl_vaults.asset_symbol),
+                                name=excluded.name,
+                                api_version=excluded.api_version,
+                                active=excluded.active,
+                                updated_at=excluded.updated_at
+                        """,
                             (key[0],'v3' if row['v3'] else 'v2',Web3.to_checksum_address(row['address']),
                              Web3.to_checksum_address(asset['address']) if asset.get('address') else None,
                              asset.get('symbol'),asset.get('decimals'),row.get('name'),row.get('apiVersion'),
@@ -443,7 +458,7 @@ def collect_tvl(conn,from_timestamp,to_timestamp,*,interval=86400,chain_ids=None
               'vault_count':len(vaults),'mapping_scope':'known candidates, not exhaustive',
               'bridge_exclusions':'none; effective migration dates required for historical deductions',
               'finality_policy':{str(v['chain_id']):('opera-bft' if v['chain_id']==250 else 'rpc-finalized') for v in vaults}}
-    run_id = conn.execute("INSERT INTO tvl_runs(started_at,status,params_json) VALUES (?,'running',?)",(int(time.time()),to_json(params))).lastrowid
+    run_id = conn.execute("INSERT INTO tvl_runs(started_at,status,params_json) VALUES (?,'running',?) RETURNING id",(int(time.time()),to_json(params))).fetchone()[0]
     conn.commit()
     readers, price_cache, reader_errors = {}, {}, {}
     incomplete = False
@@ -465,12 +480,14 @@ def collect_tvl(conn,from_timestamp,to_timestamp,*,interval=86400,chain_ids=None
             _value_nested_shares(points)
             position_rows = [_position(e,timestamp,readers[e['chain_id']],points) for e in edges]
             with conn:
-                for p in points.values():
-                    conn.execute('INSERT INTO tvl_snapshots VALUES (?,?,?,?,?,?)',
-                                 (run_id,p['chain_id'],p['vault'],timestamp,p['block_number'],to_json(p)))
-                for p in position_rows:
-                    conn.execute('INSERT INTO tvl_positions VALUES (?,?,?,?,?,?,?)',
-                                 (run_id,p['chain_id'],p['parent'],p['strategy'],p['child'],timestamp,to_json(p)))
+                # Pipeline each day's records across the remote DB connection
+                # while retaining the same atomic date boundary.
+                conn.executemany('INSERT INTO tvl_snapshots VALUES (?,?,?,?,?,?)',
+                    ((run_id,p['chain_id'],p['vault'],timestamp,p['block_number'],to_json(p))
+                     for p in points.values()))
+                conn.executemany('INSERT INTO tvl_positions VALUES (?,?,?,?,?,?,?)',
+                    ((run_id,p['chain_id'],p['parent'],p['strategy'],p['child'],timestamp,to_json(p))
+                     for p in position_rows))
             incomplete |= any(p['tvl_usd'] is None for p in points.values()) or any(p['status']!='ok' for p in position_rows)
             if progress:
                 progress(f'TVL run {run_id}: stored {len(points)} vaults and {len(position_rows)} positions at {timestamp}')
@@ -514,7 +531,7 @@ def scan_holders(conn,timestamp,*,chain_ids=None,reader_factory=ArchiveReader,pr
             checked += 1
             if balance:
                 with conn:
-                    conn.execute('INSERT OR IGNORE INTO tvl_targets VALUES (?,?,?,?)',
+                    conn.execute('INSERT INTO tvl_targets VALUES (?,?,?,?) ON CONFLICT DO NOTHING',
                                  (chain,strategy,child['address'].lower(),f'share-scan:{timestamp}'))
                 found += 1
         if progress:
