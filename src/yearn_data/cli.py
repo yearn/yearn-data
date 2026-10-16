@@ -191,6 +191,7 @@ def build_parser() -> argparse.ArgumentParser:
     price_p.add_argument("--source", choices=sorted(SUPPORTED_SOURCES), default=DEFAULT_PRICE_SOURCE)
     price_p.add_argument("--retry-missing", action="store_true", help="Retry existing non-ok price rows")
     price_p.add_argument("--no-provider-fallback", action="store_true", help="Do not use DefiLlama when Yearn Prices is unavailable")
+    price_p.add_argument("--refresh-onchain-fallbacks", action="store_true", help="Recompute prices produced by local fallback adapters")
     price_p.add_argument("--chains", nargs="+", help="Restrict report pricing to chains")
     price_p.add_argument("--no-onchain-fallbacks", action="store_true", help="Use only the selected offchain price source")
 
@@ -198,6 +199,7 @@ def build_parser() -> argparse.ArgumentParser:
     volume_price_p.add_argument("--limit", type=int, help="Maximum distinct token/timestamp prices to fetch")
     volume_price_p.add_argument("--source", choices=["defillama"], default="defillama")
     volume_price_p.add_argument("--retry-missing", action="store_true", help="Retry existing non-ok price rows")
+    volume_price_p.add_argument("--refresh-onchain-fallbacks", action="store_true", help="Recompute prices produced by local fallback adapters")
     volume_price_p.add_argument("--chains", nargs="+", help="Restrict volume pricing to chains")
     volume_price_p.add_argument("--no-onchain-fallbacks", action="store_true", help="Use only the selected offchain price source")
 
@@ -382,6 +384,7 @@ def main(argv: list[str] | None = None) -> int:
             source=args.source,
             fallback=None if args.no_provider_fallback else _fallback_source(args.source),
             retry_missing=args.retry_missing,
+            refresh_onchain_fallbacks=args.refresh_onchain_fallbacks,
             chain_ids=chain_ids,
             onchain_fallbacks=not args.no_onchain_fallbacks,
         )
@@ -396,6 +399,7 @@ def main(argv: list[str] | None = None) -> int:
             source=args.source,
             fallback=None,
             retry_missing=args.retry_missing,
+            refresh_onchain_fallbacks=args.refresh_onchain_fallbacks,
             chain_ids=chain_ids,
             onchain_fallbacks=not args.no_onchain_fallbacks,
         )
