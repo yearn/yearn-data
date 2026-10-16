@@ -1,0 +1,2436 @@
+{
+  "source_commit": "f3bb4bade3ba62ae24bb1af28f37d628447997eb",
+  "cutoff_exclusive": 1789084800,
+  "trace_budget": 10,
+  "cases": [
+    {
+      "source_reconstruction_id": 15610,
+      "selection": "0.4.2-later",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x671a912c10bba0cfa74cfc2d6fba9ba1ed9530b2",
+        "strategy_address": "0x328c39cd6cfd7da6e64a5efdef23cd63892f76a0",
+        "tx_hash": "0x02a24a94f23dc6d3d1b3dd74b9b5672411bd74278b18a33a9e5b3ea001f8241d",
+        "log_index": 116,
+        "block_number": 12568679,
+        "block_timestamp": 1622818983,
+        "asset": "0x514910771af9ca656af840dff83e8264ecf986ca",
+        "asset_decimals": 18,
+        "gain_raw": "36365757302174626",
+        "loss_raw": "0",
+        "net_raw": "36365757302174626",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.4.2",
+      "candidate": {
+        "baseline_candidate": {
+          "calculation_version": "v2-fee-calculation-1",
+          "interval": {
+            "lower_raw": "7273151460434924",
+            "upper_raw": "7273151460434924",
+            "width_raw": "0"
+          },
+          "method": "contract-state-singleton",
+          "precision": "singleton",
+          "total_fees_paid_raw": "7273151460434924"
+        },
+        "calculation_version": "vyper-fee-mint-1",
+        "interval": null,
+        "method": "execution-fee-mint",
+        "precision": "singleton",
+        "total_fees_paid_raw": "7273151460434924"
+      },
+      "evidence": {
+        "block_hash": "0xb030038d5f2cf4fcecf6b5076ff5ca99db58da560650cc2e8ebec0598d6ce11b",
+        "execution_verification": {
+          "block_hash": "0xb030038d5f2cf4fcecf6b5076ff5ca99db58da560650cc2e8ebec0598d6ce11b",
+          "div_pc": 17720,
+          "fee_operand_raw": "7273151460434924",
+          "mint_log_index": 112,
+          "minted_shares_raw": "7273151460434924",
+          "mul_pc": 17679,
+          "status": "verified",
+          "supply_before_mint_raw": "2291644352912175059110",
+          "trace_version": "vyper-fee-mint-1",
+          "trace_window_start": 0,
+          "trigger": "later_vault_logs",
+          "valuation_assets_at_mint_raw": "2291644352912175059110"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 112,
+          "minted_shares_raw": "7273151460434924",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x671a912c10bba0cfa74cfc2d6fba9ba1ed9530b2",
+              "log_index": 113,
+              "shares_raw": "3636575730217462",
+              "to": "0x328c39cd6cfd7da6e64a5efdef23cd63892f76a0"
+            },
+            {
+              "from": "0x671a912c10bba0cfa74cfc2d6fba9ba1ed9530b2",
+              "log_index": 114,
+              "shares_raw": "3636575730217462",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "7273151460434924"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0xb030038d5f2cf4fcecf6b5076ff5ca99db58da560650cc2e8ebec0598d6ce11b",
+          "inversion_assets_raw": "2291651626063635494034",
+          "locked_profit_raw": "29092605841739702",
+          "post_free_funds_raw": "2291651626063635494034",
+          "post_total_assets_raw": "2291680718669477233736",
+          "post_total_supply_raw": "2291651626063635494034",
+          "price_per_share_block_raw": "1000000000000000000",
+          "share_decimals": 18,
+          "state_formula": "v2-locked-profit-post-state"
+        },
+        "later_vault_report_in_receipt": true,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.4.2",
+          "block_number": 12568679,
+          "chain_id": 1,
+          "gain_raw": "36365757302174626",
+          "log_index": 116,
+          "loss_raw": "0",
+          "strategy_address": "0x328c39cd6cfd7da6e64a5efdef23cd63892f76a0",
+          "tx_hash": "0x02a24a94f23dc6d3d1b3dd74b9b5672411bd74278b18a33a9e5b3ea001f8241d",
+          "vault_address": "0x671a912c10bba0cfa74cfc2d6fba9ba1ed9530b2"
+        },
+        "report_log_index": 116,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": null,
+        "state_scope": "fee-mint-execution",
+        "state_suitability": "verified",
+        "status": "accepted"
+      },
+      "mint_trace_window": [
+        {
+          "op": "MUL",
+          "pc": 17679,
+          "depth": 6,
+          "a": "19d6e4893263ec",
+          "b": "7c3af43d524c1ad0a6"
+        },
+        {
+          "op": "DIV",
+          "pc": 17685,
+          "depth": 6,
+          "a": "c8a0a093dd38d60642f2a0a1dd48b08",
+          "b": "19d6e4893263ec"
+        },
+        {
+          "op": "DIV",
+          "pc": 17720,
+          "depth": 6,
+          "a": "c8a0a093dd38d60642f2a0a1dd48b08",
+          "b": "7c3af43d524c1ad0a6"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 17791,
+          "depth": 6,
+          "a": "5",
+          "b": "7c3b0e1436d54d3492"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 17838,
+          "depth": 6,
+          "a": "966399f20f59a800a7e6870622a2a254a5294708505c43f13c2f608881288461",
+          "b": "19d6e4893263ec"
+        },
+        {
+          "op": "LOG3",
+          "pc": 17892,
+          "depth": 6,
+          "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "data": "0x0000000000000000000000000000000000000000000000000019d6e4893263ec"
+        }
+      ]
+    },
+    {
+      "source_reconstruction_id": 67770,
+      "selection": "multi-report-transaction",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+        "strategy_address": "0x9f51f4df0b275dfb1f74f6db86219bae622b36ca",
+        "tx_hash": "0x12ad966ab2f5d218c7697052cd9d9ad7698e0dbfe3f62ebaefa66de0ac044d9e",
+        "log_index": 158,
+        "block_number": 12427941,
+        "block_timestamp": 1620933995,
+        "asset": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "asset_decimals": 18,
+        "gain_raw": "63742678215469892778729",
+        "loss_raw": "0",
+        "net_raw": "63742678215469892778729",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.0",
+      "candidate": {
+        "baseline_candidate": {
+          "calculation_version": "v2-fee-calculation-1",
+          "interval": null,
+          "method": "share-mint-report-block-pps",
+          "precision": "pps-estimate",
+          "total_fees_paid_raw": "16293449126587822277834"
+        },
+        "calculation_version": "vyper-fee-mint-1",
+        "interval": null,
+        "method": "execution-fee-mint",
+        "precision": "singleton",
+        "total_fees_paid_raw": "16292265193710652642737"
+      },
+      "evidence": {
+        "block_hash": "0xd6a7a3c5b59aa34792b3ac5a676c6e296c6455ad258643ae02b49688cf708eb6",
+        "execution_verification": {
+          "block_hash": "0xd6a7a3c5b59aa34792b3ac5a676c6e296c6455ad258643ae02b49688cf708eb6",
+          "div_pc": 6313,
+          "fee_operand_raw": "16292265193710652642737",
+          "mint_log_index": 154,
+          "minted_shares_raw": "15619076183214721863715",
+          "mul_pc": 6219,
+          "status": "verified",
+          "supply_before_mint_raw": "610817961915901071589188829",
+          "trace_version": "vyper-fee-mint-1",
+          "trace_window_start": 0,
+          "trigger": "later_vault_logs",
+          "valuation_assets_at_mint_raw": "637144483059142856470460186"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 154,
+          "minted_shares_raw": "15619076183214721863715",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+              "log_index": 155,
+              "shares_raw": "6110885965408300228804",
+              "to": "0x9f51f4df0b275dfb1f74f6db86219bae622b36ca"
+            },
+            {
+              "from": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+              "log_index": 156,
+              "shares_raw": "9508190217806421634911",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "15619076183214721863715"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0xd6a7a3c5b59aa34792b3ac5a676c6e296c6455ad258643ae02b49688cf708eb6",
+          "post_total_assets_raw": "634497866714574109051841841",
+          "post_total_supply_raw": "608236502983918208286395397",
+          "price_per_share_block_raw": "1043176237535599293",
+          "share_decimals": 18,
+          "state_formula": null,
+          "state_unavailable_reason": "locked_profit_call_reverted"
+        },
+        "later_vault_report_in_receipt": true,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.0",
+          "block_number": 12427941,
+          "chain_id": 1,
+          "gain_raw": "63742678215469892778729",
+          "log_index": 158,
+          "loss_raw": "0",
+          "strategy_address": "0x9f51f4df0b275dfb1f74f6db86219bae622b36ca",
+          "tx_hash": "0x12ad966ab2f5d218c7697052cd9d9ad7698e0dbfe3f62ebaefa66de0ac044d9e",
+          "vault_address": "0x19d3364a399d251e894ac732651be8b0e4e85001"
+        },
+        "report_log_index": 158,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": null,
+        "state_scope": "fee-mint-execution",
+        "state_suitability": "verified",
+        "status": "accepted"
+      },
+      "mint_trace_window": [
+        {
+          "op": "MUL",
+          "pc": 6219,
+          "depth": 6,
+          "a": "3733499698f302e55b1",
+          "b": "1f941bc10abaa48827d24dd"
+        },
+        {
+          "op": "DIV",
+          "pc": 6225,
+          "depth": 6,
+          "a": "6cf258bd053761ff3814e7debdbd4f54ed579ddcd",
+          "b": "3733499698f302e55b1"
+        },
+        {
+          "op": "DIV",
+          "pc": 6313,
+          "depth": 6,
+          "a": "6cf258bd053761ff3814e7debdbd4f54ed579ddcd",
+          "b": "20f0897a2d07da8ff98771a"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6368,
+          "depth": 6,
+          "a": "5",
+          "b": "1f9450ac6e5458138013500"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6415,
+          "depth": 6,
+          "a": "aee9cc1b56432f97d6957dd40d0ad09650dd097d1a760bd3fbc187a3a335393e",
+          "b": "34eb6399b38b5841023"
+        },
+        {
+          "op": "LOG3",
+          "pc": 6469,
+          "depth": 6,
+          "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "data": "0x00000000000000000000000000000000000000000000034eb6399b38b5841023"
+        }
+      ]
+    },
+    {
+      "source_reconstruction_id": 67771,
+      "selection": "multi-report-transaction",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+        "strategy_address": "0x57e848a6915455a7e77cf0d55a1474befd9c374d",
+        "tx_hash": "0x12ad966ab2f5d218c7697052cd9d9ad7698e0dbfe3f62ebaefa66de0ac044d9e",
+        "log_index": 192,
+        "block_number": 12427941,
+        "block_timestamp": 1620933995,
+        "asset": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "asset_decimals": 18,
+        "gain_raw": "2225238524709554588680",
+        "loss_raw": "2929147215497139760977",
+        "net_raw": "-703908690787585172297",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.0",
+      "candidate": {
+        "baseline_candidate": {
+          "calculation_version": "v2-fee-calculation-1",
+          "interval": null,
+          "method": "share-mint-report-block-pps",
+          "precision": "pps-estimate",
+          "total_fees_paid_raw": "445048948292036200367"
+        },
+        "calculation_version": "vyper-fee-mint-1",
+        "interval": null,
+        "method": "execution-fee-mint",
+        "precision": "singleton",
+        "total_fees_paid_raw": "445047704941910917736"
+      },
+      "evidence": {
+        "block_hash": "0xd6a7a3c5b59aa34792b3ac5a676c6e296c6455ad258643ae02b49688cf708eb6",
+        "execution_verification": {
+          "block_hash": "0xd6a7a3c5b59aa34792b3ac5a676c6e296c6455ad258643ae02b49688cf708eb6",
+          "div_pc": 6313,
+          "fee_operand_raw": "445047704941910917736",
+          "mint_log_index": 188,
+          "minted_shares_raw": "426628725116879897660",
+          "mul_pc": 6219,
+          "status": "verified",
+          "supply_before_mint_raw": "610833580992084286311052544",
+          "trace_version": "vyper-fee-mint-1",
+          "trace_window_start": 0,
+          "trigger": "later_vault_logs",
+          "valuation_assets_at_mint_raw": "637205296590142829223477938"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 188,
+          "minted_shares_raw": "426628725116879897660",
+          "previous_report_log_index": 158,
+          "recipient_transfers": [
+            {
+              "from": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+              "log_index": 189,
+              "shares_raw": "213314362558439948830",
+              "to": "0x57e848a6915455a7e77cf0d55a1474befd9c374d"
+            },
+            {
+              "from": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+              "log_index": 190,
+              "shares_raw": "213314362558439948830",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "426628725116879897660"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0xd6a7a3c5b59aa34792b3ac5a676c6e296c6455ad258643ae02b49688cf708eb6",
+          "post_total_assets_raw": "634497866714574109051841841",
+          "post_total_supply_raw": "608236502983918208286395397",
+          "price_per_share_block_raw": "1043176237535599293",
+          "share_decimals": 18,
+          "state_formula": null,
+          "state_unavailable_reason": "locked_profit_call_reverted"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.0",
+          "block_number": 12427941,
+          "chain_id": 1,
+          "gain_raw": "2225238524709554588680",
+          "log_index": 192,
+          "loss_raw": "2929147215497139760977",
+          "strategy_address": "0x57e848a6915455a7e77cf0d55a1474befd9c374d",
+          "tx_hash": "0x12ad966ab2f5d218c7697052cd9d9ad7698e0dbfe3f62ebaefa66de0ac044d9e",
+          "vault_address": "0x19d3364a399d251e894ac732651be8b0e4e85001"
+        },
+        "report_log_index": 192,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": null,
+        "state_scope": "fee-mint-execution",
+        "state_suitability": "verified",
+        "status": "accepted"
+      },
+      "mint_trace_window": [
+        {
+          "op": "MUL",
+          "pc": 6219,
+          "depth": 5,
+          "a": "18204711ae4d758268",
+          "b": "1f9450ac6e5458138013500"
+        },
+        {
+          "op": "DIV",
+          "pc": 6225,
+          "depth": 5,
+          "a": "2f9e2de909f3dc9e4579db93b4add66d96678800",
+          "b": "18204711ae4d758268"
+        },
+        {
+          "op": "DIV",
+          "pc": 6313,
+          "depth": 5,
+          "a": "2f9e2de909f3dc9e4579db93b4add66d96678800",
+          "b": "20f15785817ee3d355c02b2"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6368,
+          "depth": 5,
+          "a": "5",
+          "b": "1f94521e78efa9f6967393c"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6415,
+          "depth": 5,
+          "a": "aee9cc1b56432f97d6957dd40d0ad09650dd097d1a760bd3fbc187a3a335393e",
+          "b": "1720a9b51e3166043c"
+        },
+        {
+          "op": "LOG3",
+          "pc": 6469,
+          "depth": 5,
+          "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "data": "0x00000000000000000000000000000000000000000000001720a9b51e3166043c"
+        }
+      ]
+    },
+    {
+      "source_reconstruction_id": 66969,
+      "selection": "0.3.0-later",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+        "strategy_address": "0x77b7cd137dd9d94e7056f78308d7f65d2ce68910",
+        "tx_hash": "0x3934d048f85d878e29005a26c0bd39e4c6271161f4e0bce1bbab59715ffdeb27",
+        "log_index": 60,
+        "block_number": 11968256,
+        "block_timestamp": 1614813911,
+        "asset": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "asset_decimals": 18,
+        "gain_raw": "2863085542900893470055",
+        "loss_raw": "0",
+        "net_raw": "2863085542900893470055",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.0",
+      "candidate": {
+        "baseline_candidate": {
+          "calculation_version": "v2-fee-calculation-1",
+          "interval": null,
+          "method": "share-mint-report-block-pps",
+          "precision": "pps-estimate",
+          "total_fees_paid_raw": "887808624577259719485"
+        },
+        "calculation_version": "vyper-fee-mint-1",
+        "interval": null,
+        "method": "execution-fee-mint",
+        "precision": "singleton",
+        "total_fees_paid_raw": "887761349479607014000"
+      },
+      "evidence": {
+        "block_hash": "0x5d75904fcd44259c7572f1e7180ac3c659333bcbe67371d43d6c6f709d1f5ad8",
+        "execution_verification": {
+          "block_hash": "0x5d75904fcd44259c7572f1e7180ac3c659333bcbe67371d43d6c6f709d1f5ad8",
+          "div_pc": 6313,
+          "fee_operand_raw": "887761349479607014000",
+          "mint_log_index": 56,
+          "minted_shares_raw": "871438977980395080291",
+          "mul_pc": 6219,
+          "status": "verified",
+          "supply_before_mint_raw": "144627312918591358242531359",
+          "trace_version": "vyper-fee-mint-1",
+          "trace_window_start": 0,
+          "trigger": "later_vault_logs",
+          "valuation_assets_at_mint_raw": "147336235505300728161989903"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 56,
+          "minted_shares_raw": "871438977980395080291",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+              "log_index": 57,
+              "shares_raw": "281044488007788917795",
+              "to": "0x77b7cd137dd9d94e7056f78308d7f65d2ce68910"
+            },
+            {
+              "from": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+              "log_index": 58,
+              "shares_raw": "590394489972606162496",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "871438977980395080291"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x5d75904fcd44259c7572f1e7180ac3c659333bcbe67371d43d6c6f709d1f5ad8",
+          "post_total_assets_raw": "147346437010591057548586340",
+          "post_total_supply_raw": "144629625037381113015496031",
+          "price_per_share_block_raw": "1018784616032211621",
+          "share_decimals": 18,
+          "state_formula": null,
+          "state_unavailable_reason": "locked_profit_call_reverted"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.0",
+          "block_number": 11968256,
+          "chain_id": 1,
+          "gain_raw": "2863085542900893470055",
+          "log_index": 60,
+          "loss_raw": "0",
+          "strategy_address": "0x77b7cd137dd9d94e7056f78308d7f65d2ce68910",
+          "tx_hash": "0x3934d048f85d878e29005a26c0bd39e4c6271161f4e0bce1bbab59715ffdeb27",
+          "vault_address": "0x19d3364a399d251e894ac732651be8b0e4e85001"
+        },
+        "report_log_index": 60,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": null,
+        "state_scope": "fee-mint-execution",
+        "state_suitability": "verified",
+        "status": "accepted"
+      },
+      "mint_trace_window": [
+        {
+          "op": "MUL",
+          "pc": 6219,
+          "depth": 3,
+          "a": "302029e3ca5d639270",
+          "b": "77a20657e60a38058a281f"
+        },
+        {
+          "op": "DIV",
+          "pc": 6225,
+          "depth": 3,
+          "a": "167d6904ac5fdcf669467ba621b3e621fe503b90",
+          "b": "302029e3ca5d639270"
+        },
+        {
+          "op": "DIV",
+          "pc": 6313,
+          "depth": 3,
+          "a": "167d6904ac5fdcf669467ba621b3e621fe503b90",
+          "b": "79dfa954bea76814a3750f"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6368,
+          "depth": 3,
+          "a": "5",
+          "b": "77a235958b379c4470f282"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6415,
+          "depth": 3,
+          "a": "aee9cc1b56432f97d6957dd40d0ad09650dd097d1a760bd3fbc187a3a335393e",
+          "b": "2f3da52d643ee6ca63"
+        },
+        {
+          "op": "LOG3",
+          "pc": 6469,
+          "depth": 3,
+          "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "data": "0x00000000000000000000000000000000000000000000002f3da52d643ee6ca63"
+        }
+      ]
+    },
+    {
+      "source_reconstruction_id": 66660,
+      "selection": "0.2.2-additional",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0xbfa4d8aa6d8a379abfe7793399d3ddacc5bbecbb",
+        "strategy_address": "0x001f751cdfee02e2f0714831be2f8384db0f71a2",
+        "tx_hash": "0x583a8509f6d4cdd0b42a213dc23e31a43fcfad867baf10d9720061e289e26dc3",
+        "log_index": 101,
+        "block_number": 11458215,
+        "block_timestamp": 1608042803,
+        "asset": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "asset_decimals": 18,
+        "gain_raw": "16581985156413988612",
+        "loss_raw": "0",
+        "net_raw": "16581985156413988612",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.2.2",
+      "candidate": {
+        "calculation_version": "v2-fee-calculation-1",
+        "interval": null,
+        "method": "share-mint-report-block-pps",
+        "precision": "pps-estimate",
+        "total_fees_paid_raw": "3595535786351202901"
+      },
+      "evidence": {
+        "block_hash": "0x4362dab0aef8f371c1b54822754a9b668116b1b3e7eeecc08e51aa46ff385f22",
+        "execution_verification": {
+          "reason": "unsupported_trace_release",
+          "status": "not_selected"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 97,
+          "minted_shares_raw": "3587871804004772567",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0xbfa4d8aa6d8a379abfe7793399d3ddacc5bbecbb",
+              "log_index": 98,
+              "shares_raw": "1659029126114952654",
+              "to": "0x001f751cdfee02e2f0714831be2f8384db0f71a2"
+            },
+            {
+              "from": "0xbfa4d8aa6d8a379abfe7793399d3ddacc5bbecbb",
+              "log_index": 99,
+              "shares_raw": "1928842677889819913",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "3587871804004772567"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x4362dab0aef8f371c1b54822754a9b668116b1b3e7eeecc08e51aa46ff385f22",
+          "post_total_assets_raw": "4939305945624134167435",
+          "post_total_supply_raw": "4928777680625471128810",
+          "price_per_share_block_raw": "1002136080318665739",
+          "share_decimals": 18,
+          "state_formula": null,
+          "state_unavailable_reason": "locked_profit_call_reverted"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.2.2",
+          "block_number": 11458215,
+          "chain_id": 1,
+          "gain_raw": "16581985156413988612",
+          "log_index": 101,
+          "loss_raw": "0",
+          "strategy_address": "0x001f751cdfee02e2f0714831be2f8384db0f71a2",
+          "tx_hash": "0x583a8509f6d4cdd0b42a213dc23e31a43fcfad867baf10d9720061e289e26dc3",
+          "vault_address": "0xbfa4d8aa6d8a379abfe7793399d3ddacc5bbecbb"
+        },
+        "report_log_index": 101,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": "transaction_local_state_unverified",
+        "state_scope": "end-of-block",
+        "state_suitability": "unverified",
+        "status": "conditional"
+      }
+    },
+    {
+      "source_reconstruction_id": 16341,
+      "selection": "0.4.2-later",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0xa258c4606ca8206d8aa700ce2143d7db854d168c",
+        "strategy_address": "0xec2db4a1ad431cc3b102059fa91ba643620f0826",
+        "tx_hash": "0x64b2d3ab77d8d3b41bd27c7189e71ad7f12faf38871c692d3e12430b5f983ff7",
+        "log_index": 270,
+        "block_number": 12617679,
+        "block_timestamp": 1623473180,
+        "asset": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "asset_decimals": 18,
+        "gain_raw": "1269240804775215",
+        "loss_raw": "0",
+        "net_raw": "1269240804775215",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.4.2",
+      "candidate": {
+        "baseline_candidate": {
+          "calculation_version": "v2-fee-calculation-1",
+          "interval": {
+            "lower_raw": "253848160955042",
+            "upper_raw": "253848160955042",
+            "width_raw": "0"
+          },
+          "method": "contract-state-singleton",
+          "precision": "singleton",
+          "total_fees_paid_raw": "253848160955042"
+        },
+        "calculation_version": "vyper-fee-mint-1",
+        "interval": null,
+        "method": "execution-fee-mint",
+        "precision": "singleton",
+        "total_fees_paid_raw": "253848160955042"
+      },
+      "evidence": {
+        "block_hash": "0xa6c52c3b0b38e74e69314257a0824e2f250d4b04b2ef9c23d11f755315d80ed0",
+        "execution_verification": {
+          "block_hash": "0xa6c52c3b0b38e74e69314257a0824e2f250d4b04b2ef9c23d11f755315d80ed0",
+          "div_pc": 17720,
+          "fee_operand_raw": "253848160955042",
+          "mint_log_index": 266,
+          "minted_shares_raw": "253848160955042",
+          "mul_pc": 17679,
+          "status": "verified",
+          "supply_before_mint_raw": "44500004000000000000",
+          "trace_version": "vyper-fee-mint-1",
+          "trace_window_start": 0,
+          "trigger": "later_vault_logs",
+          "valuation_assets_at_mint_raw": "44500004000000000000"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 266,
+          "minted_shares_raw": "253848160955042",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0xa258c4606ca8206d8aa700ce2143d7db854d168c",
+              "log_index": 267,
+              "shares_raw": "126924080477521",
+              "to": "0xec2db4a1ad431cc3b102059fa91ba643620f0826"
+            },
+            {
+              "from": "0xa258c4606ca8206d8aa700ce2143d7db854d168c",
+              "log_index": 268,
+              "shares_raw": "126924080477521",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "253848160955042"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0xa6c52c3b0b38e74e69314257a0824e2f250d4b04b2ef9c23d11f755315d80ed0",
+          "inversion_assets_raw": "44500257848160955042",
+          "locked_profit_raw": "1015392643820173",
+          "post_free_funds_raw": "44500257848160955042",
+          "post_total_assets_raw": "44501273240804775215",
+          "post_total_supply_raw": "44500257848160955042",
+          "price_per_share_block_raw": "1000000000000000000",
+          "share_decimals": 18,
+          "state_formula": "v2-locked-profit-post-state"
+        },
+        "later_vault_report_in_receipt": true,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.4.2",
+          "block_number": 12617679,
+          "chain_id": 1,
+          "gain_raw": "1269240804775215",
+          "log_index": 270,
+          "loss_raw": "0",
+          "strategy_address": "0xec2db4a1ad431cc3b102059fa91ba643620f0826",
+          "tx_hash": "0x64b2d3ab77d8d3b41bd27c7189e71ad7f12faf38871c692d3e12430b5f983ff7",
+          "vault_address": "0xa258c4606ca8206d8aa700ce2143d7db854d168c"
+        },
+        "report_log_index": 270,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": null,
+        "state_scope": "fee-mint-execution",
+        "state_suitability": "verified",
+        "status": "accepted"
+      },
+      "mint_trace_window": [
+        {
+          "op": "MUL",
+          "pc": 17679,
+          "depth": 7,
+          "a": "e6dfa175eaa2",
+          "b": "2698fc5ddeb764000"
+        },
+        {
+          "op": "DIV",
+          "pc": 17685,
+          "depth": 7,
+          "a": "22cf2a5829e0690dbcaf457548000",
+          "b": "e6dfa175eaa2"
+        },
+        {
+          "op": "DIV",
+          "pc": 17720,
+          "depth": 7,
+          "a": "22cf2a5829e0690dbcaf457548000",
+          "b": "2698fc5ddeb764000"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 17791,
+          "depth": 7,
+          "a": "5",
+          "b": "26990acbd8cec2aa2"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 17838,
+          "depth": 7,
+          "a": "a194a6804ba1015d1a9bd5a0198490ffaf5316cb2e4d92c5f2911b7b7eb56515",
+          "b": "e6dfa175eaa2"
+        },
+        {
+          "op": "LOG3",
+          "pc": 17892,
+          "depth": 7,
+          "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "data": "0x0000000000000000000000000000000000000000000000000000e6dfa175eaa2"
+        }
+      ]
+    },
+    {
+      "source_reconstruction_id": 19199,
+      "selection": "0.4.2-ordinary",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x4962b6c40b5e9433e029c5c423f6b1ce7ff28b0f",
+        "strategy_address": "0x8784889b0d48a223c3f48312651643edd8526bbd",
+        "tx_hash": "0x6e631c8c7c19b80cccecee3ca47441dc76159a2e37bb3c8218800fdee227ffe8",
+        "log_index": 233,
+        "block_number": 12768312,
+        "block_timestamp": 1625499188,
+        "asset": "0x57ab1ec28d129707052df4df418d58a2d46d5f51",
+        "asset_decimals": 18,
+        "gain_raw": "8355543654705642416683",
+        "loss_raw": "0",
+        "net_raw": "8355543654705642416683",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.4.2",
+      "candidate": {
+        "calculation_version": "v2-fee-calculation-1",
+        "interval": {
+          "lower_raw": "1671108730941128483336",
+          "upper_raw": "1671108730941128483336",
+          "width_raw": "0"
+        },
+        "method": "contract-state-singleton",
+        "precision": "singleton",
+        "total_fees_paid_raw": "1671108730941128483336"
+      },
+      "evidence": {
+        "block_hash": "0xab6d19dc050298f15cb6c5a845d4d57b4447ebdc4a1340f23e84d4937530804d",
+        "execution_verification": {
+          "reason": "no_later_vault_logs_detected",
+          "status": "not_selected"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 229,
+          "minted_shares_raw": "1671108730941128483336",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x4962b6c40b5e9433e029c5c423f6b1ce7ff28b0f",
+              "log_index": 230,
+              "shares_raw": "835554365470564241668",
+              "to": "0x8784889b0d48a223c3f48312651643edd8526bbd"
+            },
+            {
+              "from": "0x4962b6c40b5e9433e029c5c423f6b1ce7ff28b0f",
+              "log_index": 231,
+              "shares_raw": "835554365470564241668",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "1671108730941128483336"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0xab6d19dc050298f15cb6c5a845d4d57b4447ebdc4a1340f23e84d4937530804d",
+          "inversion_assets_raw": "1775900977931383588423438",
+          "locked_profit_raw": "6684434923764513933347",
+          "post_free_funds_raw": "1775900977931383588423438",
+          "post_total_assets_raw": "1782585412855148102356785",
+          "post_total_supply_raw": "1775900977931383588423438",
+          "price_per_share_block_raw": "1000000000000000000",
+          "share_decimals": 18,
+          "state_formula": "v2-locked-profit-post-state"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.4.2",
+          "block_number": 12768312,
+          "chain_id": 1,
+          "gain_raw": "8355543654705642416683",
+          "log_index": 233,
+          "loss_raw": "0",
+          "strategy_address": "0x8784889b0d48a223c3f48312651643edd8526bbd",
+          "tx_hash": "0x6e631c8c7c19b80cccecee3ca47441dc76159a2e37bb3c8218800fdee227ffe8",
+          "vault_address": "0x4962b6c40b5e9433e029c5c423f6b1ce7ff28b0f"
+        },
+        "report_log_index": 233,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": "transaction_local_state_unverified",
+        "state_scope": "end-of-block",
+        "state_suitability": "unverified",
+        "status": "conditional"
+      }
+    },
+    {
+      "source_reconstruction_id": 67855,
+      "selection": "0.3.0-later",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x71955515adf20cbdc699b8bc556fc7fd726b31b0",
+        "strategy_address": "0xf0727058fcf72c89d2d926b3e8062972748280b0",
+        "tx_hash": "0x76e33ac4be6b99f31e9d06ba0776810bb5d0eeae749a0f836f759eac66d28c34",
+        "log_index": 223,
+        "block_number": 12475899,
+        "block_timestamp": 1621575876,
+        "asset": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "asset_decimals": 6,
+        "gain_raw": "272361405",
+        "loss_raw": "0",
+        "net_raw": "272361405",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.0",
+      "candidate": {
+        "baseline_candidate": {
+          "calculation_version": "v2-fee-calculation-1",
+          "interval": null,
+          "method": "share-mint-report-block-pps",
+          "precision": "pps-estimate",
+          "total_fees_paid_raw": "54640827"
+        },
+        "calculation_version": "vyper-fee-mint-1",
+        "interval": null,
+        "method": "execution-fee-mint",
+        "precision": "singleton",
+        "total_fees_paid_raw": "54472280"
+      },
+      "evidence": {
+        "block_hash": "0x392d3998413d59c6e17bfc6cfbaaab7c26f80240c33f433ace426404ba6520a0",
+        "execution_verification": {
+          "block_hash": "0x392d3998413d59c6e17bfc6cfbaaab7c26f80240c33f433ace426404ba6520a0",
+          "div_pc": 6313,
+          "fee_operand_raw": "54472280",
+          "mint_log_index": 219,
+          "minted_shares_raw": "54449980",
+          "mul_pc": 6219,
+          "status": "verified",
+          "supply_before_mint_raw": "70319196287",
+          "trace_version": "vyper-fee-mint-1",
+          "trace_window_start": 0,
+          "trigger": "later_vault_logs",
+          "valuation_assets_at_mint_raw": "70347994827"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 219,
+          "minted_shares_raw": "54449980",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x71955515adf20cbdc699b8bc556fc7fd726b31b0",
+              "log_index": 220,
+              "shares_raw": "27224990",
+              "to": "0xf0727058fcf72c89d2d926b3e8062972748280b0"
+            },
+            {
+              "from": "0x71955515adf20cbdc699b8bc556fc7fd726b31b0",
+              "log_index": 221,
+              "shares_raw": "27224990",
+              "to": "0x16388463d60ffe0661cf7f1f31a7d658ac790ff7"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "54449980"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x392d3998413d59c6e17bfc6cfbaaab7c26f80240c33f433ace426404ba6520a0",
+          "post_total_assets_raw": "70620356232",
+          "post_total_supply_raw": "70373646267",
+          "price_per_share_block_raw": "1003505",
+          "share_decimals": 6,
+          "state_formula": null,
+          "state_unavailable_reason": "locked_profit_call_reverted"
+        },
+        "later_vault_report_in_receipt": true,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.0",
+          "block_number": 12475899,
+          "chain_id": 1,
+          "gain_raw": "272361405",
+          "log_index": 223,
+          "loss_raw": "0",
+          "strategy_address": "0xf0727058fcf72c89d2d926b3e8062972748280b0",
+          "tx_hash": "0x76e33ac4be6b99f31e9d06ba0776810bb5d0eeae749a0f836f759eac66d28c34",
+          "vault_address": "0x71955515adf20cbdc699b8bc556fc7fd726b31b0"
+        },
+        "report_log_index": 223,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": null,
+        "state_scope": "fee-mint-execution",
+        "state_suitability": "verified",
+        "status": "accepted"
+      },
+      "mint_trace_window": [
+        {
+          "op": "MUL",
+          "pc": 6219,
+          "depth": 6,
+          "a": "33f2e58",
+          "b": "105f59c87f"
+        },
+        {
+          "op": "DIV",
+          "pc": 6225,
+          "depth": 6,
+          "a": "35287b34bd24bda8",
+          "b": "33f2e58"
+        },
+        {
+          "op": "DIV",
+          "pc": 6313,
+          "depth": 6,
+          "a": "35287b34bd24bda8",
+          "b": "10611136cb"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6368,
+          "depth": 6,
+          "a": "5",
+          "b": "1062989fbb"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6415,
+          "depth": 6,
+          "a": "9933ca57f983b6a4a1f99b1fc8082044a68540259a9eff3273600548655b2436",
+          "b": "33ed73c"
+        },
+        {
+          "op": "LOG3",
+          "pc": 6469,
+          "depth": 6,
+          "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "data": "0x00000000000000000000000000000000000000000000000000000000033ed73c"
+        }
+      ]
+    },
+    {
+      "source_reconstruction_id": 66947,
+      "selection": "nonzero-loss",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x0e8a7717a4fd7694682e7005957dd5d7598bf14a",
+        "strategy_address": "0xa93cb639ae732559ab9315b3a1615e624c32cc59",
+        "tx_hash": "0x86516823a20af0699b688f275dd3bcd9586675541418182d3d575c7f2605bd64",
+        "log_index": 241,
+        "block_number": 11923464,
+        "block_timestamp": 1614217673,
+        "asset": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+        "asset_decimals": 8,
+        "gain_raw": "1172366",
+        "loss_raw": "4752",
+        "net_raw": "1167614",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.0",
+      "candidate": {
+        "baseline_candidate": {
+          "calculation_version": "v2-fee-calculation-1",
+          "interval": null,
+          "method": "share-mint-report-block-pps",
+          "precision": "pps-estimate",
+          "total_fees_paid_raw": "235858"
+        },
+        "calculation_version": "vyper-fee-mint-1",
+        "interval": null,
+        "method": "execution-fee-mint",
+        "precision": "singleton",
+        "total_fees_paid_raw": "234472"
+      },
+      "evidence": {
+        "block_hash": "0x7963aa042295036ab4f2b2bbe6ce36d2bc1d2ec881e7f07563ae5ab03417645d",
+        "execution_verification": {
+          "block_hash": "0x7963aa042295036ab4f2b2bbe6ce36d2bc1d2ec881e7f07563ae5ab03417645d",
+          "div_pc": 6313,
+          "fee_operand_raw": "234472",
+          "mint_log_index": 237,
+          "minted_shares_raw": "223648",
+          "mul_pc": 6219,
+          "status": "verified",
+          "supply_before_mint_raw": "151032881",
+          "trace_version": "vyper-fee-mint-1",
+          "trace_window_start": 0,
+          "trigger": "later_vault_logs",
+          "valuation_assets_at_mint_raw": "158342264"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 237,
+          "minted_shares_raw": "223648",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x0e8a7717a4fd7694682e7005957dd5d7598bf14a",
+              "log_index": 238,
+              "shares_raw": "111824",
+              "to": "0xa93cb639ae732559ab9315b3a1615e624c32cc59"
+            },
+            {
+              "from": "0x0e8a7717a4fd7694682e7005957dd5d7598bf14a",
+              "log_index": 239,
+              "shares_raw": "111824",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "223648"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x7963aa042295036ab4f2b2bbe6ce36d2bc1d2ec881e7f07563ae5ab03417645d",
+          "post_total_assets_raw": "159514630",
+          "post_total_supply_raw": "151256529",
+          "price_per_share_block_raw": "105459665",
+          "share_decimals": 8,
+          "state_formula": null,
+          "state_unavailable_reason": "locked_profit_call_reverted"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.0",
+          "block_number": 11923464,
+          "chain_id": 1,
+          "gain_raw": "1172366",
+          "log_index": 241,
+          "loss_raw": "4752",
+          "strategy_address": "0xa93cb639ae732559ab9315b3a1615e624c32cc59",
+          "tx_hash": "0x86516823a20af0699b688f275dd3bcd9586675541418182d3d575c7f2605bd64",
+          "vault_address": "0x0e8a7717a4fd7694682e7005957dd5d7598bf14a"
+        },
+        "report_log_index": 241,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": null,
+        "state_scope": "fee-mint-execution",
+        "state_suitability": "verified",
+        "status": "accepted"
+      },
+      "mint_trace_window": [
+        {
+          "op": "MUL",
+          "pc": 6219,
+          "depth": 3,
+          "a": "393e8",
+          "b": "9009431"
+        },
+        {
+          "op": "DIV",
+          "pc": 6225,
+          "depth": 3,
+          "a": "20353a316f68",
+          "b": "393e8"
+        },
+        {
+          "op": "DIV",
+          "pc": 6313,
+          "depth": 3,
+          "a": "20353a316f68",
+          "b": "9701c78"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6368,
+          "depth": 3,
+          "a": "5",
+          "b": "903fdd1"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6415,
+          "depth": 3,
+          "a": "6754404dc7114f91bff3ce89a09feea6c1f1c32185f10f963ef0c3e1c3d5a6a9",
+          "b": "369a0"
+        },
+        {
+          "op": "LOG3",
+          "pc": 6469,
+          "depth": 3,
+          "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "data": "0x00000000000000000000000000000000000000000000000000000000000369a0"
+        }
+      ]
+    },
+    {
+      "source_reconstruction_id": 66777,
+      "selection": "0.3.0-later",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x5f18c75abdae578b483e5f43f12a39cf75b973a9",
+        "strategy_address": "0x4d7d4485fd600c61d840ccbec328bfd76a050f87",
+        "tx_hash": "0x8e5fa292f6c2173a80194deaf3d1ae6fbd869798c44ff24c47319a1fa178302a",
+        "log_index": 66,
+        "block_number": 11755832,
+        "block_timestamp": 1611990072,
+        "asset": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+        "asset_decimals": 6,
+        "gain_raw": "2309726968",
+        "loss_raw": "0",
+        "net_raw": "2309726968",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.0",
+      "candidate": {
+        "baseline_candidate": {
+          "calculation_version": "v2-fee-calculation-1",
+          "interval": null,
+          "method": "share-mint-report-block-pps",
+          "precision": "pps-estimate",
+          "total_fees_paid_raw": "637692554"
+        },
+        "calculation_version": "vyper-fee-mint-1",
+        "interval": null,
+        "method": "execution-fee-mint",
+        "precision": "singleton",
+        "total_fees_paid_raw": "637473825"
+      },
+      "evidence": {
+        "block_hash": "0x2c7d3c830c516a7c1d7d6dd96c194174e7fc5c3dafb5da5425948139c1ec5f7a",
+        "execution_verification": {
+          "block_hash": "0x2c7d3c830c516a7c1d7d6dd96c194174e7fc5c3dafb5da5425948139c1ec5f7a",
+          "div_pc": 6313,
+          "fee_operand_raw": "637473825",
+          "mint_log_index": 62,
+          "minted_shares_raw": "635045052",
+          "mul_pc": 6219,
+          "status": "verified",
+          "supply_before_mint_raw": "8727385895163",
+          "trace_version": "vyper-fee-mint-1",
+          "trace_window_start": 0,
+          "trigger": "later_vault_logs",
+          "valuation_assets_at_mint_raw": "8760764364332"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 62,
+          "minted_shares_raw": "635045052",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x5f18c75abdae578b483e5f43f12a39cf75b973a9",
+              "log_index": 63,
+              "shares_raw": "230092690",
+              "to": "0x4d7d4485fd600c61d840ccbec328bfd76a050f87"
+            },
+            {
+              "from": "0x5f18c75abdae578b483e5f43f12a39cf75b973a9",
+              "log_index": 64,
+              "shares_raw": "404952362",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "635045052"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x2c7d3c830c516a7c1d7d6dd96c194174e7fc5c3dafb5da5425948139c1ec5f7a",
+          "post_total_assets_raw": "8764748613338",
+          "post_total_supply_raw": "8728354504970",
+          "price_per_share_block_raw": "1004169",
+          "share_decimals": 6,
+          "state_formula": null,
+          "state_unavailable_reason": "locked_profit_call_reverted"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.0",
+          "block_number": 11755832,
+          "chain_id": 1,
+          "gain_raw": "2309726968",
+          "log_index": 66,
+          "loss_raw": "0",
+          "strategy_address": "0x4d7d4485fd600c61d840ccbec328bfd76a050f87",
+          "tx_hash": "0x8e5fa292f6c2173a80194deaf3d1ae6fbd869798c44ff24c47319a1fa178302a",
+          "vault_address": "0x5f18c75abdae578b483e5f43f12a39cf75b973a9"
+        },
+        "report_log_index": 66,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": null,
+        "state_scope": "fee-mint-execution",
+        "state_suitability": "verified",
+        "status": "accepted"
+      },
+      "mint_trace_window": [
+        {
+          "op": "MUL",
+          "pc": 6219,
+          "depth": 4,
+          "a": "25ff1421",
+          "b": "7f000bc70fb"
+        },
+        {
+          "op": "DIV",
+          "pc": 6225,
+          "depth": 4,
+          "a": "12d98cbbe07a2232c5b",
+          "b": "25ff1421"
+        },
+        {
+          "op": "DIV",
+          "pc": 6313,
+          "depth": 4,
+          "a": "12d98cbbe07a2232c5b",
+          "b": "7f7c63f762c"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6368,
+          "depth": 4,
+          "a": "5",
+          "b": "7f0269675b7"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6415,
+          "depth": 4,
+          "a": "24383c3257f20c321778bc5de008150fe7c16872d1d12dd281d901b5be36a6ee",
+          "b": "25da04bc"
+        },
+        {
+          "op": "LOG3",
+          "pc": 6469,
+          "depth": 4,
+          "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "data": "0x0000000000000000000000000000000000000000000000000000000025da04bc"
+        }
+      ]
+    },
+    {
+      "source_reconstruction_id": 21173,
+      "selection": "0.4.2-later",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x3d980e50508cfd41a13837a60149927a11c03731",
+        "strategy_address": "0xcc39ec658eedb7e44f5aed9b5192219982d2c9e5",
+        "tx_hash": "0xc8d4ecd9d1e94d471bcd759964256e48f06e0432e4648939f9278fd829230077",
+        "log_index": 306,
+        "block_number": 12924341,
+        "block_timestamp": 1627611385,
+        "asset": "0xca3d75ac011bf5ad07a98d02f18225f9bd9a6bdf",
+        "asset_decimals": 18,
+        "gain_raw": "835101607069481502",
+        "loss_raw": "0",
+        "net_raw": "835101607069481502",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.4.2",
+      "candidate": {
+        "calculation_version": "v2-fee-calculation-1",
+        "interval": {
+          "lower_raw": "413680874074503958",
+          "upper_raw": "413680874074503958",
+          "width_raw": "0"
+        },
+        "method": "contract-state-singleton",
+        "precision": "singleton",
+        "total_fees_paid_raw": "413680874074503958"
+      },
+      "evidence": {
+        "block_hash": "0x55408c016c8e2dedfa10987d408507776bcb837b64e2754498e680fe64210f64",
+        "execution_verification": {
+          "reason": "trace_budget_exhausted",
+          "status": "deferred"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 302,
+          "minted_shares_raw": "406630259268198908",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x3d980e50508cfd41a13837a60149927a11c03731",
+              "log_index": 303,
+              "shares_raw": "82086846233262136",
+              "to": "0xcc39ec658eedb7e44f5aed9b5192219982d2c9e5"
+            },
+            {
+              "from": "0x3d980e50508cfd41a13837a60149927a11c03731",
+              "log_index": 304,
+              "shares_raw": "324543413034936772",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "406630259268198908"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x55408c016c8e2dedfa10987d408507776bcb837b64e2754498e680fe64210f64",
+          "inversion_assets_raw": "12287673114142653854772",
+          "locked_profit_raw": "1085804790084882158",
+          "post_free_funds_raw": "12287673114142653854772",
+          "post_total_assets_raw": "12288758918932738736930",
+          "post_total_supply_raw": "12078246825853561764516",
+          "price_per_share_block_raw": "1017339129702235744",
+          "share_decimals": 18,
+          "state_formula": "v2-locked-profit-post-state"
+        },
+        "later_vault_report_in_receipt": true,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.4.2",
+          "block_number": 12924341,
+          "chain_id": 1,
+          "gain_raw": "835101607069481502",
+          "log_index": 306,
+          "loss_raw": "0",
+          "strategy_address": "0xcc39ec658eedb7e44f5aed9b5192219982d2c9e5",
+          "tx_hash": "0xc8d4ecd9d1e94d471bcd759964256e48f06e0432e4648939f9278fd829230077",
+          "vault_address": "0x3d980e50508cfd41a13837a60149927a11c03731"
+        },
+        "report_log_index": 306,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": "later_vault_report_in_receipt",
+        "state_scope": "end-of-block",
+        "state_suitability": "unsuitable",
+        "status": "rejected"
+      }
+    },
+    {
+      "source_reconstruction_id": 66720,
+      "selection": "0.3.0-ordinary",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x0e880118c29f095143dda28e64d95333a9e75a47",
+        "strategy_address": "0x3b1a1ae6052ccd643a250fa843c1fb20f9246e1a",
+        "tx_hash": "0xd0069507ffc7b4819fcb358df78c6095c6e5f7f33dd9b5c6e941356754364a50",
+        "log_index": 269,
+        "block_number": 11741604,
+        "block_timestamp": 1611800370,
+        "asset": "0xa3d87fffce63b53e0d54faa1cc983b7eb0b74a9c",
+        "asset_decimals": 18,
+        "gain_raw": "1151204646314",
+        "loss_raw": "0",
+        "net_raw": "1151204646314",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.0",
+      "candidate": {
+        "baseline_candidate": {
+          "calculation_version": "v2-fee-calculation-1",
+          "interval": null,
+          "method": "share-mint-report-block-pps",
+          "precision": "pps-estimate",
+          "total_fees_paid_raw": "315970002017"
+        },
+        "calculation_version": "vyper-fee-mint-1",
+        "interval": null,
+        "method": "execution-fee-mint",
+        "precision": "singleton",
+        "total_fees_paid_raw": "315967348629"
+      },
+      "evidence": {
+        "block_hash": "0x01a61d230d12f7880150724109173f91cfe8cfe8318d63fad14f3f22e3ae3865",
+        "execution_verification": {
+          "block_hash": "0x01a61d230d12f7880150724109173f91cfe8cfe8318d63fad14f3f22e3ae3865",
+          "div_pc": 6313,
+          "fee_operand_raw": "315967348629",
+          "mint_log_index": 265,
+          "minted_shares_raw": "315973453590",
+          "mul_pc": 6219,
+          "status": "verified",
+          "supply_before_mint_raw": "99462217745123296",
+          "trace_version": "vyper-fee-mint-1",
+          "trace_window_start": 0,
+          "trigger": "later_vault_logs",
+          "valuation_assets_at_mint_raw": "99460296023544425"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 265,
+          "minted_shares_raw": "315973453590",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x0e880118c29f095143dda28e64d95333a9e75a47",
+              "log_index": 266,
+              "shares_raw": "115122688930",
+              "to": "0x3b1a1ae6052ccd643a250fa843c1fb20f9246e1a"
+            },
+            {
+              "from": "0x0e880118c29f095143dda28e64d95333a9e75a47",
+              "log_index": 267,
+              "shares_raw": "200850764660",
+              "to": "0x7bacf22f747f2f4b983081c0aa76dddfecd008ab"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "315973453590"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x01a61d230d12f7880150724109173f91cfe8cfe8318d63fad14f3f22e3ae3865",
+          "post_total_assets_raw": "99461447228190739",
+          "post_total_supply_raw": "99462533718576886",
+          "price_per_share_block_raw": "999989076385393306",
+          "share_decimals": 18,
+          "state_formula": null,
+          "state_unavailable_reason": "locked_profit_call_reverted"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.0",
+          "block_number": 11741604,
+          "chain_id": 1,
+          "gain_raw": "1151204646314",
+          "log_index": 269,
+          "loss_raw": "0",
+          "strategy_address": "0x3b1a1ae6052ccd643a250fa843c1fb20f9246e1a",
+          "tx_hash": "0xd0069507ffc7b4819fcb358df78c6095c6e5f7f33dd9b5c6e941356754364a50",
+          "vault_address": "0x0e880118c29f095143dda28e64d95333a9e75a47"
+        },
+        "report_log_index": 269,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": null,
+        "state_scope": "fee-mint-execution",
+        "state_suitability": "verified",
+        "status": "accepted"
+      },
+      "mint_trace_window": [
+        {
+          "op": "MUL",
+          "pc": 6219,
+          "depth": 3,
+          "a": "49911f1f95",
+          "b": "1615c5c2d4547e0"
+        },
+        {
+          "op": "DIV",
+          "pc": 6225,
+          "depth": 3,
+          "a": "658ba68ee569231b5126f560",
+          "b": "49911f1f95"
+        },
+        {
+          "op": "DIV",
+          "pc": 6313,
+          "depth": 3,
+          "a": "658ba68ee569231b5126f560",
+          "b": "1615a9cbdbd1269"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6368,
+          "depth": 3,
+          "a": "5",
+          "b": "1615ca5bec18ef6"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6415,
+          "depth": 3,
+          "a": "7c9fc8570e8bc55a052269229171f19862dadfed8fce3189a0bcd2ce61e72ebf",
+          "b": "49917c4716"
+        },
+        {
+          "op": "LOG3",
+          "pc": 6469,
+          "depth": 3,
+          "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "data": "0x00000000000000000000000000000000000000000000000000000049917c4716"
+        }
+      ]
+    },
+    {
+      "source_reconstruction_id": 67374,
+      "selection": "nonzero-loss",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+        "strategy_address": "0x57e848a6915455a7e77cf0d55a1474befd9c374d",
+        "tx_hash": "0xd77dc07f6221e1f4efa63ed0b560bc1e150808726a02332e56439698d7224336",
+        "log_index": 243,
+        "block_number": 12242544,
+        "block_timestamp": 1618461230,
+        "asset": "0x6b175474e89094c44da98b954eedeac495271d0f",
+        "asset_decimals": 18,
+        "gain_raw": "4266718650082121345910",
+        "loss_raw": "2290122847929632655204",
+        "net_raw": "1976595802152488690706",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.0",
+      "candidate": {
+        "baseline_candidate": {
+          "calculation_version": "v2-fee-calculation-1",
+          "interval": null,
+          "method": "share-mint-report-block-pps",
+          "precision": "pps-estimate",
+          "total_fees_paid_raw": "853352271430643805721"
+        },
+        "calculation_version": "vyper-fee-mint-1",
+        "interval": null,
+        "method": "execution-fee-mint",
+        "precision": "singleton",
+        "total_fees_paid_raw": "853343730016424269182"
+      },
+      "evidence": {
+        "block_hash": "0x97f85cc961b5ab6ae8fd376dac118b5b6c49ba237a3c1b0930c089192ca47dc2",
+        "execution_verification": {
+          "block_hash": "0x97f85cc961b5ab6ae8fd376dac118b5b6c49ba237a3c1b0930c089192ca47dc2",
+          "div_pc": 6313,
+          "fee_operand_raw": "853343730016424269182",
+          "mint_log_index": 239,
+          "minted_shares_raw": "826215347196636192078",
+          "mul_pc": 6219,
+          "status": "verified",
+          "supply_before_mint_raw": "373413827146425075924740144",
+          "trace_version": "vyper-fee-mint-1",
+          "trace_window_start": 0,
+          "trigger": "later_vault_logs",
+          "valuation_assets_at_mint_raw": "385674690234241167151315503"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 239,
+          "minted_shares_raw": "826215347196636192078",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+              "log_index": 240,
+              "shares_raw": "413107673598318096039",
+              "to": "0x57e848a6915455a7e77cf0d55a1474befd9c374d"
+            },
+            {
+              "from": "0x19d3364a399d251e894ac732651be8b0e4e85001",
+              "log_index": 241,
+              "shares_raw": "413107673598318096039",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "826215347196636192078"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x97f85cc961b5ab6ae8fd376dac118b5b6c49ba237a3c1b0930c089192ca47dc2",
+          "post_total_assets_raw": "385679515685238646998736222",
+          "post_total_supply_raw": "373414761554787247456435865",
+          "price_per_share_block_raw": "1032844856157760437",
+          "share_decimals": 18,
+          "state_formula": null,
+          "state_unavailable_reason": "locked_profit_call_reverted"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.0",
+          "block_number": 12242544,
+          "chain_id": 1,
+          "gain_raw": "4266718650082121345910",
+          "log_index": 243,
+          "loss_raw": "2290122847929632655204",
+          "strategy_address": "0x57e848a6915455a7e77cf0d55a1474befd9c374d",
+          "tx_hash": "0xd77dc07f6221e1f4efa63ed0b560bc1e150808726a02332e56439698d7224336",
+          "vault_address": "0x19d3364a399d251e894ac732651be8b0e4e85001"
+        },
+        "report_log_index": 243,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": null,
+        "state_scope": "fee-mint-execution",
+        "state_suitability": "verified",
+        "status": "accepted"
+      },
+      "mint_trace_window": [
+        {
+          "a": "2e4285f13db7cf957e",
+          "b": "134e17421a459a629e02830",
+          "depth": 5,
+          "op": "MUL",
+          "pc": 6219
+        },
+        {
+          "a": "37d0c69a303fc9535d28cd2cbd8bb292e287b7a0",
+          "b": "2e4285f13db7cf957e",
+          "depth": 5,
+          "op": "DIV",
+          "pc": 6225
+        },
+        {
+          "a": "37d0c69a303fc9535d28cd2cbd8bb292e287b7a0",
+          "b": "13f05cad9ea55a6259bba2f",
+          "depth": 5,
+          "op": "DIV",
+          "pc": 6313
+        },
+        {
+          "a": "5",
+          "b": "134e1a0ebaeea72a968857e",
+          "depth": 5,
+          "op": "SSTORE",
+          "pc": 6368
+        },
+        {
+          "a": "aee9cc1b56432f97d6957dd40d0ad09650dd097d1a760bd3fbc187a3a335393e",
+          "b": "2cca0a90cc7f885d4e",
+          "depth": 5,
+          "op": "SSTORE",
+          "pc": 6415
+        },
+        {
+          "data": "0x00000000000000000000000000000000000000000000002cca0a90cc7f885d4e",
+          "depth": 5,
+          "op": "LOG3",
+          "pc": 6469,
+          "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+        }
+      ]
+    },
+    {
+      "source_reconstruction_id": 14100,
+      "selection": "0.3.1-additional",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x7356f09c294cb9c6428ac7327b24b0f29419c181",
+        "strategy_address": "0x1a930f92c780ff359466472d667738bcf6b294ba",
+        "tx_hash": "0xd90db06469daab3521f77bcef081b39ef96564aaebe308083e537d9e7c8c1f3b",
+        "log_index": 226,
+        "block_number": 12003641,
+        "block_timestamp": 1615283757,
+        "asset": "0xc011a73ee8576fb46f5e1c5751ca3b9fe0af2a6f",
+        "asset_decimals": 18,
+        "gain_raw": "1754465217278927476",
+        "loss_raw": "0",
+        "net_raw": "1754465217278927476",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.1",
+      "candidate": {
+        "calculation_version": "v2-fee-calculation-1",
+        "interval": {
+          "lower_raw": "350893043455785494",
+          "upper_raw": "350893043455785494",
+          "width_raw": "0"
+        },
+        "method": "contract-state-singleton",
+        "precision": "singleton",
+        "total_fees_paid_raw": "350893043455785494"
+      },
+      "evidence": {
+        "block_hash": "0x082334eb1f2b00d107a0e94f3c41ff52d1a70c7f663b69df9197fcc777a3f860",
+        "execution_verification": {
+          "reason": "unsupported_trace_release",
+          "status": "not_selected"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 222,
+          "minted_shares_raw": "350893043455785494",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x7356f09c294cb9c6428ac7327b24b0f29419c181",
+              "log_index": 223,
+              "shares_raw": "175446521727892747",
+              "to": "0x1a930f92c780ff359466472d667738bcf6b294ba"
+            },
+            {
+              "from": "0x7356f09c294cb9c6428ac7327b24b0f29419c181",
+              "log_index": 224,
+              "shares_raw": "175446521727892747",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "350893043455785494"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x082334eb1f2b00d107a0e94f3c41ff52d1a70c7f663b69df9197fcc777a3f860",
+          "post_total_assets_raw": "933846263936841844442",
+          "post_total_supply_raw": "932442691763018702460",
+          "pre_total_supply_raw": "932091798719562916966",
+          "pre_valuation_assets_raw": "932091798719562916966",
+          "price_per_share_block_raw": "1001505263740304869",
+          "share_decimals": 18,
+          "state_formula": "v2-0.3.1-pre-state"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.1",
+          "block_number": 12003641,
+          "chain_id": 1,
+          "gain_raw": "1754465217278927476",
+          "log_index": 226,
+          "loss_raw": "0",
+          "strategy_address": "0x1a930f92c780ff359466472d667738bcf6b294ba",
+          "tx_hash": "0xd90db06469daab3521f77bcef081b39ef96564aaebe308083e537d9e7c8c1f3b",
+          "vault_address": "0x7356f09c294cb9c6428ac7327b24b0f29419c181"
+        },
+        "report_log_index": 226,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": "transaction_local_state_unverified",
+        "state_scope": "end-of-block",
+        "state_suitability": "unverified",
+        "status": "conditional"
+      }
+    },
+    {
+      "source_reconstruction_id": 17608,
+      "selection": "0.4.2-ordinary",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x3d980e50508cfd41a13837a60149927a11c03731",
+        "strategy_address": "0xb9267f1427ddb937003b9ca0ca7716dda4026d19",
+        "tx_hash": "0xd9f6e8121715f84b76fc781dc4b58a6b36f64f56c954cac6ad3768073c284e58",
+        "log_index": 273,
+        "block_number": 12669863,
+        "block_timestamp": 1624173533,
+        "asset": "0xca3d75ac011bf5ad07a98d02f18225f9bd9a6bdf",
+        "asset_decimals": 18,
+        "gain_raw": "410689614451566541",
+        "loss_raw": "0",
+        "net_raw": "410689614451566541",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.4.2",
+      "candidate": {
+        "calculation_version": "v2-fee-calculation-1",
+        "interval": {
+          "lower_raw": "96063298099115853",
+          "upper_raw": "96063298099115853",
+          "width_raw": "0"
+        },
+        "method": "contract-state-singleton",
+        "precision": "singleton",
+        "total_fees_paid_raw": "96063298099115853"
+      },
+      "evidence": {
+        "block_hash": "0x0cbea9e5effbd7101d62b4c6168b0ac734915d0d003b3c3c41e9234c2a576af0",
+        "execution_verification": {
+          "reason": "no_later_vault_logs_detected",
+          "status": "not_selected"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 269,
+          "minted_shares_raw": "96063298099115853",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x3d980e50508cfd41a13837a60149927a11c03731",
+              "log_index": 270,
+              "shares_raw": "41068961445156654",
+              "to": "0xb9267f1427ddb937003b9ca0ca7716dda4026d19"
+            },
+            {
+              "from": "0x3d980e50508cfd41a13837a60149927a11c03731",
+              "log_index": 271,
+              "shares_raw": "54994336653959199",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "96063298099115853"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x0cbea9e5effbd7101d62b4c6168b0ac734915d0d003b3c3c41e9234c2a576af0",
+          "inversion_assets_raw": "471396175162594492584",
+          "locked_profit_raw": "314626316352450688",
+          "post_free_funds_raw": "471396175162594492584",
+          "post_total_assets_raw": "471710801478946943272",
+          "post_total_supply_raw": "471396175162594492584",
+          "price_per_share_block_raw": "1000000000000000000",
+          "share_decimals": 18,
+          "state_formula": "v2-locked-profit-post-state"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.4.2",
+          "block_number": 12669863,
+          "chain_id": 1,
+          "gain_raw": "410689614451566541",
+          "log_index": 273,
+          "loss_raw": "0",
+          "strategy_address": "0xb9267f1427ddb937003b9ca0ca7716dda4026d19",
+          "tx_hash": "0xd9f6e8121715f84b76fc781dc4b58a6b36f64f56c954cac6ad3768073c284e58",
+          "vault_address": "0x3d980e50508cfd41a13837a60149927a11c03731"
+        },
+        "report_log_index": 273,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": "transaction_local_state_unverified",
+        "state_scope": "end-of-block",
+        "state_suitability": "unverified",
+        "status": "conditional"
+      }
+    },
+    {
+      "source_reconstruction_id": 66809,
+      "selection": "0.3.0-ordinary",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x0e8a7717a4fd7694682e7005957dd5d7598bf14a",
+        "strategy_address": "0xa93cb639ae732559ab9315b3a1615e624c32cc59",
+        "tx_hash": "0xdeaf8ca221aa5557c00bde1792bd604c81e760e9bbfd9e537fd73501ac8aeaf3",
+        "log_index": 193,
+        "block_number": 11837678,
+        "block_timestamp": 1613078197,
+        "asset": "0x2260fac5e5542a773aa44fbcfedf7c193bc2c599",
+        "asset_decimals": 8,
+        "gain_raw": "925893",
+        "loss_raw": "0",
+        "net_raw": "925893",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.0",
+      "candidate": {
+        "baseline_candidate": {
+          "calculation_version": "v2-fee-calculation-1",
+          "interval": null,
+          "method": "share-mint-report-block-pps",
+          "precision": "pps-estimate",
+          "total_fees_paid_raw": "193161"
+        },
+        "calculation_version": "vyper-fee-mint-1",
+        "interval": null,
+        "method": "execution-fee-mint",
+        "precision": "singleton",
+        "total_fees_paid_raw": "185178"
+      },
+      "evidence": {
+        "block_hash": "0xe0ffd1c57066b558356fe848dc81b165a4abcd89ed12e6541c48c096f05888c4",
+        "execution_verification": {
+          "block_hash": "0xe0ffd1c57066b558356fe848dc81b165a4abcd89ed12e6541c48c096f05888c4",
+          "div_pc": 6313,
+          "fee_operand_raw": "185178",
+          "mint_log_index": 189,
+          "minted_shares_raw": "185178",
+          "mul_pc": 6219,
+          "status": "verified",
+          "supply_before_mint_raw": "16996021",
+          "trace_version": "vyper-fee-mint-1",
+          "trace_window_start": 0,
+          "trigger": "later_vault_logs",
+          "valuation_assets_at_mint_raw": "16996021"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 189,
+          "minted_shares_raw": "185178",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x0e8a7717a4fd7694682e7005957dd5d7598bf14a",
+              "log_index": 190,
+              "shares_raw": "92589",
+              "to": "0xa93cb639ae732559ab9315b3a1615e624c32cc59"
+            },
+            {
+              "from": "0x0e8a7717a4fd7694682e7005957dd5d7598bf14a",
+              "log_index": 191,
+              "shares_raw": "92589",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "185178"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0xe0ffd1c57066b558356fe848dc81b165a4abcd89ed12e6541c48c096f05888c4",
+          "post_total_assets_raw": "17921914",
+          "post_total_supply_raw": "17181199",
+          "price_per_share_block_raw": "104311195",
+          "share_decimals": 8,
+          "state_formula": null,
+          "state_unavailable_reason": "locked_profit_call_reverted"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.0",
+          "block_number": 11837678,
+          "chain_id": 1,
+          "gain_raw": "925893",
+          "log_index": 193,
+          "loss_raw": "0",
+          "strategy_address": "0xa93cb639ae732559ab9315b3a1615e624c32cc59",
+          "tx_hash": "0xdeaf8ca221aa5557c00bde1792bd604c81e760e9bbfd9e537fd73501ac8aeaf3",
+          "vault_address": "0x0e8a7717a4fd7694682e7005957dd5d7598bf14a"
+        },
+        "report_log_index": 193,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": null,
+        "state_scope": "fee-mint-execution",
+        "state_suitability": "verified",
+        "status": "accepted"
+      },
+      "mint_trace_window": [
+        {
+          "op": "MUL",
+          "pc": 6219,
+          "depth": 6,
+          "a": "2d35a",
+          "b": "10356b5"
+        },
+        {
+          "op": "DIV",
+          "pc": 6225,
+          "depth": 6,
+          "a": "2dcc90daaa2",
+          "b": "2d35a"
+        },
+        {
+          "op": "DIV",
+          "pc": 6313,
+          "depth": 6,
+          "a": "2dcc90daaa2",
+          "b": "10356b5"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6368,
+          "depth": 6,
+          "a": "5",
+          "b": "1062a0f"
+        },
+        {
+          "op": "SSTORE",
+          "pc": 6415,
+          "depth": 6,
+          "a": "6754404dc7114f91bff3ce89a09feea6c1f1c32185f10f963ef0c3e1c3d5a6a9",
+          "b": "2d35a"
+        },
+        {
+          "op": "LOG3",
+          "pc": 6469,
+          "depth": 6,
+          "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "data": "0x000000000000000000000000000000000000000000000000000000000002d35a"
+        }
+      ]
+    },
+    {
+      "source_reconstruction_id": 13968,
+      "selection": "0.3.2-additional",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0x1133b2e2f51beccf25b2f8d0ca48c1d93dd5ab12",
+        "strategy_address": "0xe04f0f09301f3ec882170a3e79746796740a1285",
+        "tx_hash": "0xfc7dece83d877297de151ed3d237f9b745e872c13722cafb2d7bf321ff306685",
+        "log_index": 121,
+        "block_number": 11994911,
+        "block_timestamp": 1615167454,
+        "asset": "0x967da4048cd07ab37855c090aaf366e4ce1b9f48",
+        "asset_decimals": 18,
+        "gain_raw": "3897654858302329",
+        "loss_raw": "0",
+        "net_raw": "3897654858302329",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.2",
+      "candidate": {
+        "calculation_version": "v2-fee-calculation-1",
+        "interval": {
+          "lower_raw": "779516971674373",
+          "upper_raw": "779516971674373",
+          "width_raw": "0"
+        },
+        "method": "contract-state-singleton",
+        "precision": "singleton",
+        "total_fees_paid_raw": "779516971674373"
+      },
+      "evidence": {
+        "block_hash": "0x40ffe4d1a51d63e2ea8d3691be53afec6764592635392dfff91f147d5ac4a449",
+        "execution_verification": {
+          "reason": "unsupported_trace_release",
+          "status": "not_selected"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 116,
+          "minted_shares_raw": "779530971660464",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0x1133b2e2f51beccf25b2f8d0ca48c1d93dd5ab12",
+              "log_index": 117,
+              "shares_raw": "389765485830232",
+              "to": "0xe04f0f09301f3ec882170a3e79746796740a1285"
+            },
+            {
+              "from": "0x1133b2e2f51beccf25b2f8d0ca48c1d93dd5ab12",
+              "log_index": 118,
+              "shares_raw": "389765485830232",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "779530971660464"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x40ffe4d1a51d63e2ea8d3691be53afec6764592635392dfff91f147d5ac4a449",
+          "inversion_assets_raw": "43404159002358314853",
+          "locked_profit_raw": "3897654858302329",
+          "post_free_funds_raw": "43404159002358314853",
+          "post_total_assets_raw": "43408056657216617182",
+          "post_total_supply_raw": "43404938533329975317",
+          "price_per_share_block_raw": "999982040500505216",
+          "share_decimals": 18,
+          "state_formula": "v2-locked-profit-post-state"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.2",
+          "block_number": 11994911,
+          "chain_id": 1,
+          "gain_raw": "3897654858302329",
+          "log_index": 121,
+          "loss_raw": "0",
+          "strategy_address": "0xe04f0f09301f3ec882170a3e79746796740a1285",
+          "tx_hash": "0xfc7dece83d877297de151ed3d237f9b745e872c13722cafb2d7bf321ff306685",
+          "vault_address": "0x1133b2e2f51beccf25b2f8d0ca48c1d93dd5ab12"
+        },
+        "report_log_index": 121,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": "transaction_local_state_unverified",
+        "state_scope": "end-of-block",
+        "state_suitability": "unverified",
+        "status": "conditional"
+      }
+    },
+    {
+      "source_reconstruction_id": 14860,
+      "selection": "locked-profit-loss-adjustment",
+      "report": {
+        "chain_id": 1,
+        "version": "v2",
+        "vault_address": "0xa9fe4601811213c340e850ea305481aff02f5b28",
+        "strategy_address": "0x946a03264bba08d1f90df1ce0bbd3394c3ab1cfa",
+        "tx_hash": "0x09d08d6a2caeb6f4f1c90ac68adea93f758dc57d173acfa6621d92f3dc3277d0",
+        "log_index": 335,
+        "block_number": 12468281,
+        "block_timestamp": 1621474180,
+        "asset": "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
+        "asset_decimals": 18,
+        "gain_raw": "2179655938885115226",
+        "loss_raw": "6554872534891088120883",
+        "net_raw": "-6552692878952203005657",
+        "current_debt_raw": null,
+        "protocol_fees_raw": null,
+        "total_fees_raw": null,
+        "total_refunds_raw": null,
+        "extra_json": "{}"
+      },
+      "api_version": "0.3.2",
+      "candidate": {
+        "calculation_version": "v2-fee-calculation-1",
+        "interval": {
+          "lower_raw": "1237448678487580616",
+          "upper_raw": "1237448678487580616",
+          "width_raw": "0"
+        },
+        "method": "contract-state-singleton",
+        "precision": "singleton",
+        "total_fees_paid_raw": "1237448678487580616"
+      },
+      "evidence": {
+        "block_hash": "0x580dc0dceb439d6b62e2df9be5dae845e75a3e3b4d9d631a237ff605e235dc37",
+        "execution_verification": {
+          "reason": "unsupported_trace_release",
+          "status": "not_selected"
+        },
+        "fee_data": null,
+        "fee_log_index": null,
+        "fee_shares": {
+          "candidate_mint_count": 1,
+          "mint_log_index": 331,
+          "minted_shares_raw": "1543423929389287017",
+          "previous_report_log_index": null,
+          "recipient_transfers": [
+            {
+              "from": "0xa9fe4601811213c340e850ea305481aff02f5b28",
+              "log_index": 332,
+              "shares_raw": "240497608279095832",
+              "to": "0x946a03264bba08d1f90df1ce0bbd3394c3ab1cfa"
+            },
+            {
+              "from": "0xa9fe4601811213c340e850ea305481aff02f5b28",
+              "log_index": 333,
+              "shares_raw": "1302926321110191185",
+              "to": "0x93a62da5a14c80f265dabc077fcee437b1a0efde"
+            }
+          ],
+          "status": "found",
+          "transferred_shares_raw": "1543423929389287017"
+        },
+        "fee_topic": null,
+        "historical_state": {
+          "block_hash": "0x580dc0dceb439d6b62e2df9be5dae845e75a3e3b4d9d631a237ff605e235dc37",
+          "inversion_assets_raw": "50275076098320748466776",
+          "locked_profit_raw": "2179655938885115226",
+          "post_free_funds_raw": "56829948633211836587659",
+          "post_total_assets_raw": "56832128289150721702885",
+          "post_total_supply_raw": "62706241358513364162957",
+          "price_per_share_block_raw": "906288551219252309",
+          "share_decimals": 18,
+          "state_formula": "v2-locked-profit-loss-adjusted-post-state"
+        },
+        "later_vault_report_in_receipt": false,
+        "nominal_fee_values": null,
+        "report_inputs": {
+          "api_version": "0.3.2",
+          "block_number": 12468281,
+          "chain_id": 1,
+          "gain_raw": "2179655938885115226",
+          "log_index": 335,
+          "loss_raw": "6554872534891088120883",
+          "strategy_address": "0x946a03264bba08d1f90df1ce0bbd3394c3ab1cfa",
+          "tx_hash": "0x09d08d6a2caeb6f4f1c90ac68adea93f758dc57d173acfa6621d92f3dc3277d0",
+          "vault_address": "0xa9fe4601811213c340e850ea305481aff02f5b28"
+        },
+        "report_log_index": 335,
+        "source": "transaction_receipt"
+      },
+      "decision": {
+        "policy_version": "fee-acceptance-2",
+        "reason": "transaction_local_state_unverified",
+        "state_scope": "end-of-block",
+        "state_suitability": "unverified",
+        "status": "conditional"
+      }
+    }
+  ],
+  "acquisition": "17-report run capped at 10 traces; one additional 0.3.2 loss-adjusted report used no traces."
+}

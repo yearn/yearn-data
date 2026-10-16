@@ -158,33 +158,50 @@ def _v2_amounts(report, decoded):
     return None, 'missing_fee_report' if emits_fees else 'unsupported_or_unverified_release'
 
 
-def _save(conn, report, amounts, reason, evidence, event_index=None):
+def _save(conn, report, amounts, reason, evidence, event_index=None, candidate=None, decision=None):
+    if decision is None:
+        from .fee_acceptance import POLICY_VERSION
+        decision = {'policy_version': POLICY_VERSION, 'status': 'accepted' if amounts else 'unavailable',
+                    'reason': reason, 'state_scope': 'event' if amounts else None,
+                    'state_suitability': 'not-required' if amounts else 'unverified'}
     conn.execute('''
         INSERT INTO canonical_fee_reports (
             chain_id,tx_hash,report_log_index,event_log_index,contract_family,
-            api_version,method_version,status,reason,accounting_json,evidence_json
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?)
+            api_version,method_version,status,reason,accounting_json,evidence_json,candidate_json,decision_json
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON CONFLICT(chain_id,tx_hash,report_log_index) DO UPDATE SET
             event_log_index=excluded.event_log_index,contract_family=excluded.contract_family,
             api_version=excluded.api_version,method_version=excluded.method_version,
             status=excluded.status,reason=excluded.reason,
-            accounting_json=excluded.accounting_json,evidence_json=excluded.evidence_json
+            accounting_json=excluded.accounting_json,evidence_json=excluded.evidence_json,
+            candidate_json=excluded.candidate_json,decision_json=excluded.decision_json
     ''', (report['chain_id'],report['tx_hash'],report['log_index'],event_index,
           'yearn-v3-allocator' if report['version']=='v3' else 'yearn-v2-vault',report['api_version'],
           METHOD_VERSION,'ok' if amounts is not None else 'unresolved',reason,
-          to_json(amounts) if amounts is not None else None,to_json(evidence)))
+          to_json(amounts) if amounts is not None else None,to_json(evidence),
+          to_json(candidate) if candidate else None,to_json(decision) if decision else None))
 
 
-def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, receipt_fetcher=None, version=None, report_keys=None) -> int:
+def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, receipt_fetcher=None,
+                         reconstruct_v2=False, state_reader=None, verify_selective=False, trace_limit=10,
+                         block_logs_fetcher=None, trace_fetcher=None, refresh_evidence=False, filtered_evidence_only=False, version=None, report_keys=None, verify_execution=False) -> int:
     """Project allocator fees locally; fetch each selected V2 receipt once per run.
 
     Scope is the stored report universe, including retired vaults. This does not
     certify historical completeness or expand Tokenized Strategy discovery.
     """
+    if verify_execution and (not verify_selective or not report_keys):
+        raise ValueError('explicit execution requires selective verification and report keys')
+    if verify_selective and not reconstruct_v2:
+        raise ValueError('selective verification requires V2 reconstruction')
+    if verify_selective and trace_limit <= 0:
+        raise ValueError('trace limit must be positive')
     if limit is not None and limit <= 0:
         raise ValueError('limit must be positive')
     if version not in (None, 'v2', 'v3'):
         raise ValueError('version must be v2 or v3')
+    if version == 'v3' and filtered_evidence_only:
+        raise ValueError('filtered evidence applies only to V2')
     params = []
     scope = ''
     if chains:
@@ -197,10 +214,21 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
     if report_keys is not None:
         if not report_keys:
             return 0
-        scope += ' AND (r.chain_id,r.tx_hash,r.log_index) IN (VALUES ' + ','.join('(?,?,?)' for _ in report_keys) + ')'
+        scope += ' AND (r.chain_id,r.tx_hash,r.log_index) IN (VALUES '+','.join('(?,?,?)' for _ in report_keys)+')'
         params.extend(value for key in report_keys for value in key)
+    if filtered_evidence_only:
+        if refresh_evidence:
+            raise ValueError('offline filtered projection cannot refresh evidence')
+        scope += """ AND EXISTS (SELECT 1 FROM fee_filtered_log_evidence e WHERE
+            e.chain_id=r.chain_id AND e.tx_hash=r.tx_hash AND e.report_log_index=r.log_index)"""
     retry = " OR f.status='unresolved'" if retry_unresolved else ''
-    query = f'''SELECT r.*,v.api_version FROM strategy_reports r
+    retry += " OR (r.version='v2' AND r.gain_raw='0' AND f.method_version<>?)"
+    params.insert(0, METHOD_VERSION)
+    if reconstruct_v2:
+        retry += " OR (f.method_version<>? AND json_extract(f.accounting_json,'$.amount_source')='derived-contract')"
+        # These placeholders precede the optional chain scope in the query.
+        params.insert(1, METHOD_VERSION)
+    query = f'''SELECT r.*,v.api_version,f.evidence_json AS previous_evidence FROM strategy_reports r
         LEFT JOIN vaults v ON v.chain_id=r.chain_id AND v.address=r.vault_address
         LEFT JOIN canonical_fee_reports f ON f.chain_id=r.chain_id AND f.tx_hash=r.tx_hash AND f.report_log_index=r.log_index
         WHERE r.version IN ('v2','v3') AND (f.chain_id IS NULL{retry}){scope}
@@ -213,36 +241,74 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
     for row in rows:
         groups[(row['chain_id'],row['tx_hash'])].append(row)
     clients = {}
+    def client_for(chain_id):
+        if chain_id not in clients:
+            chain = next(c.key for c in CHAINS.values() if c.chain_id == chain_id)
+            clients[chain_id] = web3_for(chain)
+        return clients[chain_id]
+    from .fee_trace import SelectiveFeeVerifier
+    verifier = SelectiveFeeVerifier(conn, trace_limit, client_for, block_logs_fetcher, trace_fetcher) if verify_selective else None
     for (chain_id,tx_hash), reports in groups.items():
         receipt, receipt_error = None, None
-        if any(r['version']=='v2' for r in reports):
+        from .fee_log_evidence import load as load_filtered
+        filtered = {}
+        for r in reports:
+            if r['version'] == 'v2' and not refresh_evidence:
+                try:
+                    value = load_filtered(conn, r)
+                    if value is not None:
+                        filtered[r['log_index']] = value
+                except (ValueError, KeyError, TypeError):
+                    filtered[r['log_index']] = None
+        if any(r['version']=='v2' and r['log_index'] not in filtered for r in reports):
             try:
-                if receipt_fetcher:
-                    receipt = receipt_fetcher(chain_id,tx_hash)
-                else:
-                    if chain_id not in clients:
-                        chain = next(c.key for c in CHAINS.values() if c.chain_id==chain_id)
-                        clients[chain_id] = web3_for(chain)
-                    receipt = _receipt_with_retry(clients[chain_id],tx_hash)
+                cached = None if refresh_evidence else conn.execute(
+                    'SELECT receipt_json,block_number,block_hash FROM fee_receipt_evidence WHERE chain_id=? AND tx_hash=?',
+                    (chain_id,tx_hash)).fetchone()
+                if cached and all(r['block_number']==cached['block_number'] for r in reports):
+                    try:
+                        receipt = json.loads(cached['receipt_json'])
+                        if (_hex(receipt['transactionHash'])!=tx_hash.lower() or _number(receipt['status'])!=1
+                                or not receipt.get('blockHash') or not isinstance(receipt.get('logs'),list)
+                                or _number(receipt['blockNumber'])!=cached['block_number']
+                                or _hex(receipt['blockHash'])!=cached['block_hash']):
+                            receipt = None
+                    except (ValueError,KeyError,TypeError):
+                        receipt = None
+                if receipt is None:
+                    receipt = receipt_fetcher(chain_id,tx_hash) if receipt_fetcher else _receipt_with_retry(client_for(chain_id),tx_hash)
                 if (_hex(receipt['transactionHash']) != tx_hash.lower()
                         or _number(receipt['status']) != 1 or not receipt.get('blockHash')):
                     raise ValueError('invalid receipt identity/status')
+                from web3 import Web3
+                if all(_number(receipt['blockNumber'])==r['block_number'] for r in reports):
+                    conn.execute('INSERT OR REPLACE INTO fee_receipt_evidence VALUES (?,?,?,?,?)',
+                        (chain_id,tx_hash,_number(receipt['blockNumber']),_hex(receipt['blockHash']),Web3.to_json(receipt)))
             except Exception:
                 receipt_error = 'receipt_unavailable_or_invalid'  # Never persist provider URLs/credentials.
         for report in reports:
             event_index, amounts, reason = None, None, None
+            candidate, decision = None, None
             evidence = {'report_log_index':report['log_index'], 'report_inputs':report_inputs(report)}
             try:
                 if report['version']=='v3':
                     amounts = normalize_allocator_fees(report)
                     event_index = report['log_index']
                     evidence.update(source='strategy_reports', allocator_inputs=allocator_inputs(report))
+                elif report['log_index'] in filtered:
+                    value = filtered[report['log_index']]
+                    if value is None:
+                        reason = 'invalid_filtered_log_evidence'
+                        evidence['source'] = 'filtered_v2_logs'
+                    else:
+                        amounts, event_index, evidence = value
                 elif receipt_error:
                     reason = receipt_error
                 else:
                     if _number(receipt['blockNumber']) != report['block_number']:
                         raise ValueError('receipt block differs from report')
-                    decoded = decode_v2_receipt(receipt,report['vault_address']).get(report['log_index'])
+                    receipt_reports = decode_v2_receipt(receipt,report['vault_address'])
+                    decoded = receipt_reports.get(report['log_index'])
                     amounts, reason = _v2_amounts(report,decoded)
                     fee = decoded['fee'] if decoded else None
                     event_index = fee['log_index'] if fee else report['log_index']
@@ -250,9 +316,90 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
                                     fee_log_index=fee['log_index'] if fee else None,
                                     nominal_fee_values=[str(v) for v in fee['values']] if fee else None,
                                     fee_data=fee['data'] if fee else None,fee_topic=FEE_TOPIC if fee else None)
+                    if amounts and amounts['amount_source']=='contract-zero-gain':
+                        from .fee_zero_rules import zero_gain_rule
+                        evidence['zero_gain_rule'] = zero_gain_rule(report['api_version'])
+                    if reconstruct_v2 and amounts is None and fee is None:
+                        from .fee_reconstruction import extract_fee_shares, reconstruct_candidate
+                        from .fee_state import SUPPORTED_RELEASES, NO_MINT_RELEASES, read_fee_state
+                        from .fee_trace import TRACE_RELEASES
+                        if report['api_version'] in NO_MINT_RELEASES or (verify_selective and report['api_version'] in TRACE_RELEASES):
+                            shares = extract_fee_shares(receipt['logs'], report['vault_address'], report['log_index'])
+                            evidence['fee_shares'] = shares
+                            if verifier and ((decoded['gain'] == 0 and shares['status'] == 'found') or
+                                             (verify_execution and shares['status'] in ('found', 'zero-share-mint'))):
+                                from .fee_acceptance import assess_candidate
+                                verification=verifier.verify(report,receipt,shares,explicit=verify_execution)
+                                if verify_execution:
+                                    evidence['execution_selection']='explicit_report_keys'
+                                evidence['fee_amount_basis']='assessed_asset_fee_operand'
+                                evidence['issued_fee_shares_raw']=shares['minted_shares_raw']
+                                evidence['execution_verification']=verification
+                                evidence['direct_execution_asset']={'asset':report['asset'],'asset_decimals':report['asset_decimals']}
+                                if verification['status']=='verified':
+                                    candidate={'total_fees_paid_raw':verification['fee_operand_raw'],
+                                        'method':'execution-fee-mint','precision':'singleton','interval':None,
+                                        'calculation_version':verification['trace_version']}
+                                    decision=assess_candidate(candidate,evidence)
+                                    amounts=_amounts(decoded['gain'],decoded['loss'],candidate['total_fees_paid_raw'])
+                                    amounts.update(amount_source='derived-contract',component_coverage='unavailable')
+                                    reason=None
+                                else:
+                                    reason=verification.get('reason','execution_verification_unavailable')
+                                _save(conn,report,amounts,reason,evidence,event_index,candidate,decision)
+                                continue
+                            if shares['status'] not in ('found', 'no-mint'):
+                                reason = 'unresolved_fee_share_evidence'
+                            else:
+                                state = {}
+                                later_report = any(index > report['log_index'] for index in receipt_reports)
+                                evidence['later_vault_report_in_receipt'] = later_report
+                                state_supported = report['api_version'] in SUPPORTED_RELEASES or (verify_selective and report['api_version'] in TRACE_RELEASES)
+                                if shares['status'] == 'found' and not state_supported:
+                                    reason, state = 'unsupported_historical_fee_state_release', None
+                                elif shares['status'] == 'found':
+                                    try:
+                                        prior = json.loads(report['previous_evidence']) if report['previous_evidence'] and not refresh_evidence else {}
+                                        if not prior and not refresh_evidence:
+                                            cached = conn.execute('''SELECT evidence_json FROM fee_state_evidence WHERE
+                                                chain_id=? AND tx_hash=? AND report_log_index=? AND block_hash=?''',
+                                                (chain_id,tx_hash,report['log_index'],evidence['block_hash'])).fetchone()
+                                            prior = json.loads(cached[0]) if cached else {}
+                                        cached_state = prior.get('historical_state')
+                                        reusable = (cached_state is not None and prior.get('report_inputs')==evidence['report_inputs']
+                                            and prior.get('block_hash')==evidence['block_hash'] and prior.get('fee_shares')==shares)
+                                        if reusable:
+                                            try:
+                                                reconstruct_candidate(shares,cached_state)
+                                            except (ValueError,KeyError,TypeError):
+                                                reusable=False
+                                        state = cached_state if reusable else (state_reader(report,receipt,shares) if state_reader
+                                            else read_fee_state(client_for(chain_id),report,receipt,shares))
+                                    except Exception:
+                                        reason = 'historical_fee_state_unavailable_or_invalid'
+                                        state = None
+                                if state is not None:
+                                    evidence['historical_state'] = state
+                                    from .fee_acceptance import assess_candidate, normalize_candidate
+                                    candidate = normalize_candidate(reconstruct_candidate(shares, state))
+                                    conn.execute('INSERT OR REPLACE INTO fee_state_evidence VALUES (?,?,?,?,?)',
+                                        (chain_id,tx_hash,report['log_index'],evidence['block_hash'],json.dumps(evidence)))
+                                    if verifier and shares['status'] == 'found':
+                                        verification = verifier.verify(report, receipt, shares)
+                                        evidence['execution_verification'] = verification
+                                        if verification['status'] == 'verified':
+                                            candidate = {'total_fees_paid_raw':verification['fee_operand_raw'],
+                                                'method':'execution-fee-mint','precision':'singleton',
+                                                'interval':None,'calculation_version':verification['trace_version'],
+                                                'baseline_candidate':candidate}
+                                    decision = assess_candidate(candidate, evidence)
+                                    reason = decision['reason']
+                                    if decision['status'] == 'accepted':
+                                        amounts = _amounts(decoded['gain'], decoded['loss'], candidate['total_fees_paid_raw'])
+                                        amounts.update(amount_source='derived-contract', component_coverage='unavailable')
             except (ValueError, KeyError, TypeError):
                 amounts, reason = None, 'invalid_report_or_fee_evidence'
-            _save(conn,report,amounts,reason,evidence,event_index)
+            _save(conn,report,amounts,reason,evidence,event_index,candidate,decision)
         conn.commit()
     return len(rows)
 
@@ -262,7 +409,7 @@ def run_canonical_fees(conn) -> int:
     run_id = create_analysis_run(conn,'canonical-fees',{'method_version':METHOD_VERSION,'valuation':'raw-assets-only'})
     coverage, by_asset = {}, {}
     rows = conn.execute('''SELECT r.*,f.contract_family,f.status,f.reason,f.event_log_index,
-        f.accounting_json,f.evidence_json,f.api_version,f.method_version FROM strategy_reports r LEFT JOIN canonical_fee_reports f
+        f.accounting_json,f.evidence_json,f.candidate_json,f.decision_json,f.api_version,f.method_version FROM strategy_reports r LEFT JOIN canonical_fee_reports f
         ON f.chain_id=r.chain_id AND f.tx_hash=r.tx_hash AND f.report_log_index=r.log_index
         WHERE r.version IN ('v2','v3') ORDER BY r.chain_id,r.block_number,r.log_index''')
     for r in rows:
@@ -285,16 +432,38 @@ def run_canonical_fees(conn) -> int:
             'contract_family':r['contract_family'],'api_version':r['api_version'],'method_version':r['method_version'],
             **{k:None for k in _amounts(0,0,0)}, **(amounts or {}),
             'evidence_json':r['evidence_json']}
+        evidence = json.loads(r['evidence_json']) if r['evidence_json'] else {}
+        reconstruction = json.loads(r['candidate_json']) if r['candidate_json'] else {}
+        decision = json.loads(r['decision_json']) if r['decision_json'] else {}
+        # Guard exports from legacy rows even if a caller has not rerun migration.
+        if amounts and amounts.get('amount_source') == 'derived-contract' and decision.get('status') != 'accepted':
+            raise ValueError('legacy derived fee requires init_db migration before export')
+        output.update(reconstruction_method=reconstruction.get('method'),
+                      candidate_fee_raw=reconstruction.get('total_fees_paid_raw'),
+                      calculation_precision=reconstruction.get('precision'),
+                      acceptance_status=decision.get('status', 'accepted' if amounts else 'unavailable'),
+                      state_scope=decision.get('state_scope'), state_suitability=decision.get('state_suitability'),
+                      decision_json=r['decision_json'], candidate_json=r['candidate_json'],
+                      fee_interval_json=to_json(reconstruction['interval']) if reconstruction.get('interval') else None)
+        for transfer in evidence.get('fee_shares', {}).get('recipient_transfers', []):
+            write_output(conn, run_id, 'canonical_fee_share_distributions', {
+                'chain_id': r['chain_id'], 'tx_hash': r['tx_hash'], 'report_log_index': r['log_index'],
+                'vault_address': r['vault_address'], 'fee_status': state, 'fee_reason': r['reason'],
+                'share_evidence_status': evidence['fee_shares']['status'],
+                'role': 'fee_share_evidence_not_additional_revenue', **transfer})
         nominal = output.pop('nominal_components')
         output['nominal_components_json'] = to_json(nominal) if nominal is not None else None
         write_output(conn,run_id,'canonical_fee_events',output)
         if r['asset']:
             asset_key = (r['chain_id'],r['asset'],r['asset_decimals'])
             bucket = by_asset.setdefault(asset_key,{'chain_id':r['chain_id'],'asset':r['asset'],
-                'asset_decimals':r['asset_decimals'],'known_fee_subtotal_raw':0,'known_reports':0,'unknown_reports':0})
+                'asset_decimals':r['asset_decimals'],'known_fee_subtotal_raw':0,'known_reports':0,'unknown_reports':0,'derived_reports':0,'lower_bound_reports':0,'pps_estimate_reports':0})
             if amounts:
                 bucket['known_fee_subtotal_raw'] += int(amounts['total_fees_paid_raw'])
                 bucket['known_reports'] += 1
+                bucket['derived_reports'] += amounts['amount_source'] == 'derived-contract'
+                bucket['lower_bound_reports'] += reconstruction.get('precision') == 'bounded-interval'
+                bucket['pps_estimate_reports'] += reconstruction.get('precision') == 'pps-estimate'
             else:
                 bucket['unknown_reports'] += 1
     for counts in coverage.values():

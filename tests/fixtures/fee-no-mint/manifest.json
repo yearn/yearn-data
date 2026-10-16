@@ -1,0 +1,13 @@
+{
+  "reference_revision": "f3bb4bade3ba62ae24bb1af28f37d628447997eb",
+  "capture_date": "2026-09-12",
+  "source": "independent RPC receipts",
+  "scope": "three supported no-mint cases and two zero-share mint counterexamples; additive fixture supplement",
+  "files": {
+    "91960.json": "144ff9a75361ad4f28c7ab6aafe4efa7b34c4e840924036be21b440fa9a29fea",
+    "87452.json": "401dc74245aa0d4c9bce9369683dcebd887c5265799331e719c6d65763010a71",
+    "88483.json": "9f1a1e7255695c68a5b9b0e2e26891174813a5825c502487814ab91802fe28ee",
+    "92520.json": "1635dbc98bda517cf192dcee5d8d6b4106ca193cc9a853ed4badf13add8bb47a",
+    "95226.json": "a0be1829387d3dbc6e83787e4a7c5ecbd1c5917bb08958fbd71d92fe95ecbce8"
+  }
+}

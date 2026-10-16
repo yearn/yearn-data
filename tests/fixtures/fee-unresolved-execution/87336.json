@@ -1,0 +1,580 @@
+{
+  "event": {
+    "amount_source": "derived-contract",
+    "api_version": "0.4.2",
+    "asset_address": "0x57ab1ec28d129707052df4df418d58a2d46d5f51",
+    "asset_decimals": 18,
+    "block_hash": "0xab6d19dc050298f15cb6c5a845d4d57b4447ebdc4a1340f23e84d4937530804d",
+    "block_number": 12768312,
+    "block_timestamp": 1625499188,
+    "chain_id": 1,
+    "component_coverage": "unavailable",
+    "contract_family": "yearn-v2-vault",
+    "event_name": "StrategyReported",
+    "event_signature": "0x67f96d2854a335a4cadb49f84fd3ca6f990744ddb3feceeb4b349d2d53d32ad3",
+    "finalized": 1,
+    "gross_gain_raw": "8355543654705642416683",
+    "id": 87336,
+    "ingested_at": "2026-07-31T15:46:43.106Z",
+    "log_index": 233,
+    "loss_raw": "0",
+    "management_fee_raw": null,
+    "manager_fee_raw": null,
+    "nominal_components_json": null,
+    "performance_fee_raw": null,
+    "protocol_fee_raw": null,
+    "report_kind": null,
+    "strategist_fee_raw": null,
+    "strategy_address": "0x8784889b0d48a223c3f48312651643edd8526bbd",
+    "total_fees_paid_raw": "1671108730941128483336",
+    "total_refunds_raw": null,
+    "transaction_hash": "0x6e631c8c7c19b80cccecee3ca47441dc76159a2e37bb3c8218800fdee227ffe8",
+    "transaction_index": 86,
+    "vault_address": "0x4962b6c40b5e9433e029c5c423f6b1ce7ff28b0f",
+    "vault_id": 801,
+    "yield_mechanism": null
+  },
+  "receipt": {
+    "type": 0,
+    "status": 1,
+    "cumulativeGasUsed": 9858185,
+    "logs": [
+      {
+        "address": "0x4962B6C40B5E9433E029c5c423F6b1ce7fF28b0f",
+        "topics": [
+          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "0x0000000000000000000000000000000000000000000000000000000000000000",
+          "0x0000000000000000000000004962b6c40b5e9433e029c5c423f6b1ce7ff28b0f"
+        ],
+        "data": "0x00000000000000000000000000000000000000000000005a974ad8e09fcaa208",
+        "blockHash": "0xab6d19dc050298f15cb6c5a845d4d57b4447ebdc4a1340f23e84d4937530804d",
+        "blockNumber": 12768312,
+        "blockTimestamp": "0x60e32634",
+        "transactionHash": "0x6e631c8c7c19b80cccecee3ca47441dc76159a2e37bb3c8218800fdee227ffe8",
+        "transactionIndex": 86,
+        "logIndex": 229,
+        "removed": false
+      },
+      {
+        "address": "0x4962B6C40B5E9433E029c5c423F6b1ce7fF28b0f",
+        "topics": [
+          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "0x0000000000000000000000004962b6c40b5e9433e029c5c423f6b1ce7ff28b0f",
+          "0x0000000000000000000000008784889b0d48a223c3f48312651643edd8526bbd"
+        ],
+        "data": "0x00000000000000000000000000000000000000000000002d4ba56c704fe55104",
+        "blockHash": "0xab6d19dc050298f15cb6c5a845d4d57b4447ebdc4a1340f23e84d4937530804d",
+        "blockNumber": 12768312,
+        "blockTimestamp": "0x60e32634",
+        "transactionHash": "0x6e631c8c7c19b80cccecee3ca47441dc76159a2e37bb3c8218800fdee227ffe8",
+        "transactionIndex": 86,
+        "logIndex": 230,
+        "removed": false
+      },
+      {
+        "address": "0x4962B6C40B5E9433E029c5c423F6b1ce7fF28b0f",
+        "topics": [
+          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "0x0000000000000000000000004962b6c40b5e9433e029c5c423f6b1ce7ff28b0f",
+          "0x00000000000000000000000093a62da5a14c80f265dabc077fcee437b1a0efde"
+        ],
+        "data": "0x00000000000000000000000000000000000000000000002d4ba56c704fe55104",
+        "blockHash": "0xab6d19dc050298f15cb6c5a845d4d57b4447ebdc4a1340f23e84d4937530804d",
+        "blockNumber": 12768312,
+        "blockTimestamp": "0x60e32634",
+        "transactionHash": "0x6e631c8c7c19b80cccecee3ca47441dc76159a2e37bb3c8218800fdee227ffe8",
+        "transactionIndex": 86,
+        "logIndex": 231,
+        "removed": false
+      },
+      {
+        "address": "0x57Ab1ec28D129707052df4dF418D58a2D46d5f51",
+        "topics": [
+          "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef",
+          "0x0000000000000000000000008784889b0d48a223c3f48312651643edd8526bbd",
+          "0x0000000000000000000000004962b6c40b5e9433e029c5c423f6b1ce7ff28b0f"
+        ],
+        "data": "0x0000000000000000000000000000000000000000000001c4f4763c631ef52a2b",
+        "blockHash": "0xab6d19dc050298f15cb6c5a845d4d57b4447ebdc4a1340f23e84d4937530804d",
+        "blockNumber": 12768312,
+        "blockTimestamp": "0x60e32634",
+        "transactionHash": "0x6e631c8c7c19b80cccecee3ca47441dc76159a2e37bb3c8218800fdee227ffe8",
+        "transactionIndex": 86,
+        "logIndex": 232,
+        "removed": false
+      },
+      {
+        "address": "0x4962B6C40B5E9433E029c5c423F6b1ce7fF28b0f",
+        "topics": [
+          "0x67f96d2854a335a4cadb49f84fd3ca6f990744ddb3feceeb4b349d2d53d32ad3",
+          "0x0000000000000000000000008784889b0d48a223c3f48312651643edd8526bbd"
+        ],
+        "data": "0x0000000000000000000000000000000000000000000001c4f4763c631ef52a2b000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001c4f4763c631ef52a2b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000177b531a5a513f0a3e50600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002710",
+        "blockHash": "0xab6d19dc050298f15cb6c5a845d4d57b4447ebdc4a1340f23e84d4937530804d",
+        "blockNumber": 12768312,
+        "blockTimestamp": "0x60e32634",
+        "transactionHash": "0x6e631c8c7c19b80cccecee3ca47441dc76159a2e37bb3c8218800fdee227ffe8",
+        "transactionIndex": 86,
+        "logIndex": 233,
+        "removed": false
+      },
+      {
+        "address": "0x8784889b0d48a223c3F48312651643Edd8526bbD",
+        "topics": [
+          "0x4c0f499ffe6befa0ca7c826b0916cf87bea98de658013e76938489368d60d509"
+        ],
+        "data": "0x0000000000000000000000000000000000000000000001c4f4763c631ef52a2b000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "blockHash": "0xab6d19dc050298f15cb6c5a845d4d57b4447ebdc4a1340f23e84d4937530804d",
+        "blockNumber": 12768312,
+        "blockTimestamp": "0x60e32634",
+        "transactionHash": "0x6e631c8c7c19b80cccecee3ca47441dc76159a2e37bb3c8218800fdee227ffe8",
+        "transactionIndex": 86,
+        "logIndex": 234,
+        "removed": false
+      },
+      {
+        "address": "0x16388463d60FFE0661Cf7F1f31a7D658aC790ff7",
+        "topics": [
+          "0x442e715f626346e8c54381002da614f62bee8d27386535b2521ec8540898556e"
+        ],
+        "data": "0x52afd976e7ab060f9deec11fe8087a05ebd2eb895191197335129df4718deecc0000000000000000000000000000000000000000000000000000000000000000",
+        "blockHash": "0xab6d19dc050298f15cb6c5a845d4d57b4447ebdc4a1340f23e84d4937530804d",
+        "blockNumber": 12768312,
+        "blockTimestamp": "0x60e32634",
+        "transactionHash": "0x6e631c8c7c19b80cccecee3ca47441dc76159a2e37bb3c8218800fdee227ffe8",
+        "transactionIndex": 86,
+        "logIndex": 235,
+        "removed": false
+      }
+    ],
+    "logsBloom": "0x00000000400000000000200000000000000000100000000000000000040000000000000000000000000000000000000004000000000000000000001100000000010000008000000000000008000040000000010080000040002001000000000000000000220000000000000000000800010000000000010000000810000000000000000000000000000000004000000000000000000000000000000000000000000000000000400000008000000184000000000000000000000000000000000000000002000000000000000000200000000000000000000000000000000020000000000000000008000002000000200000000000002000000000000000000000",
+    "transactionHash": "0x6e631c8c7c19b80cccecee3ca47441dc76159a2e37bb3c8218800fdee227ffe8",
+    "transactionIndex": 86,
+    "blockHash": "0xab6d19dc050298f15cb6c5a845d4d57b4447ebdc4a1340f23e84d4937530804d",
+    "blockNumber": 12768312,
+    "gasUsed": 512564,
+    "effectiveGasPrice": 13000000000,
+    "from": "0xB28Af40C766044915d6f45313d2A8d94481F646F",
+    "to": "0x16388463d60FFE0661Cf7F1f31a7D658aC790ff7",
+    "contractAddress": null
+  },
+  "trace": {
+    "ops": [
+      {
+        "a": "2710",
+        "b": "177b531a5a513f0a3e506",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 19220
+      },
+      {
+        "a": "395415e356805ae802223a60",
+        "b": "2710",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 19226
+      },
+      {
+        "a": "395415e356805ae802223a60",
+        "b": "2710",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 19250
+      },
+      {
+        "a": "0",
+        "b": "2a4",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 20552
+      },
+      {
+        "a": "0",
+        "b": "0",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 20558
+      },
+      {
+        "a": "0",
+        "b": "0",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 20582
+      },
+      {
+        "a": "0",
+        "b": "0",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 20588
+      },
+      {
+        "a": "0",
+        "b": "2710",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 20612
+      },
+      {
+        "a": "0",
+        "b": "1e18558",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 20624
+      },
+      {
+        "a": "1c4f4763c631ef52a2b",
+        "b": "3e8",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 20665
+      },
+      {
+        "a": "6e95aeddbe330edacb7f8",
+        "b": "1c4f4763c631ef52a2b",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 20671
+      },
+      {
+        "a": "6e95aeddbe330edacb7f8",
+        "b": "2710",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 20695
+      },
+      {
+        "a": "1c4f4763c631ef52a2b",
+        "b": "3e8",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 20713
+      },
+      {
+        "a": "6e95aeddbe330edacb7f8",
+        "b": "1c4f4763c631ef52a2b",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 20719
+      },
+      {
+        "a": "6e95aeddbe330edacb7f8",
+        "b": "2710",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 20743
+      },
+      {
+        "a": "2a4",
+        "b": "29d635a8e000",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 17308
+      },
+      {
+        "a": "6e79a5b1ef8000",
+        "b": "2a4",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 17314
+      },
+      {
+        "a": "6e79a5b1ef8000",
+        "b": "0",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 17377
+      },
+      {
+        "a": "0",
+        "b": "6e79a5b1ef8000",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 17383
+      },
+      {
+        "a": "0",
+        "b": "de0b6b3a7640000",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 17413
+      },
+      {
+        "a": "5a974ad8e09fcaa208",
+        "b": "177b531a5a513f0a3e506",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 17679
+      },
+      {
+        "a": "84f3bd2d2fa2353527795f9a36e8b8acc8f430",
+        "b": "5a974ad8e09fcaa208",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 17685
+      },
+      {
+        "a": "84f3bd2d2fa2353527795f9a36e8b8acc8f430",
+        "b": "177b531a5a513f0a3e506",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 17720
+      },
+      {
+        "a": "5",
+        "b": "1780fc8f07df4906e870e",
+        "depth": 7,
+        "op": "SSTORE",
+        "pc": 17791
+      },
+      {
+        "a": "ec881aaf682ed117241be094b599cfb8106fafe125a9d082cca78e6a7414360c",
+        "b": "5a974ad8e09fcaa208",
+        "depth": 7,
+        "op": "SSTORE",
+        "pc": 17838
+      },
+      {
+        "data": "0x00000000000000000000000000000000000000000000005a974ad8e09fcaa208",
+        "depth": 7,
+        "op": "LOG3",
+        "pc": 17892,
+        "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+      },
+      {
+        "a": "2d4ba56c704fe55104",
+        "b": "5a974ad8e09fcaa208",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 20983
+      },
+      {
+        "a": "10075d04efd5b84996548a3331d505971020",
+        "b": "2d4ba56c704fe55104",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 20989
+      },
+      {
+        "a": "10075d04efd5b84996548a3331d505971020",
+        "b": "5a974ad8e09fcaa208",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 21024
+      },
+      {
+        "a": "20",
+        "b": "0",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 16963
+      },
+      {
+        "a": "20",
+        "b": "1",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 16963
+      },
+      {
+        "a": "ec881aaf682ed117241be094b599cfb8106fafe125a9d082cca78e6a7414360c",
+        "b": "2d4ba56c704fe55104",
+        "depth": 7,
+        "op": "SSTORE",
+        "pc": 17065
+      },
+      {
+        "a": "b0a7539cb03195f2f205bff87f69d7c9f0dfb7a132fbd9fd33d98868e546ab1",
+        "b": "2d4ba56c704fe55104",
+        "depth": 7,
+        "op": "SSTORE",
+        "pc": 17113
+      },
+      {
+        "data": "0x00000000000000000000000000000000000000000000002d4ba56c704fe55104",
+        "depth": 7,
+        "op": "LOG3",
+        "pc": 17169,
+        "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+      },
+      {
+        "a": "20",
+        "b": "0",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 16963
+      },
+      {
+        "a": "20",
+        "b": "1",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 16963
+      },
+      {
+        "a": "ec881aaf682ed117241be094b599cfb8106fafe125a9d082cca78e6a7414360c",
+        "b": "0",
+        "depth": 7,
+        "op": "SSTORE",
+        "pc": 17065
+      },
+      {
+        "a": "e80b3cd0750d9c0eeb109bb5e42157d1a264d1a1139aa5cc8ce05063194d3a4b",
+        "b": "2d4ba56c704fe55104",
+        "depth": 7,
+        "op": "SSTORE",
+        "pc": 17113
+      },
+      {
+        "data": "0x00000000000000000000000000000000000000000000002d4ba56c704fe55104",
+        "depth": 7,
+        "op": "LOG3",
+        "pc": 17169,
+        "topic": "ddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+      },
+      {
+        "a": "27a718fcbf6d1e188c704325c180b2eecd93cfbe28bd724ed9f8cb5e35cae0ae",
+        "b": "1c4f4763c631ef52a2b",
+        "depth": 7,
+        "op": "SSTORE",
+        "pc": 13290
+      },
+      {
+        "a": "2710",
+        "b": "177b531a5a513f0a3e506",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 19479
+      },
+      {
+        "a": "395415e356805ae802223a60",
+        "b": "2710",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 19485
+      },
+      {
+        "a": "395415e356805ae802223a60",
+        "b": "2710",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 19509
+      },
+      {
+        "a": "2710",
+        "b": "177b531a5a513f0a3e506",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 19560
+      },
+      {
+        "a": "395415e356805ae802223a60",
+        "b": "2710",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 19566
+      },
+      {
+        "a": "395415e356805ae802223a60",
+        "b": "2710",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 19590
+      },
+      {
+        "a": "2710",
+        "b": "177b531a5a513f0a3e506",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 19220
+      },
+      {
+        "a": "395415e356805ae802223a60",
+        "b": "2710",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 19226
+      },
+      {
+        "a": "395415e356805ae802223a60",
+        "b": "2710",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 19250
+      },
+      {
+        "a": "1",
+        "b": "1",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 16819
+      },
+      {
+        "a": "2a4",
+        "b": "29d635a8e000",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 17308
+      },
+      {
+        "a": "6e79a5b1ef8000",
+        "b": "2a4",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 17314
+      },
+      {
+        "a": "6e79a5b1ef8000",
+        "b": "0",
+        "depth": 7,
+        "op": "MUL",
+        "pc": 17377
+      },
+      {
+        "a": "0",
+        "b": "6e79a5b1ef8000",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 17383
+      },
+      {
+        "a": "0",
+        "b": "de0b6b3a7640000",
+        "depth": 7,
+        "op": "DIV",
+        "pc": 17413
+      },
+      {
+        "a": "13",
+        "b": "16a5d2b63827f2a8823",
+        "depth": 7,
+        "op": "SSTORE",
+        "pc": 14107
+      },
+      {
+        "a": "27a718fcbf6d1e188c704325c180b2eecd93cfbe28bd724ed9f8cb5e35cae0ac",
+        "b": "60e32634",
+        "depth": 7,
+        "op": "SSTORE",
+        "pc": 14145
+      },
+      {
+        "a": "11",
+        "b": "60e32634",
+        "depth": 7,
+        "op": "SSTORE",
+        "pc": 14149
+      },
+      {
+        "data": "0x0000000000000000000000000000000000000000000001c4f4763c631ef52a2b000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001c4f4763c631ef52a2b00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000177b531a5a513f0a3e50600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002710",
+        "depth": 7,
+        "op": "LOG2",
+        "pc": 14334,
+        "topic": "67f96d2854a335a4cadb49f84fd3ca6f990744ddb3feceeb4b349d2d53d32ad3"
+      }
+    ],
+    "overflow": false
+  },
+  "expected_operand_raw": "1671108730941128483336"
+}

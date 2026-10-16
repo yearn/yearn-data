@@ -1,0 +1,19 @@
+{
+  "reference_revision": "f3bb4bade3ba62ae24bb1af28f37d628447997eb",
+  "source_db": "artifacts/reconciled-fee-samples/comparison.sqlite",
+  "trace_requests": 9,
+  "receipt_requests": 0,
+  "state_requests": 0,
+  "block_log_requests": 0,
+  "files": {
+    "129090.json": "c1557c643438f3774820b10e9724fa924fbfe95316a8f48f3f30ba3a3cb3756c",
+    "82109.json": "155afafa9b93e725c9c92297f82095311ba97407949e7729b54bb2c0125d64d3",
+    "82151.json": "f759d0bedf6f06b3bfde393d0a592f8467295732f76ef83aa22b1ad2e3f7e95f",
+    "84167.json": "3fd4fc34068b10e750557cfad2f7eb8a5641b491272db2e305d411089db8854f",
+    "86380.json": "cd846a501a182eee27166aecd119a1f1d28c1ba0ef7282b553f303d5621d72c5",
+    "87336.json": "73264e291f15b33084bdd98b7ba2ff780970f7d4188dc6d160afabfc0c27f18a",
+    "88561.json": "a3066e0d78026c95c87348741334cbc3fde8b8a5b16f78f8a6c4f000c77f235a",
+    "92520.json": "5c5f16fcd4f94174847bf78ae8f0a044936e85bc54eb29fcc12a3d2dead73c5f",
+    "95226.json": "e238a64e2a38a99e3f37657c70da5e67064fe483ccfa08a522979ca135dccc33"
+  }
+}

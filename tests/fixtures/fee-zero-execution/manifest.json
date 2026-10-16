@@ -1,0 +1,12 @@
+{
+  "reference_revision": "f3bb4bade3ba62ae24bb1af28f37d628447997eb",
+  "capture_date": "2026-09-12",
+  "source": "independent Ethereum receipt and compact execution RPC evidence",
+  "scope": "one zero-gain fee mint for each of four releases; additive supplement, original fixtures unchanged",
+  "files": {
+    "105890.json": "62de7026295b31d1cc29bafe1f95e5b9eb855d7d1bcc170d220c6ba971965fd3",
+    "105940.json": "814ee4d5b1403e8905e2022b2b8b0eef866cfd247b68bf4735c33f7c2adc77aa",
+    "51634.json": "f932f9c6dc294b280c6e529f2ddca58ee0f6b59573cd114245cdacabd6fc75f2",
+    "52005.json": "ccb30e7427d885fd826cb4935c4548f83cc0f37bad31b95a8c6ae477f6c9bfb8"
+  }
+}
