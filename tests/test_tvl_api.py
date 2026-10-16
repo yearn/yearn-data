@@ -78,6 +78,53 @@ def test_auto_refresh_and_pinned_publication(source):
     assert result['chart'][0]['Ethereum'] == 100
 
 
+def test_incomplete_ok_position_cannot_replace_complete_ownership(source):
+    from yearn_data.canonical_history import _stage_observations
+
+    conn,path,root = source
+    run(conn,1,DAY,[(PARENT,'100'),(CHILD,'100')],[(CHILD,'50')])
+    run(conn,2,DAY,[(PARENT,'100')],[(CHILD,'60')])
+    row = json.loads(conn.execute('SELECT data_json FROM tvl_positions WHERE run_id=2').fetchone()[0])
+    row.update(owned_usd=None, mapping_status='child_outside_selection')
+    conn.execute('UPDATE tvl_positions SET data_json=? WHERE run_id=2',(json.dumps(row),))
+    conn.commit()
+
+    dataset = TvlStore(path,root).get()
+    assert dataset.summary()['totalTvl'] == 150
+    assert dataset.frames((DAY,))[0][2][0]['source_run_id'] == 1
+    # Retention must keep the same complete evidence as the API selector.
+    import hashlib
+    conn.create_function('canonical_sha256', 1, lambda value: hashlib.sha256(value.encode()).hexdigest())
+    _stage_observations(conn, 'tvl_positions', dataset.run_ids)
+    assert conn.execute('SELECT run_id FROM canonical_keep_tvl_positions').fetchone()[0] == 1
+
+    # A complete later repair still supersedes the old amount.
+    run(conn,3,DAY,[],[(CHILD,'75')])
+    assert TvlStore(path,root).get().summary()['totalTvl'] == 125
+
+    # Observed zero debt is complete even without an owned-value read.
+    run(conn,4,DAY,[],[(CHILD,'0')])
+    row.update(debt_usd='0',debt_raw='0',owned_usd=None)
+    conn.execute('UPDATE tvl_positions SET data_json=? WHERE run_id=4',(json.dumps(row),))
+    run(conn,5,DAY,[],[(CHILD,None)],status='incomplete')
+    dataset = TvlStore(path,root).get()
+    assert dataset.summary()['totalTvl'] == 200
+    assert dataset.frames((DAY,))[0][2][0]['source_run_id'] == 4
+
+
+def test_complete_position_from_different_block_is_not_applied(source):
+    conn,path,root = source
+    run(conn,1,DAY,[(PARENT,'100'),(CHILD,'100')],[(CHILD,'50')])
+    run(conn,2,DAY,[(PARENT,'100')],[(CHILD,None)])
+    row = json.loads(conn.execute('SELECT data_json FROM tvl_snapshots WHERE run_id=2').fetchone()[0])
+    row['block_number'] += 1
+    conn.execute('UPDATE tvl_snapshots SET data_json=? WHERE run_id=2',(json.dumps(row),))
+    conn.commit()
+    dataset = TvlStore(path,root).get()
+    assert dataset.summary()['totalTvl'] == 200
+    assert dataset.frames((DAY,))[0][2][0]['reason'] == 'selected_block_mismatch'
+
+
 def test_failed_publication_retains_last_selection(source, monkeypatch):
     conn,path,root = source
     run(conn,1,DAY,[(PARENT,'100')])

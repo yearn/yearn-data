@@ -48,8 +48,15 @@ def observation_selection(table):
                 "CASE WHEN json_extract(data_json,'$.tvl_usd') IS NOT NULL THEN 2 "
                 "WHEN json_extract(data_json,'$.asset_units') IS NOT NULL THEN 1 ELSE 0 END")
     if table == 'tvl_positions':
+        # Legacy targeted collections marked an edge ok even when its child was
+        # not collected and ownership could not be valued. Prefer complete dated
+        # evidence; a verified zero debt needs no ownership valuation.
         return ('chain_id,parent,strategy,child,timestamp',
-                "CASE WHEN json_extract(data_json,'$.status')='ok' THEN 1 ELSE 0 END")
+                "CASE WHEN json_extract(data_json,'$.status')='ok' "
+                "AND json_extract(data_json,'$.debt_usd') IS NOT NULL "
+                "AND (json_extract(data_json,'$.owned_usd') IS NOT NULL "
+                "OR CAST(json_extract(data_json,'$.debt_usd') AS REAL)=0) THEN 2 "
+                "WHEN json_extract(data_json,'$.status')='ok' THEN 1 ELSE 0 END")
     raise ValueError('unsupported observation table')
 
 
@@ -116,7 +123,7 @@ def publish_tvl(database, publication, *, current_bridge_policy='none'):
     context = {'runs': runs, 'catalog': catalog, 'allocatorKeys': sorted(allocator_keys),
                'deductInternalCuration': True,
                'vaultPolicies': VAULT_POLICIES,
-               'currentBridgePolicy': current_bridge_policy, 'selectionPolicy': 'known-value-then-newest-finished-common-close-6', 'bridgeMigrations': BRIDGE_MIGRATIONS, 'priceRejections': PRICE_REJECTIONS,
+               'currentBridgePolicy': current_bridge_policy, 'selectionPolicy': 'known-value-then-newest-finished-common-close-7', 'bridgeMigrations': BRIDGE_MIGRATIONS, 'priceRejections': PRICE_REJECTIONS,
                'historicalBridgePolicy': 'dated-evidence-only', 'database': database_reference(database)}
     dataset_id = hashlib.sha256(encoded(context).encode()).hexdigest()
     root = Path(publication)

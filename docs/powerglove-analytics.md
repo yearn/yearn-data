@@ -58,7 +58,7 @@ analytics publication.
   external reference figures, not a second source of local Yearn accounting.
 - Membership: evaluate the local catalogue against the frozen finance adapter's
   Kong candidates, exclusions, positive on-chain assets, V1 rules and nested debt
-  deductions. Curation uses the last retained Yearn curation adapter configuration,
+  deductions. Curation uses the current Yearn entry in the upstream curator registry,
   its explicit ERC-4626 vaults and factory creation-owner evidence. The frozen
   source URLs/text/hashes and per-vault blocks/evidence are stored with the input.
   This is an adapter reconstruction, not a DefiLlama-supplied vault balance feed.

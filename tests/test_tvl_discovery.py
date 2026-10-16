@@ -437,7 +437,15 @@ def test_kong_refresh_paginates_selected_chain_and_preserves_morpho_family(db,mo
                        for n in (range(1000,1100) if variables['skip']==0 else [1100])]
         return response
     monkeypatch.setattr('yearn_data.tvl_sources.requests.post',request)
-    summary=refresh_kong_catalog(db,chain_ids=[8453],with_summary=True)
+    class TypedConnection:
+        def __getattr__(self,name):return getattr(db,name)
+        def __enter__(self):db.__enter__();return self
+        def __exit__(self,*args):return db.__exit__(*args)
+        def execute(self,sql,params=()):
+            if 'INSERT INTO tvl_vaults' in sql:
+                assert type(params[-2]) is int  # PostgreSQL active is BIGINT.
+            return db.execute(sql,params)
+    summary=refresh_kong_catalog(TypedConnection(),chain_ids=[8453],with_summary=True)
     assert summary['status']=='complete' and summary['discovered']==101
     assert [v['skip'] for v in calls]==[0,100]
     assert db.execute('SELECT COUNT(*) FROM tvl_vaults').fetchone()[0]==101
@@ -548,3 +556,16 @@ def test_hyperevm_factory_discovery_retains_unpriced_ousd_candidates(db,monkeypa
     assert result['status']=='complete'
     assert {tuple(r) for r in db.execute('SELECT chain_id,version,tvl_category FROM tvl_vaults')}=={
         (999,'morpho-v1','curation'),(999,'morpho-v2','curation')}
+
+
+def test_corrected_registry_target_does_not_reactivate_stored_candidate(monkeypatch):
+    from yearn_data import tvl_sources
+    monkeypatch.setattr(tvl_sources,'REGISTRY',{'targets':[{'chainId':1,'strategyAddress':'strategy','targetVaultAddress':'correct'}]})
+    class Connection:
+        def execute(self,query):
+            return [dict(chain_id=1,strategy='strategy',child='old',source='service-registry'),
+                    dict(chain_id=1,strategy='strategy',child='correct',source='service-registry'),
+                    dict(chain_id=1,strategy='other',child='retained',source='onchain')]
+    result=tvl_sources.defaultdict_targets(Connection())
+    assert result[(1,'strategy')]==[('correct','service-registry')]
+    assert result[(1,'other')]==[('retained','onchain')]

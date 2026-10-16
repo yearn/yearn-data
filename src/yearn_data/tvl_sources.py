@@ -154,7 +154,7 @@ def refresh_kong_catalog(conn, *, chain_ids=None, with_summary=False):
                             (key[0],'v3' if row['v3'] else 'v2',Web3.to_checksum_address(row['address']),
                              Web3.to_checksum_address(asset['address']) if asset.get('address') else None,
                              asset.get('symbol'),asset.get('decimals'),row.get('name'),row.get('apiVersion'),
-                             not (row.get('meta') or {}).get('isRetired',False),now))
+                             int(not (row.get('meta') or {}).get('isRetired',False)),now))
                         for strategy in row.get('strategies') or []:
                             put_strategy(conn,key[0],key[1],strategy,'kong')
                 seen.update(page_seen)
@@ -359,7 +359,13 @@ def candidate_edges(conn,vaults):
 
 def defaultdict_targets(conn):
     targets = {}
+    registered = {(e['chainId'],e['strategyAddress'].lower()):e['targetVaultAddress'].lower()
+                  for e in REGISTRY['targets']}
     for row in conn.execute('SELECT * FROM tvl_targets'):
+        # Retain stored evidence, but do not reactivate a corrected registry target.
+        expected = registered.get((row['chain_id'],row['strategy']))
+        if row['source']=='service-registry' and expected and row['child']!=expected:
+            continue
         targets.setdefault((row['chain_id'],row['strategy']),[]).append((row['child'],row['source']))
     return targets
 
@@ -418,7 +424,8 @@ def _position(edge,timestamp,reader,snapshots,readers=None):
                 else:
                     data.update(status='ok',mapping_status='no_known_child')
             elif child is None:
-                data.update(status='ok',mapping_status='child_outside_selection')
+                data.update(status='unavailable',mapping_status='child_outside_selection',
+                            reason='child_outside_selection')
             elif edge['method']=='cross-chain-shares':
                 remote = (readers or {}).get(child_chain)
                 remote_block = child.get('block_number')

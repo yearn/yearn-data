@@ -88,3 +88,26 @@ repairs or exclusions are made by this comparison workflow.
 
 The current private preview uses a separate read-only response server over the
 captured bundle. Production analytics and Neon selection have not been changed.
+
+## Refresh after the Finance and curation adapter updates
+
+The current collector reads the Yearn entry in `registries/curators.js` rather
+than the retired standalone curation adapter. Isolate that entry before parsing
+chain configuration: other curators use the same chain names.
+
+For a new close, capture all upstream files at one commit, then run:
+
+```bash
+PYTHONPATH=src python scripts/collect_finance_comparison.py ARTIFACT_DIRECTORY \
+  --timestamp UTC_CLOSE_TIMESTAMP
+```
+
+This saves current Kong candidates and dated Finance contributions, including
+registered route destination checks, ownership caps, converter decimals, wrapper
+exclusions, and the verified remote allocation. Missing reads remain unavailable.
+Factory discovery, curation adapter/share calls, bad-debt checks and price quotes
+must also be refreshed at the same close before running `review_tvl_comparison.py`.
+The reviewer accepts only reviewed source hashes, and the new Finance source
+requires its dated `finance-replay.json`; it cannot reuse the old recognition-only
+replay. Retained factory events can support discovery only with continuous scan
+coverage and exactly matching factory ABI and owner filters.

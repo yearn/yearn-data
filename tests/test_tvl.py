@@ -252,6 +252,9 @@ def test_known_child_outside_sample_stays_a_known_relationship(db,monkeypatch):
     position=json.loads(db.execute('SELECT data_json FROM tvl_positions WHERE run_id=?',(run,)).fetchone()[0])
     assert position['method']=='direct-strategy'
     assert position['mapping_status']=='child_outside_selection'
+    assert position['status']=='unavailable'
+    assert position['reason']=='child_outside_selection'
+    assert db.execute('SELECT status FROM tvl_runs WHERE id=?',(run,)).fetchone()[0]=='incomplete'
     assert Decimal(position['debt_usd'])==60
 
 
