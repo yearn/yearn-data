@@ -15,7 +15,7 @@ from .config import CHAINS
 from .indexing import _receipt_with_retry
 from .storage import to_json
 
-METHOD_VERSION = 'canonical-fees-6'
+METHOD_VERSION = 'canonical-fees-7'
 FEE_TOPIC = '0x' + keccak(text='FeeReport(uint256,uint256,uint256,uint256)').hex()
 REPORT_TOPICS = {
     '0x' + keccak(text='StrategyReported(address,' + ','.join(['uint256'] * n) + ')').hex(): n
@@ -51,21 +51,34 @@ def _amounts(gain, loss, total) -> dict[str, Any]:
     }
 
 
-def normalize_allocator_fees(report) -> dict[str, Any]:
+def normalize_allocator_fees(report, locker_split=None) -> dict[str, Any]:
     gain, loss = unsigned(report['gain_raw']), unsigned(report['loss_raw'])
     total = unsigned(report['total_fees_raw'])
     protocol = unsigned(report['protocol_fees_raw'])
     refunds = unsigned(report['total_refunds_raw'])
     if protocol > total:
         raise ValueError('protocol fees exceed total fees')
+    from .yvusd_fees import applies
+    if applies(dict(report)) and locker_split is None:
+        raise ValueError('yvUSD requires verified locker distribution evidence')
     self_report = report['strategy_address'].lower() == report['vault_address'].lower()
-    return {
+    result = {
         **_amounts(gain, loss, total), 'protocol_fee_raw': str(protocol),
         'manager_fee_raw': str(total - protocol), 'total_refunds_raw': str(refunds),
         'report_kind': 'self-report' if self_report else 'external-strategy',
         'yield_mechanism': ('direct-asset-distribution' if gain else 'self-report-loss' if loss else 'strategy-pnl')
         if self_report else 'strategy-pnl',
     }
+
+    if locker_split is not None:
+        management, performance, bonus = map(unsigned, locker_split)
+        if not applies(dict(report)) or protocol or management + performance + bonus != total:
+            raise ValueError('unreconciled locker distribution')
+        result.update(reported_total_fees_raw=str(total), locker_bonus_raw=str(bonus),
+                      total_fees_paid_raw=str(management + performance),
+                      manager_fee_raw=str(management + performance),
+                      management_fee_raw=str(management), performance_fee_raw=str(performance))
+    return result
 
 
 def normalize_v2_fees(gain, loss, management, performance, strategist) -> dict[str, Any]:
@@ -221,6 +234,7 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
             raise ValueError('offline filtered projection cannot refresh evidence')
         scope += """ AND EXISTS (SELECT 1 FROM fee_filtered_log_evidence e WHERE
             e.chain_id=r.chain_id AND e.tx_hash=r.tx_hash AND e.report_log_index=r.log_index)"""
+    from .yvusd_fees import VAULT, applies as is_yvusd
     retry = " OR f.status='unresolved'" if retry_unresolved else ''
     retry += " OR (r.version='v2' AND r.gain_raw='0' AND f.method_version<>?)"
     params.insert(0, METHOD_VERSION)
@@ -228,6 +242,7 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
         retry += " OR (f.method_version<>? AND json_extract(f.accounting_json,'$.amount_source')='derived-contract')"
         # These placeholders precede the optional chain scope in the query.
         params.insert(1, METHOD_VERSION)
+    retry += f" OR (r.chain_id=1 AND lower(r.vault_address)='{VAULT}' AND f.method_version<>'{METHOD_VERSION}')"
     query = f'''SELECT r.*,v.api_version,f.evidence_json AS previous_evidence FROM strategy_reports r
         LEFT JOIN vaults v ON v.chain_id=r.chain_id AND v.address=r.vault_address
         LEFT JOIN canonical_fee_reports f ON f.chain_id=r.chain_id AND f.tx_hash=r.tx_hash AND f.report_log_index=r.log_index
@@ -260,7 +275,7 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
                         filtered[r['log_index']] = value
                 except (ValueError, KeyError, TypeError):
                     filtered[r['log_index']] = None
-        if any(r['version']=='v2' and r['log_index'] not in filtered for r in reports):
+        if any((r['version']=='v2' and r['log_index'] not in filtered) or is_yvusd(dict(r)) for r in reports):
             try:
                 cached = None if refresh_evidence else conn.execute(
                     'SELECT receipt_json,block_number,block_hash FROM fee_receipt_evidence WHERE chain_id=? AND tx_hash=?',
@@ -292,7 +307,27 @@ def index_canonical_fees(conn, chains=None, limit=None, retry_unresolved=False, 
             evidence = {'report_log_index':report['log_index'], 'report_inputs':report_inputs(report)}
             try:
                 if report['version']=='v3':
-                    amounts = normalize_allocator_fees(report)
+                    if is_yvusd(dict(report)):
+                        from .yvusd_fees import accounting
+                        if receipt_error:
+                            raise ValueError(receipt_error)
+                        previous = json.loads(report['previous_evidence'] or '{}').get('yvusd')
+                        if previous and previous.get('receipt', {}).get('blockHash') == _hex(receipt['blockHash']):
+                            accountant = previous['accountant']
+                        else:
+                            from eth_utils import keccak
+                            try:
+                                raw = client_for(chain_id).eth.call(
+                                    {'to': report['vault_address'], 'data': keccak(text='accountant()')[:4]},
+                                    block_identifier=receipt['blockHash'])
+                            except Exception:
+                                raise ValueError('historical yvUSD accountant unavailable') from None
+                            accountant = '0x' + bytes(raw).hex()[-40:]
+                        from web3 import Web3
+                        evidence['yvusd'] = {'accountant': accountant, 'receipt': json.loads(Web3.to_json(receipt))}
+                        amounts = accounting(report, evidence['yvusd'])
+                    else:
+                        amounts = normalize_allocator_fees(report)
                     event_index = report['log_index']
                     evidence.update(source='strategy_reports', allocator_inputs=allocator_inputs(report))
                 elif report['log_index'] in filtered:

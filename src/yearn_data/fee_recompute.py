@@ -39,7 +39,9 @@ def recompute_canonical_fees(conn, mode, chains=None, limit=None, version=None, 
             try:
                 if evidence.get('allocator_inputs') != allocator_inputs(r):
                     raise ValueError('allocator inputs missing or changed')
-                amounts, reason = normalize_allocator_fees(r), None
+                from .yvusd_fees import applies, accounting
+                amounts = accounting(r, evidence['yvusd']) if applies(dict(r)) else normalize_allocator_fees(r)
+                reason = None
             except (ValueError, KeyError, TypeError):
                 amounts, reason = None, 'cached_allocator_inputs_missing_or_changed'
             _save(conn, r, amounts, reason, evidence, r['log_index'])
