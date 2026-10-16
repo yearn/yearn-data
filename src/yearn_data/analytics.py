@@ -16,7 +16,7 @@ from .tvl_api import CHAINS, encoded, key, money
 
 DAY = 86400
 YEAR = 365 * DAY
-VERSION = 'powerglove-analytics-3'
+VERSION = 'powerglove-analytics-5'
 SCHEMA = '''
 CREATE TABLE IF NOT EXISTS analytics_inputs (
  id TEXT PRIMARY KEY, kind TEXT NOT NULL, observed_at INTEGER NOT NULL,
@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS analytics_selection (
 def put_input(conn, kind, body, status='available', observed_at=None):
     observed_at = int(time.time()) if observed_at is None else observed_at
     previous = selected_input(conn,kind)
-    if previous['id']:
+    if previous['id'] and kind != 'comparison-evidence':
         body = dict(body)
         field = 'snapshots' if kind=='defillama' else 'vaults'
         def identity(row):
@@ -119,8 +119,11 @@ def fee_stack(rows, positions, configurations):
                 node['viaStrategy']=strategy
                 children.append(node)
                 complete=complete and node['availability']['state']=='available'
-        if perf is None or mgmt is None or not cfg.get('fixedRateSupported',True):complete=False
-        return {'vault':{'address':identity[1],'chainId':identity[0],'name':row.get('name')},
+        fee_known = perf is not None and mgmt is not None and cfg.get('fixedRateSupported',True)
+        if not fee_known:complete=False
+        from .fee_views import fee_display_name
+        return {'vault':{'address':identity[1],'chainId':identity[0],'name':fee_display_name(identity[0], identity[1], row.get('name'))},
+                'feeAvailability':{'state':'available' if fee_known else 'unavailable'},
                 'capitalUsd':capital,'perfFee':perf,'mgmtFee':mgmt,'children':children,
                 'availability':{'state':'available' if complete else 'partial'}}
     def effective(root):
@@ -137,17 +140,25 @@ def fee_stack(rows, positions, configurations):
             return sum(r[0]*r[index] for r in leaves)/sum(r[0] for r in leaves)
         return weighted(1),weighted(2)
     def depth(node):return 1+max((depth(c) for c in node['children']),default=0)
-    chains=[]
+    # Direct-deposit entries also cover vaults without a nested vault allocation.
+    chains=[]; standalone=[]
     for identity in sorted(by_key):
         row=by_key[identity]
-        if row.get('tvl_usd') is None or float(row['tvl_usd'])<=0 or not by_parent[identity]:continue
-        root=build(identity,float(row['tvl_usd']),set());perf,mgmt=effective(root)
-        chains.append({'root':root,'maxDepth':depth(root),'effectivePerfFee':perf,'effectiveMgmtFee':mgmt})
+        if row.get('tvl_usd') is None or float(row['tvl_usd'])<=0:continue
+        root=build(identity,float(row['tvl_usd']),set())
+        if by_parent[identity]:
+            perf,mgmt=effective(root)
+        else:
+            available = root['availability']['state']=='available'
+            perf,mgmt = (root['perfFee'],root['mgmtFee']) if available else (None,None)
+        target = chains if by_parent[identity] else standalone
+        target.append({'root':root,'maxDepth':depth(root),'effectivePerfFee':perf,'effectiveMgmtFee':mgmt})
     rates=[c['effectivePerfFee'] for c in chains if c['effectivePerfFee'] is not None]
     # External fractions attribute the same capital only once even with nested roots.
     identities={(c['root']['vault']['chainId'],c['root']['vault']['address']) for c in chains}
     capital=money([by_key[i] for i in identities],'external_tvl_usd')
-    return {'chains':chains,'maxDepth':max((c['maxDepth'] for c in chains),default=0),
+    from .fee_views import fee_view_entries
+    return {'chains':chains,'entries':fee_view_entries(chains + standalone, rows),'maxDepth':max((c['maxDepth'] for c in chains),default=0),
             'maxEffectivePerfFee':max(rates) if rates else None,'avgEffectivePerfFee':sum(rates)/len(rates) if rates else None,
             'totalStackedCapital':capital,'availability':{'state':'available' if len(rates)==len(chains) and not issues else 'partial',
              'knownStacks':len(rates),'expectedStacks':len(chains),'unresolvedAllocations':issues}}
@@ -267,10 +278,10 @@ def dated_rows(tvl,dates):
             yield from tvl.history_rows(dates[offset:offset+31],None)
 
 
-def prepare(database, financial, tvl):
+def prepare(database, financial, tvl, *, select=True):
     with closing(connect(database)) as conn:
         conn.executescript(SCHEMA)
-        inputs={kind:selected_input(conn,kind) for kind in ('defillama','membership','fee-config')}
+        inputs={kind:selected_input(conn,kind) for kind in ('defillama','membership','fee-config','comparison-evidence')}
     cutoff=min(financial.cutoff,(tvl.as_of()//DAY+1)*DAY)
     context={'methodologyVersion':VERSION,'tvlDatasetId':tvl.id,'feesDatasetId':financial.id,
              'inputIds':{k:v['id'] for k,v in inputs.items()},'cutoffTimestamp':cutoff,'tvlAsOfTimestamp':tvl.as_of()}
@@ -287,15 +298,18 @@ def prepare(database, financial, tvl):
             for row in points:history[key(row)].append((timestamp,row['tvl_usd']))
         configs=inputs['fee-config']['body']
         profits={str(c):profitability(financial,rows,history,configs,cutoff,c) for c in [None,*sorted({r['chain_id'] for r in rows})]}
+        from .tvl_comparison import discrepancy_details
+        details = discrepancy_details(rows, inputs['comparison-evidence']['body'], tvl.id)
         references=inputs['defillama']['body'].get('snapshots',[])
         publication={'meta':context|{'publicationId':identity,'publishedAt':int(time.time()),
                         'inputs':{k:{'id':v['id'],'observedAt':v['observed_at'],'availability':v['status']} for k,v in inputs.items()}},
-            'stack':fee_stack(rows,positions,configs),'comparable':comparable(rows,inputs['membership']['body']),
+            'stack':fee_stack(rows,positions,configs),'comparable':comparable(rows,inputs['membership']['body']) | {'reconciliation': details},
             'profitability':profits,'comparison':owned_comparison(tvl,rows,references)}
         with closing(connect(database)) as conn,conn:
             conn.execute('INSERT INTO analytics_publications VALUES (?,?,?) ON CONFLICT DO NOTHING',(identity,int(time.time()),encoded(publication)))
-    with closing(connect(database)) as conn,conn:
-        conn.execute("INSERT INTO analytics_selection VALUES ('powerglove',?) ON CONFLICT(name) DO UPDATE SET publication_id=excluded.publication_id",(identity,))
+    if select:
+        with closing(connect(database)) as conn,conn:
+            conn.execute("INSERT INTO analytics_selection VALUES ('powerglove',?) ON CONFLICT(name) DO UPDATE SET publication_id=excluded.publication_id",(identity,))
     return identity
 
 

@@ -1,0 +1,38 @@
+[
+  {
+    "chainId": 1,
+    "address": "0xF470EB50B4a60c9b069F7Fd6032532B8F5cC014d",
+    "version": "v3",
+    "category": "v3",
+    "excludeFromTvl": true,
+    "scope": "all-history",
+    "reason": "Turtle Club Katana predeposit excluded by reporting policy; not a separate curation product"
+  },
+  {
+    "chainId": 1,
+    "address": "0xA5DaB32DbE68E6fa784e1e50e4f620a0477D3896",
+    "version": "v3",
+    "category": "v3",
+    "excludeFromTvl": true,
+    "scope": "all-history",
+    "reason": "Turtle Club Katana predeposit excluded by reporting policy; not a separate curation product"
+  },
+  {
+    "chainId": 1,
+    "address": "0xe1Ac97e2616Ad80f69f705ff007A4bbb3655544a",
+    "version": "v3",
+    "category": "v3",
+    "excludeFromTvl": true,
+    "scope": "all-history",
+    "reason": "Turtle Club Katana predeposit excluded by reporting policy; not a separate curation product"
+  },
+  {
+    "chainId": 1,
+    "address": "0x77570CfEcf83bc6bB08E2cD9e8537aeA9F97eA2F",
+    "version": "v3",
+    "category": "v3",
+    "excludeFromTvl": true,
+    "scope": "all-history",
+    "reason": "Turtle Club Katana predeposit excluded by reporting policy; not a separate curation product"
+  }
+]

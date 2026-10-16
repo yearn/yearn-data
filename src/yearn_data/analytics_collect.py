@@ -185,6 +185,39 @@ def default_debts(reader,active):
 
 
 
+
+def custom_accountant_config(reader, config):
+    """Recognize product accountants by pinned code and recipient/asset evidence."""
+    from eth_utils import keccak
+    from .ybold_fees import VAULT as YBOLD, ACCOUNTANT, STAKER, CODE_HASH
+    from .yvusd_fees import VAULT as YVUSD
+    locked = '0xaaafea48472f77563961cdb53291dedfb46f9040'
+    locked_hash = '0x237ca0cef5a652adde023f9a80e5dbd8535e4a36cfd216bd42bfa7af31e8ebf1'
+    address, accountant = config['address'].lower(), config.get('accountant', '').lower()
+    if config['chainId'] != 1 or address not in (YBOLD, YVUSD):
+        return None
+    expected = ACCOUNTANT if address == YBOLD else locked
+    if accountant != expected:
+        raise ValueError('unknown product accountant')
+    block = reader.block['hash']
+    code_hash = '0x' + keccak(reader.w3.eth.get_code(Web3.to_checksum_address(accountant), block_identifier=block)).hex()
+    if code_hash != (CODE_HASH if address == YBOLD else locked_hash):
+        raise ValueError('unknown product accountant implementation')
+    if address == YBOLD:
+        recipient = reader.call([(accountant, 'feeRecipient()', [], [], ['address'])])[0]
+        if not recipient or recipient[0].lower() != STAKER:
+            raise ValueError('unknown yBOLD distribution recipient')
+        amounts = {'managementFee': 0, 'performanceFee': 0, 'stakerRecipient': STAKER}
+    else:
+        asset, rates = reader.call([(accountant, 'asset()', [], [], ['address']),
+                                   (accountant, 'feeConfig()', [], [], ['uint16'] * 3)])
+        if not asset or asset[0].lower() != YVUSD or rates is None:
+            raise ValueError('unavailable yvUSD accountant configuration')
+        amounts = {'managementFee': rates[0], 'performanceFee': rates[1], 'lockerBonus': rates[2]}
+    return amounts | {'fixedRateSupported': True, 'availability': 'available',
+                      'source': 'verified-product-accountant-config', 'accountantCodeHash': code_hash,
+                      'blockHash': '0x' + bytes(block).hex()}
+
 def observed_configs(chain, local, declared):
     reader=Reader(chain)
     calls=[]
@@ -213,8 +246,15 @@ def observed_configs(chain, local, declared):
             if int(accountant[0],16)==0:
                 config.update(performanceFee=0,managementFee=0,fixedRateSupported=True)
             else:
-                accountants.append((accountant[0],'getVaultConfig(address)',['address'],[address],['uint16']*6+['bool']))
-                slots.append(config)
+                try:
+                    custom = custom_accountant_config(reader, config)
+                except Exception:
+                    custom = {'fixedRateSupported': False, 'availability': 'unavailable'}
+                if custom is not None:
+                    config.update(custom)
+                else:
+                    accountants.append((accountant[0],'getVaultConfig(address)',['address'],[address],['uint16']*6+['bool']))
+                    slots.append(config)
         elif perf and api.startswith('3.'):
             config.update(performanceFee=perf[0],managementFee=0,fixedRateSupported=True)
         config['availability']='available' if config['fixedRateSupported'] else 'unavailable'

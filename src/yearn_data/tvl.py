@@ -8,6 +8,7 @@ from decimal import Decimal, localcontext
 from pathlib import Path
 
 from .storage import to_json
+from .tvl_policy import VAULT_POLICIES, classify_vault
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS tvl_vaults (
@@ -156,19 +157,27 @@ def asset_units(raw, decimals):
         return Decimal(int(raw)) / Decimal(10) ** int(decimals)
 
 
-def account(snapshots, positions, *, include_curation=False):
+def account(snapshots, positions, *, include_curation=False, deduct_internal_curation=True,
+            vault_policies=VAULT_POLICIES):
     """Deduct each actual holding once, capped by parent debt and child TVL.
 
     A shared holder's balance is split among its parents by recorded debt. Several
     child positions share that same debt budget. This prevents duplicate deductions.
-    Curation remains a separate product category unless explicitly combined.
+    Curation remains a separate product layer unless explicitly combined, but
+    holdings within curation are always netted in new publications.
     """
+    excluded = {(p['chainId'],p['address'].lower()) for p in vault_policies if p.get('excludeFromTvl')}
+    snapshots = [classify_vault(s,vault_policies) for s in snapshots
+                 if (s['chain_id'],s['vault'].lower()) not in excluded]
+    positions = [p for p in positions if (p['chain_id'],p['parent'].lower()) not in excluded
+                 and (p.get('child_chain_id',p['chain_id']),p['child'].lower()) not in excluded]
     with localcontext() as ctx:
         ctx.prec = 78
-        return _account(snapshots, positions, include_curation=include_curation)
+        return _account(snapshots, positions, include_curation=include_curation,
+                        deduct_internal_curation=deduct_internal_curation)
 
 
-def _account(snapshots, positions, *, include_curation):
+def _account(snapshots, positions, *, include_curation, deduct_internal_curation):
     by_key = {(s['chain_id'], s['vault'].lower()): s for s in snapshots}
     adjustments = defaultdict(lambda: Decimal(0))
     edges = [dict(p, overlap_usd=None) for p in positions]
@@ -187,14 +196,17 @@ def _account(snapshots, positions, *, include_curation):
                 edge['overlap_usd'] = '0'
             continue
         parent = by_key.get((edge['chain_id'], edge['parent'].lower()))
-        child = by_key.get((edge['chain_id'], edge['child'].lower()))
+        child_chain = edge.get('child_chain_id',edge['chain_id'])
+        child = by_key.get((child_chain, edge['child'].lower()))
         if parent is None or child is None:
             edge['reason'] = 'endpoint_outside_selection'
             continue
-        if edge['parent'].lower() == edge['child'].lower():
+        if edge['chain_id'] == child_chain and edge['parent'].lower() == edge['child'].lower():
             edge['reason'] = 'self_edge'
             continue
-        if not include_curation and child.get('category',child['version']) == 'curation':
+        if (not include_curation and child.get('category',child['version']) == 'curation'
+                and not (deduct_internal_curation
+                         and parent.get('category',parent['version']) == 'curation')):
             edge['reason'] = 'curation_separate_product'
             continue
         # A known zero needs no child valuation. Missing prices must not mask it.
@@ -217,24 +229,24 @@ def _account(snapshots, positions, *, include_curation):
         owned = {}
         for e in group:
             debts[e['parent'].lower()] = decimal(e['debt_usd'])
-            owned[e['child'].lower()] = decimal(e['owned_usd'])
+            owned[(e.get('child_chain_id',e['chain_id']),e['child'].lower())] = decimal(e['owned_usd'])
         total_debt = sum(debts.values(), Decimal(0))
         total_owned = sum(owned.values(), Decimal(0))
         budget = min(total_debt, total_owned)
         for e in group:
             value = (budget * debts[e['parent'].lower()] / total_debt
-                     * owned[e['child'].lower()] / total_owned) if total_debt and total_owned else Decimal(0)
+                     * owned[(e.get('child_chain_id',e['chain_id']),e['child'].lower())] / total_owned) if total_debt and total_owned else Decimal(0)
             candidates.append((e, value))
 
     # Cap all incoming ownership at the child's TVL, and all outgoing at parent TVL.
     incoming = defaultdict(lambda: Decimal(0))
     outgoing = defaultdict(lambda: Decimal(0))
     for e, value in candidates:
-        incoming[(e['chain_id'], e['child'].lower())] += value
+        incoming[(e.get('child_chain_id',e['chain_id']), e['child'].lower())] += value
         outgoing[(e['chain_id'], e['parent'].lower())] += value
     for e, value in candidates:
         pk = (e['chain_id'], e['parent'].lower())
-        ck = (e['chain_id'], e['child'].lower())
+        ck = (e.get('child_chain_id',e['chain_id']), e['child'].lower())
         scale = min(Decimal(1), decimal(by_key[ck]['tvl_usd']) / incoming[ck] if incoming[ck] else Decimal(1),
                     decimal(by_key[pk]['tvl_usd']) / outgoing[pk] if outgoing[pk] else Decimal(1))
         value *= scale
