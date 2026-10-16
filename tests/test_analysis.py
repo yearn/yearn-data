@@ -110,6 +110,7 @@ def test_lifetime_yield_selects_and_records_requested_price_source(tmp_path):
     assert params == {
         "price_source": "yearn-prices",
         "fallback_price_source": "defillama",
+        "before_timestamp": None,
     }
     summary = from_json(
         conn.execute(

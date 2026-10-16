@@ -278,6 +278,11 @@ def init_db(conn: sqlite3.Connection) -> None:
     conn.executescript(SCHEMA)
     conn.executescript(COVERAGE_SCHEMA)
     _ensure_column(conn, "vault_inventory_events", "action", "TEXT NOT NULL DEFAULT 'added'")
+    conn.execute("""CREATE TABLE IF NOT EXISTS fee_daily_prices (
+        chain_id INTEGER NOT NULL, asset TEXT NOT NULL, eod_timestamp INTEGER NOT NULL,
+        policy TEXT NOT NULL, endpoint_id TEXT NOT NULL, price_usd TEXT,
+        status TEXT NOT NULL, evidence_json TEXT NOT NULL, fetched_at INTEGER NOT NULL,
+        PRIMARY KEY(chain_id,asset,eod_timestamp,policy,endpoint_id))""")
     conn.execute("""CREATE TABLE IF NOT EXISTS tokenized_fee_events (
         chain_id INTEGER NOT NULL,tx_hash TEXT NOT NULL,log_index INTEGER NOT NULL,
         event_json TEXT NOT NULL,PRIMARY KEY(chain_id,tx_hash,log_index))""")

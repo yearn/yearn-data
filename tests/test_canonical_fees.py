@@ -143,7 +143,9 @@ def test_canonical_exports_include_retired_and_not_indexed_reports_without_usd(d
     counts = [json.loads(r[0]) for r in db.execute("SELECT row_json FROM analysis_outputs WHERE run_id=? AND name='canonical_fee_coverage'",(run,))]
     assert sum(r['not_indexed_reports'] for r in counts)==len(rows)-1
     from yearn_data.exports import export_analysis
-    assert len(export_analysis(db,'canonical-fees',tmp_path/'export'))==3
+    paths = export_analysis(db,'canonical-fees',tmp_path/'export')
+    assert sum(path.suffix == '.csv' for path in paths) == 3
+    assert (tmp_path/'export'/'context.json') in paths
 
 
 def test_fee_projection_does_not_change_lifetime_results(db):

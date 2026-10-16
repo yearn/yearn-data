@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +21,15 @@ def latest_run_id(conn, name: str) -> int:
 
 
 def export_analysis(conn, name: str, out_dir: str | Path = "exports", run_id: int | None = None) -> list[Path]:
-    rid = run_id or latest_run_id(conn, name)
+    rid = latest_run_id(conn, name) if run_id is None else run_id
+    run = conn.execute(
+        "SELECT * FROM analysis_runs WHERE id=? AND name=? AND status='complete'",
+        (rid, name),
+    ).fetchone()
+    if run is None:
+        raise ValueError(f"analysis run {rid} is not a completed {name} run")
+    context = {key: run[key] for key in ("id", "name", "started_at", "completed_at", "status")}
+    context["params"] = from_json(run["params_json"])
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
     written: list[Path] = []
@@ -64,4 +73,8 @@ def export_analysis(conn, name: str, out_dir: str | Path = "exports", run_id: in
             for row in rows:
                 writer.writerow(from_json(row["row_json"]))
         written.append(path)
+    context["files"] = [path.name for path in written]
+    context_path = out / "context.json"
+    context_path.write_text(json.dumps(context, indent=2, sort_keys=True) + "\n")
+    written.append(context_path)
     return written
