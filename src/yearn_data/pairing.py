@@ -317,14 +317,14 @@ def pairing_response(store, url):
 
 
 def serve_pairing(publication, *, host='127.0.0.1', port=3490, cors_origin=None,
-                  tvl_publication=None, current_bridge_policy='retired-registry', comparison_database=None):
+                  tvl_publication=None, current_bridge_policy='retired-registry', comparison_database=None, published_tvl_only=False):
     store = PairingStore(publication)
     dataset = store.get()  # Fail at startup if selection is missing or incompatible.
     tvl_store = None
     if tvl_publication is not None:
         from .tvl_api import TvlStore, tvl_response
         tvl_store = TvlStore(dataset.database, tvl_publication, current_bridge_policy=current_bridge_policy,
-                             comparison_database=comparison_database)
+                             comparison_database=comparison_database, auto_publish=not published_tvl_only)
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):

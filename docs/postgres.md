@@ -135,3 +135,70 @@ with the largest latest known values plus an `All other vaults` series, and one
 price-neutral total across every vault. `meta.topSeries` identifies the prepared
 series so clients do not reduce them again. Default requests keep the full
 response. Responses use gzip when the client accepts it.
+
+## Local operation after cutover
+
+Set `YEARN_DATA_DB=neon` alongside `NEON_DB_URL` in the ignored local `.env`.
+Commands then default to Neon; an explicit `--db` always wins. Run commands from
+the Postgres checkout rather than an older branch without this configuration.
+No automatic ingestion schedule is installed.
+
+`scripts/update_postgres.py` runs a bounded report acquisition, fee calculation,
+Yearn-only pricing, paired analyses, one full-catalog TVL close and chart
+preparation. Select block bounds and a closed UTC cutoff explicitly. A report
+window covers the selected chain; it does not claim all-chain fee freshness.
+The publication root contains `fees/` and `tvl/` directories. Preparation uses a
+separate pointer before publishing the serving TVL selection. Historical
+publications remain available for pinned clients.
+
+```bash
+python scripts/update_postgres.py --db neon --env /path/to/.env \
+  --chain eth --from-block START --to-block END --cutoff UTC_MIDNIGHT \
+  --publication-root data/neon-operations \
+  --deferred-manifest /path/to/validated-deferred-events.json
+```
+
+Coordinate writers: run one update at a time. Pricing and fee-calculation batches
+are limited to 500 targets; inspect their results and repeat acquisition/pricing
+for larger catch-ups before publishing. Missing values retain existing semantics.
+
+The user service templates in `ops/` serve Neon on localhost 3491 and forward
+legacy port 3492 to it without another database reader. The API uses `--published-tvl-only` so acquiring a finished TVL run does not
+publish it ahead of chart preparation. They assume the durable
+checkout at `~/raaaws/worktrees/yearn-data-neon`.
+Copy the unit files to `~/.config/systemd/user`, run `systemctl --user daemon-reload`
+and enable the API service and compatibility socket. The Comparison endpoint
+still uses the old TVL service's separate SQLite reference database.
+
+## Local Postgres staging
+
+Staging uses a separate Postgres 18 container (matching Neon), database, role and Docker volume.
+It binds only `127.0.0.1:55435` and restarts automatically. Its credentials are in
+ignored `.env` / `data/local-postgres.env` files. Set `STAGING_DB_URL` to its local
+connection URL with `?sslmode=disable`; hosted Neon continues to require TLS.
+Select staging explicitly with `--db staging`; its publications store `staging`
+rather than a credential-bearing URL. Keep staging publications separate from
+Neon publications.
+
+A full staging copy can be seeded with the existing SQLite importer before
+retirement. Reimport requires a new empty database; existing tables are never
+overwritten. The staging copy is a point-in-time development copy, not a live
+replica or Neon recovery backup. Integration tests can use `STAGING_DB_URL` as
+`YEARN_TEST_POSTGRES_URL`; they create isolated temporary schemas.
+
+Before removing the shared SQLite source, compress its final stopped-writer
+state, fully decompress it, compare SHA-256, and run integrity and foreign-key
+checks on the restored file. Keep the verified archive and restore metadata.
+Neon recovery settings and a tested recovery path remain a separate requirement.
+
+The existing staging container can be started with
+`docker start yearn-data-staging-postgres`. `ops/staging-postgres.compose.yml`
+records its image, localhost binding and external volume for future management.
+Set `YEARN_STAGING_ENV_FILE` to the existing ignored credential file when using
+Compose. Adopting the existing volume requires removing only the stopped
+container first; do not remove the volume. Do not run two containers on this port.
+
+The main checkout's virtual environment can use the operational checkout with
+`python -m pip install -e /path/to/yearn-data-neon`. Check
+`python -c 'import yearn_data.cli; print(yearn_data.cli.__file__)'` before assuming
+that an older checkout's command supports the Neon/staging selectors.

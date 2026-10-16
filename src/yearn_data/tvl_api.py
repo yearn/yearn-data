@@ -583,10 +583,11 @@ class TvlDataset:
 
 
 class TvlStore:
-    def __init__(self, database, publication, *, current_bridge_policy='none', refresh_seconds=30, comparison_database=None):
+    def __init__(self, database, publication, *, current_bridge_policy='none', refresh_seconds=30, comparison_database=None, auto_publish=True):
         self.database, self.root = database, Path(publication)
         self.policy, self.refresh_seconds = current_bridge_policy, refresh_seconds
         self.comparison_database = comparison_database
+        self.auto_publish = auto_publish
         self.lock = threading.RLock()
         self.last_check = 0
         self.last_error = None
@@ -595,7 +596,10 @@ class TvlStore:
     def refresh(self):
         with self.lock:
             try:
-                publish_tvl(self.database, self.root, current_bridge_policy=self.policy)
+                if self.auto_publish:
+                    publish_tvl(self.database, self.root, current_bridge_policy=self.policy)
+                elif not (self.root/'current.json').exists():
+                    raise ValueError('published-only serving requires an existing TVL publication')
                 self.last_error = None
             except (OSError, *DATABASE_ERRORS, ValueError) as error:
                 self.last_error = str(error)

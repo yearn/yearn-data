@@ -1,0 +1,8 @@
+[Unit]
+Description=Compatibility port for the Neon API
+
+[Socket]
+ListenStream=127.0.0.1:3492
+
+[Install]
+WantedBy=sockets.target

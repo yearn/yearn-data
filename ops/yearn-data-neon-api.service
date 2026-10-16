@@ -1,0 +1,13 @@
+[Unit]
+Description=Yearn Data API backed by Neon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+WorkingDirectory=%h/raaaws/worktrees/yearn-data-neon
+ExecStart=%h/raaaws/worktrees/yearn-data-neon/.venv/bin/python -m yearn_data.cli --env %h/raaaws/yearn-data/.env serve-pairing --publication data/neon-operations/fees --tvl-publication data/neon-operations/tvl --published-tvl-only --current-bridge-policy retired-registry --comparison-db %h/raaaws/yearn-tvl-service/packages/db/yearn-tvl.db --host 127.0.0.1 --port 3491
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
