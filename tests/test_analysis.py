@@ -54,6 +54,72 @@ def test_lifetime_yield_uses_net_gain_minus_loss(tmp_path):
     assert output["priced_reports"] == 1
 
 
+def test_lifetime_yield_includes_active_and_retired_vault_reports(tmp_path):
+    conn = connect(tmp_path / "test.sqlite")
+    init_db(conn)
+    seed_chains(conn, CHAINS)
+    asset = "0x0000000000000000000000000000000000000002"
+    cases = [
+        ("0xactive", "v3", 1, "1000000", "0", "1000000", 100),
+        ("0xretired", "v2", 0, "5000000", "1000000", "4000000", 101),
+        ("0xunpriced", "v3", 0, "3000000", "0", "3000000", 102),
+    ]
+    for address, version, active, gain, loss, net, timestamp in cases:
+        conn.execute(
+            """
+            INSERT INTO vaults (chain_id, version, address, asset, asset_decimals, active, updated_at)
+            VALUES (1, ?, ?, ?, 6, ?, 1)
+            """,
+            (version, address, asset, active),
+        )
+        conn.execute(
+            """
+            INSERT INTO strategy_reports (
+                chain_id, version, vault_address, strategy_address, tx_hash, log_index,
+                block_number, block_timestamp, asset, asset_decimals, gain_raw, loss_raw, net_raw
+            ) VALUES (1, ?, ?, '0xstrategy', ?, 0, 10, ?, ?, 6, ?, ?, ?)
+            """,
+            (version, address, address, timestamp, asset, gain, loss, net),
+        )
+    conn.executemany(
+        """
+        INSERT INTO prices (chain_id, token_address, timestamp, source, price_usd, status)
+        VALUES (1, ?, ?, 'yearn-prices', 2.0, 'ok')
+        """,
+        [(asset, 100), (asset, 101)],
+    )
+    conn.commit()
+
+    run_id = run_lifetime_yield(conn, fallback_price_source=None)
+    summary = from_json(
+        conn.execute(
+            "SELECT row_json FROM analysis_outputs WHERE run_id=? AND name='total_yield_summary'",
+            (run_id,),
+        ).fetchone()["row_json"]
+    )
+    assert summary["reports"] == 3
+    assert summary["priced_reports"] == 2
+    assert summary["unpriced_reports"] == 1
+    assert Decimal(summary["gross_gain_usd"]) == Decimal("12")
+    assert Decimal(summary["loss_usd"]) == Decimal("2")
+    assert Decimal(summary["net_yield_usd"]) == Decimal("10")
+    report_rows = conn.execute(
+        "SELECT row_json FROM analysis_outputs WHERE run_id=? AND name='reports'", (run_id,)
+    )
+    outputs = [from_json(row["row_json"]) for row in report_rows]
+    reports = {row["vault_address"]: row for row in outputs}
+    assert set(reports) == {case[0] for case in cases}
+    assert reports["0xunpriced"]["net_yield_usd"] is None
+    assert reports["0xunpriced"]["valuation_status"] == "missing_price"
+    vaults = [
+        from_json(row["row_json"])
+        for row in conn.execute(
+            "SELECT row_json FROM analysis_outputs WHERE run_id=? AND name='yield_by_vault'", (run_id,)
+        )
+    ]
+    assert {row["vault_address"] for row in vaults} == set(reports)
+
+
 def test_lifetime_yield_selects_and_records_requested_price_source(tmp_path):
     conn = connect(tmp_path / "test.sqlite")
     init_db(conn)
@@ -195,10 +261,10 @@ def test_lifetime_yield_excludes_known_incident_adjustments(tmp_path):
         """
         INSERT INTO vaults (
             chain_id, version, address, asset, asset_symbol, asset_decimals,
-            updated_at
+            active, updated_at
         )
         VALUES (1, 'v2', '0x0000000000000000000000000000000000000001',
-                '0x0000000000000000000000000000000000000002', 'DAI', 18, 1)
+                '0x0000000000000000000000000000000000000002', 'DAI', 18, 0, 1)
         """
     )
     reports = [

@@ -131,6 +131,17 @@ def build_parser() -> argparse.ArgumentParser:
     tvl_export.add_argument("--run-id", type=int)
     tvl_export.add_argument("--include-curation", action="store_true", help="Deduct curated child ownership too")
 
+    pairing_p = sub.add_parser("select-pairing", help="Select completed earnings/fees for Powerglove without changing source data")
+    pairing_p.add_argument("--earnings-run-id", type=int, required=True)
+    pairing_p.add_argument("--fees-run-id", type=int, required=True)
+    pairing_p.add_argument("--out", type=Path, default=Path("data/powerglove"))
+
+    serve_p = sub.add_parser("serve-pairing", help="Serve read-only selected Powerglove views")
+    serve_p.add_argument("--publication", type=Path, default=Path("data/powerglove"))
+    serve_p.add_argument("--host", default="127.0.0.1")
+    serve_p.add_argument("--port", type=int, default=3490)
+    serve_p.add_argument("--cors-origin", help="Optional production frontend origin")
+
     catchup_p = sub.add_parser("catch-up", help="Acquire one bounded chain window; no pricing or analysis")
     catchup_p.add_argument("--chain", required=True, choices=sorted(CHAINS))
     catchup_p.add_argument("--from-block", type=int, required=True)
@@ -282,6 +293,15 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result,sort_keys=True))
         return 0 if result["space_sufficient"] else 2
     load_environment(args.env)
+    if args.command == "select-pairing":
+        from .pairing import select_pairing
+        manifest = select_pairing(args.db, args.earnings_run_id, args.fees_run_id, args.out)
+        print(json.dumps({'datasetId': manifest['datasetId'], 'publication': str(args.out)}, sort_keys=True))
+        return 0
+    if args.command == "serve-pairing":
+        from .pairing import serve_pairing
+        serve_pairing(args.publication, host=args.host, port=args.port, cors_origin=args.cors_origin)
+        return 0
     conn = open_db(args.db)
     event_source = get_event_source()
 

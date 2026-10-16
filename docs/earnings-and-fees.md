@@ -165,6 +165,7 @@ A known subtotal can be incomplete. It is not necessarily the full revenue total
 
 Keep V2 vault, V3 allocator, and Tokenized Strategy fees separate.
 They can charge fees at different layers of the same capital.
+A consumer can combine distinct accepted charges into an explicitly scoped total of gross fees across the stack, retaining family and completeness details. Do not add components or distributions of an existing charge again. Reported gains/losses require separate treatment because underlying yield can be recognized at multiple layers. See the [Powerglove accounting contract](powerglove-accounting-contract.md).
 These are gross contract fees, not Yearn treasury receipts.
 A missing price affects the USD value, not the stored raw fee amount.
 
