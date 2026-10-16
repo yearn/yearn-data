@@ -6,9 +6,12 @@ import time
 from decimal import Decimal
 from typing import Any
 import os
+import re
+from urllib.parse import quote
 import json
 from collections import defaultdict
 from functools import lru_cache
+from math import isfinite
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import requests
@@ -22,7 +25,13 @@ from .storage import to_json
 
 
 DEFILLAMA_BASE = "https://coins.llama.fi"
-SUPPORTED_SOURCES = {"defillama"}
+YEARN_PRICES_DEFAULT_BASE = "https://prices.yearn.dev"
+YEARN_PRICES_MAX_TOKEN_KEYS = 50
+YEARN_PRICES_MAX_TIMESTAMPS_PER_TOKEN = 90
+SUPPORTED_SOURCES = {"defillama", "yearn-prices"}
+DEFAULT_PRICE_SOURCE = "yearn-prices"
+DEFAULT_FALLBACK_PRICE_SOURCE = "defillama"
+TOKEN_ADDRESS_PATTERN = re.compile(r"^0x[0-9a-fA-F]{40}$")
 ETHEREUM_WETH = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
 POLYGON_STABLE_ALIASES = {
     "0x2791bca1f2de4661ed88a30c99a7a9449aa84174",  # bridged USDC
@@ -83,6 +92,255 @@ CRV_BASED_CURVE_LPS = {
 def defillama_coin_id(chain_id: int, token_address: str) -> str:
     cfg = next(c for c in CHAINS.values() if c.chain_id == int(chain_id))
     return f"{cfg.defillama_slug}:{token_address.lower()}"
+
+
+def normalize_yearn_price_timestamp(timestamp: int) -> int:
+    """Normalize an event timestamp to the canonical Yearn Prices UTC day-end."""
+    timestamp = int(timestamp)
+    if timestamp < 0:
+        raise ValueError("price timestamp must be non-negative")
+    return timestamp // 86_400 * 86_400 + 86_399
+
+
+def yearn_prices_token_key(chain_id: int, token_address: str) -> str:
+    if not TOKEN_ADDRESS_PATTERN.fullmatch(token_address):
+        raise ValueError(f"invalid token address {token_address!r}")
+    # Historical Tokenized inventory includes Gnosis without a runtime RPC chain.
+    if int(chain_id) == 100:
+        return f"gnosis:{token_address.lower()}"
+    try:
+        cfg = next(c for c in CHAINS.values() if c.chain_id == int(chain_id))
+    except StopIteration as error:
+        raise ValueError(f"Yearn Prices does not support configured chain {chain_id}") from error
+    return f"{cfg.defillama_slug}:{token_address.lower()}"
+
+
+def _yearn_prices_config() -> tuple[str, str]:
+    api_key = os.environ.get("YEARN_PRICE_PROD_KEY", "").strip()
+    if not api_key:
+        raise ValueError("missing Yearn Prices API key; set YEARN_PRICE_PROD_KEY")
+    base_url = os.environ.get("YEARN_PRICE_PROD_BASE_URL", YEARN_PRICES_DEFAULT_BASE).strip().rstrip("/")
+    if not base_url.startswith(("http://", "https://")):
+        raise ValueError("YEARN_PRICE_PROD_BASE_URL must be an absolute HTTP(S) URL")
+    return base_url, api_key
+
+
+class YearnPricesAuthenticationError(RuntimeError):
+    pass
+
+
+class YearnPricesRequestError(RuntimeError):
+    def __init__(self, message: str, *, retryable: bool = True):
+        super().__init__(message)
+        self.retryable = retryable
+
+
+def _yearn_prices_get(
+    path: str,
+    *,
+    params: dict[str, str] | None = None,
+    timeout: int = 10,
+    allow_not_found: bool = False,
+) -> dict[str, Any] | None:
+    base_url, api_key = _yearn_prices_config()
+    attempts = max(1, int(os.environ.get("YEARN_PRICE_HTTP_ATTEMPTS", "3")))
+    retry_base = max(0.0, float(os.environ.get("YEARN_PRICE_HTTP_RETRY_BASE_SECONDS", "0.25")))
+    last_error: Exception | None = None
+    last_retryable = True
+
+    for attempt in range(attempts):
+        response = None
+        try:
+            response = requests.get(
+                f"{base_url}{path}",
+                params=params,
+                headers={"Authorization": f"Bearer {api_key}", "Accept": "application/json"},
+                timeout=timeout,
+            )
+            if response.status_code in {401, 403}:
+                raise YearnPricesAuthenticationError(
+                    f"Yearn Prices authentication failed (HTTP {response.status_code})"
+                )
+            if allow_not_found and response.status_code == 404:
+                return None
+            if response.status_code == 408 or response.status_code == 429 or response.status_code >= 500:
+                raise requests.HTTPError(f"Yearn Prices returned HTTP {response.status_code}", response=response)
+            response.raise_for_status()
+            payload = response.json()
+            if not isinstance(payload, dict):
+                raise ValueError("Yearn Prices returned a non-object JSON response")
+            return payload
+        except YearnPricesAuthenticationError:
+            raise
+        except (requests.RequestException, ValueError) as error:
+            last_error = error
+            retryable = response is None or response.status_code in {408, 429} or response.status_code >= 500
+            last_retryable = retryable
+            if not retryable or attempt == attempts - 1:
+                break
+            retry_after = response.headers.get("retry-after") if response is not None else None
+            try:
+                delay = min(float(retry_after), 30.0) if retry_after is not None else retry_base * (2**attempt)
+            except ValueError:
+                delay = retry_base * (2**attempt)
+            time.sleep(max(0.0, delay))
+
+    raise YearnPricesRequestError(
+        f"Yearn Prices request failed after {attempts} attempt(s)",
+        retryable=last_retryable,
+    ) from last_error
+
+
+def _parse_yearn_price_point(
+    raw_point: Any,
+    *,
+    expected_timestamp: int,
+    symbol: Any,
+    adapter: str,
+) -> tuple[float, str, dict[str, Any]] | None:
+    if not isinstance(raw_point, dict):
+        raise ValueError("Yearn Prices returned a malformed price point")
+    price = raw_point.get("price")
+    if price == 0:
+        return None
+    if (
+        raw_point.get("timestamp") != expected_timestamp
+        or not isinstance(price, (int, float))
+        or isinstance(price, bool)
+        or not isfinite(float(price))
+        or float(price) <= 0
+        or not isinstance(raw_point.get("source"), str)
+        or not raw_point["source"]
+    ):
+        raise ValueError("Yearn Prices returned a malformed price point")
+    confidence = raw_point.get("confidence")
+    if confidence is not None and (
+        not isinstance(confidence, (int, float))
+        or isinstance(confidence, bool)
+        or not isfinite(float(confidence))
+    ):
+        raise ValueError("Yearn Prices returned malformed confidence metadata")
+    payload = {
+        "adapter": adapter,
+        "confidence": confidence,
+        "normalized_timestamp": expected_timestamp,
+        "provider": "yearn-prices",
+        "symbol": symbol if isinstance(symbol, str) else None,
+        "upstream_source": raw_point["source"],
+    }
+    return float(price), "ok", payload
+
+
+def fetch_yearn_prices_batch(
+    targets: list[tuple[int, str, int]],
+    timeout: int = 10,
+) -> dict[tuple[int, str, int], tuple[float, str, dict[str, Any]]]:
+    """Fetch normalized EOD targets from the Yearn Prices batch endpoint.
+
+    Omitted targets are intentionally absent from the result. The caller verifies
+    each omission against the exact endpoint before recording it as missing.
+    """
+    coins: dict[str, list[int]] = defaultdict(list)
+    target_by_key: dict[tuple[str, int], tuple[int, str, int]] = {}
+    for chain_id, token_address, timestamp in targets:
+        normalized = normalize_yearn_price_timestamp(timestamp)
+        token_key = yearn_prices_token_key(chain_id, token_address)
+        key = (token_key, normalized)
+        if key not in target_by_key:
+            coins[token_key].append(normalized)
+            target_by_key[key] = (int(chain_id), token_address.lower(), normalized)
+    if len(coins) > YEARN_PRICES_MAX_TOKEN_KEYS or any(
+        len(timestamps) > YEARN_PRICES_MAX_TIMESTAMPS_PER_TOKEN for timestamps in coins.values()
+    ):
+        raise ValueError("Yearn Prices batch exceeds the documented API limits")
+
+    payload = _yearn_prices_get(
+        "/api/prices/batchHistorical",
+        params={"coins": json.dumps(coins, separators=(",", ":"), sort_keys=True)},
+        timeout=timeout,
+    )
+    raw_coins = payload.get("coins") if payload is not None else None
+    if not isinstance(raw_coins, dict):
+        raise ValueError("Yearn Prices returned a malformed batch response")
+
+    output: dict[tuple[int, str, int], tuple[float, str, dict[str, Any]]] = {}
+    seen_targets: set[tuple[int, str, int]] = set()
+    for raw_token_key, raw_coin in raw_coins.items():
+        if not isinstance(raw_token_key, str) or not isinstance(raw_coin, dict):
+            raise ValueError("Yearn Prices returned a malformed batch coin")
+        token_key = raw_token_key.lower()
+        prices = raw_coin.get("prices")
+        if not isinstance(prices, list):
+            raise ValueError("Yearn Prices returned malformed batch prices")
+        for raw_point in prices:
+            if not isinstance(raw_point, dict) or not isinstance(raw_point.get("timestamp"), int):
+                raise ValueError("Yearn Prices returned a malformed batch price point")
+            lookup = (token_key, raw_point["timestamp"])
+            target = target_by_key.get(lookup)
+            if target is None or target in seen_targets:
+                raise ValueError("Yearn Prices returned an unexpected or duplicate batch price point")
+            seen_targets.add(target)
+            parsed = _parse_yearn_price_point(
+                raw_point,
+                expected_timestamp=target[2],
+                symbol=raw_coin.get("symbol"),
+                adapter="batchHistorical",
+            )
+            if parsed is not None:
+                output[target] = parsed
+    return output
+
+
+def fetch_yearn_price(
+    chain_id: int,
+    token_address: str,
+    timestamp: int,
+    timeout: int = 10,
+) -> tuple[float | None, str, dict[str, Any]]:
+    normalized = normalize_yearn_price_timestamp(timestamp)
+    token_key = yearn_prices_token_key(chain_id, token_address)
+    try:
+        payload = _yearn_prices_get(
+            f"/api/prices/historical/{normalized}/{quote(token_key, safe=':')}",
+            timeout=timeout,
+            allow_not_found=True,
+        )
+    except YearnPricesRequestError as error:
+        failure_class = "retryable" if error.retryable else "invalid"
+        return None, failure_class, {
+            "adapter": "historical",
+            "failure_class": failure_class,
+            "failure_reason": str(error),
+            "normalized_timestamp": normalized,
+            "provider": "yearn-prices",
+        }
+    if payload is None:
+        return None, "missing", {
+            "adapter": "historical",
+            "failure_class": "not-found",
+            "normalized_timestamp": normalized,
+            "provider": "yearn-prices",
+        }
+    raw_coins = payload.get("coins")
+    if not isinstance(raw_coins, dict) or len(raw_coins) != 1:
+        raise ValueError("Yearn Prices returned a malformed exact response")
+    raw_key, raw_point = next(iter(raw_coins.items()))
+    if not isinstance(raw_key, str) or raw_key.lower() != token_key:
+        raise ValueError("Yearn Prices returned an unexpected exact token key")
+    parsed = _parse_yearn_price_point(
+        raw_point,
+        expected_timestamp=normalized,
+        symbol=raw_point.get("symbol") if isinstance(raw_point, dict) else None,
+        adapter="historical",
+    )
+    if parsed is None:
+        return None, "missing", {
+            "adapter": "historical",
+            "failure_class": "not-found",
+            "normalized_timestamp": normalized,
+            "provider": "yearn-prices",
+        }
+    return parsed
 
 
 def fetch_defillama_price(chain_id: int, token_address: str, timestamp: int, timeout: int = 30) -> tuple[float | None, str, dict[str, Any]]:
@@ -617,14 +875,16 @@ def _row_level_fallback_price(chain_id: int, token_address: str, timestamp: int,
 def _fetch_price(source: str, chain_id: int, token_address: str, timestamp: int, block_number: int):
     if source == "defillama":
         return fetch_defillama_price(chain_id, token_address, timestamp)
+    if source == "yearn-prices":
+        return fetch_yearn_price(chain_id, token_address, timestamp)
     raise ValueError(f"unsupported price source {source!r}; expected {sorted(SUPPORTED_SOURCES)}")
 
 
 def price_unpriced_reports(
     conn,
     limit: int | None = None,
-    source: str = "defillama",
-    fallback: str | None = None,
+    source: str = DEFAULT_PRICE_SOURCE,
+    fallback: str | None = DEFAULT_FALLBACK_PRICE_SOURCE,
     retry_missing: bool = False,
     chain_ids: set[int] | None = None,
     onchain_fallbacks: bool = True,
@@ -665,6 +925,16 @@ def price_unpriced_reports(
     count = 0
     if source == "defillama":
         count += _price_unpriced_reports_defillama_batched(conn, rows, fallback, onchain_fallbacks=onchain_fallbacks)
+        return count
+    if source == "yearn-prices":
+        count, unresolved_rows = _price_rows_with_yearn_prices(conn, rows)
+        if fallback == "defillama":
+            count += _price_unpriced_reports_defillama_batched(
+                conn,
+                unresolved_rows,
+                fallback=None,
+                onchain_fallbacks=onchain_fallbacks,
+            )
         return count
 
     for row in rows:
@@ -923,3 +1193,121 @@ def _defillama_coin_batches(rows, max_timestamps: int = 400):
     for coin_rows in rows_by_coin.values():
         coin_rows.sort(key=lambda row: int(row["block_timestamp"]))
         yield from _chunks(coin_rows, max_timestamps)
+
+
+def _yearn_prices_batches(
+    targets: list[tuple[int, str, int]],
+    max_tokens: int | None = None,
+) -> list[list[tuple[int, str, int]]]:
+    if max_tokens is None:
+        max_tokens = int(os.environ.get("YEARN_PRICE_BATCH_TOKENS", "20"))
+    if max_tokens < 1 or max_tokens > YEARN_PRICES_MAX_TOKEN_KEYS:
+        raise ValueError(
+            f"YEARN_PRICE_BATCH_TOKENS must be between 1 and {YEARN_PRICES_MAX_TOKEN_KEYS}"
+        )
+
+    timestamps_by_token: dict[tuple[int, str], set[int]] = defaultdict(set)
+    for chain_id, token_address, timestamp in targets:
+        yearn_prices_token_key(chain_id, token_address)
+        timestamps_by_token[(int(chain_id), token_address.lower())].add(
+            normalize_yearn_price_timestamp(timestamp)
+        )
+
+    segments: list[list[tuple[int, str, int]]] = []
+    for (chain_id, token_address), timestamps in sorted(timestamps_by_token.items()):
+        sorted_timestamps = sorted(timestamps)
+        for chunk in _chunks(sorted_timestamps, YEARN_PRICES_MAX_TIMESTAMPS_PER_TOKEN):
+            segments.append([(chain_id, token_address, timestamp) for timestamp in chunk])
+
+    batches: list[list[tuple[int, str, int]]] = []
+    current: list[tuple[int, str, int]] = []
+    current_tokens: set[tuple[int, str]] = set()
+    for segment in segments:
+        token = (segment[0][0], segment[0][1])
+        if current and (token in current_tokens or len(current_tokens) >= max_tokens):
+            batches.append(current)
+            current = []
+            current_tokens = set()
+        current.extend(segment)
+        current_tokens.add(token)
+    if current:
+        batches.append(current)
+    return batches
+
+
+def _price_rows_with_yearn_prices(conn, rows) -> tuple[int, list]:
+    if not rows:
+        return 0, []
+
+    report_targets = [
+        (int(row["chain_id"]), row["asset"].lower(), int(row["block_timestamp"]))
+        for row in rows
+    ]
+    normalized_targets = {
+        (chain_id, token_address, normalize_yearn_price_timestamp(timestamp))
+        for chain_id, token_address, timestamp in report_targets
+    }
+    results: dict[tuple[int, str, int], tuple[float | None, str, dict[str, Any]]] = {}
+    batches = _yearn_prices_batches(list(normalized_targets))
+    batch_workers = max(1, int(os.environ.get("YEARN_DATA_PRICE_WORKERS", "8")))
+    with ThreadPoolExecutor(max_workers=batch_workers) as executor:
+        futures = [executor.submit(fetch_yearn_prices_batch, batch) for batch in batches]
+        for future in as_completed(futures):
+            try:
+                results.update(future.result())
+            except YearnPricesRequestError:
+                # Treat a transient batch failure like an omission. The exact
+                # request below records the terminal state for each target,
+                # after which the configured provider fallback can run.
+                continue
+
+    missing_targets = sorted(normalized_targets - results.keys())
+    exact_workers = max(1, int(os.environ.get("YEARN_PRICE_EXACT_WORKERS", "5")))
+    with ThreadPoolExecutor(max_workers=exact_workers) as executor:
+        futures = {
+            executor.submit(fetch_yearn_price, chain_id, token_address, timestamp): (
+                chain_id,
+                token_address,
+                timestamp,
+            )
+            for chain_id, token_address, timestamp in missing_targets
+        }
+        for future in as_completed(futures):
+            results[futures[future]] = future.result()
+
+    insert_rows = []
+    unresolved_rows = []
+    for row in rows:
+        chain_id = int(row["chain_id"])
+        token_address = row["asset"]
+        report_timestamp = int(row["block_timestamp"])
+        normalized_timestamp = normalize_yearn_price_timestamp(report_timestamp)
+        price, status, result_payload = results[(chain_id, token_address.lower(), normalized_timestamp)]
+        if status != "ok":
+            unresolved_rows.append(row)
+        payload = dict(result_payload)
+        payload["requested_timestamp"] = report_timestamp
+        insert_rows.append(
+            (
+                chain_id,
+                token_address,
+                report_timestamp,
+                int(row["block_number"]),
+                "yearn-prices",
+                price,
+                status,
+                to_json(payload),
+            )
+        )
+    conn.executemany(
+        """
+        INSERT OR REPLACE INTO prices (
+            chain_id, token_address, timestamp, block_number,
+            source, price_usd, status, raw_json
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+        insert_rows,
+    )
+    conn.commit()
+    return len(insert_rows), unresolved_rows

@@ -4,6 +4,8 @@ Reusable Python tooling for indexing Yearn vault data and running research jobs 
 
 The first analysis job is `lifetime-yield`, which backfills Yearn V2/V3 `StrategyReported` events, prices report-time vault asset gains/losses, and exports aggregate yield totals.
 
+For pricing policy, configuration and Yearn-only commands, see [historical earnings pricing](docs/earnings-pricing.md).
+
 ## Quick Start
 
 ```bash
@@ -14,8 +16,8 @@ pip install -e '.[dev]'
 yearn-data init-db
 yearn-data discover
 yearn-data index-events
-yearn-data price
-yearn-data analyze lifetime-yield
+yearn-data price --source yearn-prices --no-provider-fallback --no-onchain-fallbacks
+yearn-data analyze lifetime-yield --price-source yearn-prices --no-provider-fallback
 yearn-data export lifetime-yield
 ```
 

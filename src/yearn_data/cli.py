@@ -14,7 +14,13 @@ from .envio import discover_from_envio, import_reports_from_envio
 from .exports import export_analysis
 from .headline import LIFETIME_YIELD_HEADLINE_KEY, publish_lifetime_yield_headline
 from .indexing import index_all_reports, index_all_volume, index_v2_fee_mints_from_reports
-from .pricing import price_unpriced_reports, price_unpriced_volume
+from .pricing import (
+    DEFAULT_FALLBACK_PRICE_SOURCE,
+    DEFAULT_PRICE_SOURCE,
+    SUPPORTED_SOURCES,
+    price_unpriced_reports,
+    price_unpriced_volume,
+)
 from .storage import DEFAULT_DB_PATH, connect, init_db, seed_chains
 
 
@@ -28,9 +34,23 @@ def _chains(values: list[str] | None) -> list[str]:
     return [normalize_chain_key(value) for value in values]
 
 
-def _run_analysis(conn, job: str) -> int:
+def _job_price_source(job: str, requested_source: str | None) -> str:
+    if requested_source is not None:
+        return requested_source
+    return DEFAULT_PRICE_SOURCE if job == "lifetime-yield" else "defillama"
+
+
+def _fallback_source(price_source: str) -> str | None:
+    return DEFAULT_FALLBACK_PRICE_SOURCE if price_source == DEFAULT_PRICE_SOURCE else None
+
+
+def _run_analysis(conn, job: str, price_source: str | None = None, provider_fallback: bool = True) -> int:
+    price_source = _job_price_source(job, price_source)
     if job == "lifetime-yield":
-        return run_lifetime_yield(conn)
+        return run_lifetime_yield(conn, price_source=price_source,
+                                  fallback_price_source=_fallback_source(price_source) if provider_fallback else None)
+    if price_source != "defillama":
+        raise ValueError("--price-source yearn-prices is currently supported only for lifetime-yield")
     if job == "vault-volume":
         return run_vault_volume(conn)
     if job == "vault-fees":
@@ -108,8 +128,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     price_p = sub.add_parser("price")
     price_p.add_argument("--limit", type=int, help="Maximum distinct token/timestamp prices to fetch")
-    price_p.add_argument("--source", choices=["defillama"], default="defillama")
+    price_p.add_argument("--source", choices=sorted(SUPPORTED_SOURCES), default=DEFAULT_PRICE_SOURCE)
     price_p.add_argument("--retry-missing", action="store_true", help="Retry existing non-ok price rows")
+    price_p.add_argument("--no-provider-fallback", action="store_true", help="Do not use DefiLlama when Yearn Prices is unavailable")
     price_p.add_argument("--chains", nargs="+", help="Restrict report pricing to chains")
     price_p.add_argument("--no-onchain-fallbacks", action="store_true", help="Use only the selected offchain price source")
 
@@ -122,6 +143,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     analyze_p = sub.add_parser("analyze")
     analyze_p.add_argument("job", choices=["lifetime-yield", "vault-volume", "vault-fees"])
+
+    analyze_p.add_argument("--price-source", choices=sorted(SUPPORTED_SOURCES))
+    analyze_p.add_argument("--no-provider-fallback", action="store_true")
 
     export_p = sub.add_parser("export")
     export_p.add_argument("job", choices=["lifetime-yield", "vault-volume", "vault-fees"])
@@ -143,7 +167,8 @@ def build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("--to-block", type=int)
     run_p.add_argument("--chunk-size", type=int, default=50_000)
     run_p.add_argument("--price-limit", type=int)
-    run_p.add_argument("--price-source", choices=["defillama"], default="defillama")
+    run_p.add_argument("--price-source", choices=sorted(SUPPORTED_SOURCES))
+    run_p.add_argument("--no-provider-fallback", action="store_true")
     run_p.add_argument("--no-onchain-fallbacks", action="store_true", help="Use only the selected offchain price source")
     run_p.add_argument("--find-deployment", action="store_true")
     run_p.add_argument("--out", default="exports")
@@ -250,7 +275,7 @@ def main(argv: list[str] | None = None) -> int:
             conn,
             limit=args.limit,
             source=args.source,
-            fallback=None,
+            fallback=None if args.no_provider_fallback else _fallback_source(args.source),
             retry_missing=args.retry_missing,
             chain_ids=chain_ids,
             onchain_fallbacks=not args.no_onchain_fallbacks,
@@ -273,7 +298,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "analyze":
-        run_id = _run_analysis(conn, args.job)
+        run_id = _run_analysis(conn, args.job, args.price_source, provider_fallback=not args.no_provider_fallback)
         print(f"analysis run {run_id} complete")
         return 0
 
@@ -299,6 +324,9 @@ def main(argv: list[str] | None = None) -> int:
         raise AssertionError(args.publish_job)
 
     if args.command == "run":
+        price_source = _job_price_source(args.job, args.price_source)
+        if args.job != "lifetime-yield" and price_source != "defillama":
+            raise ValueError("--price-source yearn-prices is currently supported only for lifetime-yield")
         chains = _chains(args.chains)
         if args.job == "lifetime-yield" and event_source == "envio":
             count = discover_from_envio(
@@ -334,20 +362,20 @@ def main(argv: list[str] | None = None) -> int:
             count = price_unpriced_reports(
                 conn,
                 limit=args.price_limit,
-                source=args.price_source,
-                fallback=None,
+                source=price_source,
+                fallback=None if args.no_provider_fallback else _fallback_source(price_source),
                 onchain_fallbacks=not args.no_onchain_fallbacks,
             )
         else:
             count = price_unpriced_volume(
                 conn,
                 limit=args.price_limit,
-                source=args.price_source,
+                source=price_source,
                 fallback=None,
                 onchain_fallbacks=not args.no_onchain_fallbacks,
             )
         print(f"priced/recorded {count} token timestamp rows")
-        run_id = _run_analysis(conn, args.job)
+        run_id = _run_analysis(conn, args.job, args.price_source, provider_fallback=not args.no_provider_fallback)
         print(f"analysis run {run_id} complete")
         for path in export_analysis(conn, args.job, args.out):
             print(path)
