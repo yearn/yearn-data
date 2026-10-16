@@ -315,17 +315,26 @@ def pairing_response(store, url):
         return 400, {'error': str(error)}
 
 
-def serve_pairing(publication, *, host='127.0.0.1', port=3490, cors_origin=None):
+def serve_pairing(publication, *, host='127.0.0.1', port=3490, cors_origin=None,
+                  tvl_publication=None, current_bridge_policy='retired-registry', comparison_database=None):
     store = PairingStore(publication)
-    store.get()  # Fail at startup if selection is missing or incompatible.
+    dataset = store.get()  # Fail at startup if selection is missing or incompatible.
+    tvl_store = None
+    if tvl_publication is not None:
+        from .tvl_api import TvlStore, tvl_response
+        tvl_store = TvlStore(dataset.database, tvl_publication, current_bridge_policy=current_bridge_policy,
+                             comparison_database=comparison_database)
 
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
             try:
-                status, payload = pairing_response(store, self.path)
+                if tvl_store is not None and (self.path.startswith('/api/tvl') or self.path.startswith('/api/audit/tree') or self.path.split('?')[0]=='/api/comparison'):
+                    status, payload = tvl_response(tvl_store, self.path)
+                else:
+                    status, payload = pairing_response(store, self.path)
             except (OSError, sqlite3.Error, KeyError, TypeError, json.JSONDecodeError) as error:
                 self.log_error('Pairing read failed: %s', error)
-                status, payload = 503, {'error': 'Fee data could not be loaded'}
+                status, payload = 503, {'error': 'Data could not be loaded'}
             body = _json(payload).encode()
             self.send_response(status)
             self.send_header('Content-Type', 'application/json')

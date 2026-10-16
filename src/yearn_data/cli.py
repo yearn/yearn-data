@@ -141,6 +141,9 @@ def build_parser() -> argparse.ArgumentParser:
     serve_p.add_argument("--host", default="127.0.0.1")
     serve_p.add_argument("--port", type=int, default=3490)
     serve_p.add_argument("--cors-origin", help="Optional production frontend origin")
+    serve_p.add_argument("--tvl-publication", type=Path, help="Automatically publish accumulated finished TVL results too")
+    serve_p.add_argument("--current-bridge-policy", choices=["none", "retired-registry"], default="retired-registry")
+    serve_p.add_argument("--comparison-db", type=Path, help="Read-only external DefiLlama reference database")
 
     catchup_p = sub.add_parser("catch-up", help="Acquire one bounded chain window; no pricing or analysis")
     catchup_p.add_argument("--chain", required=True, choices=sorted(CHAINS))
@@ -300,7 +303,9 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if args.command == "serve-pairing":
         from .pairing import serve_pairing
-        serve_pairing(args.publication, host=args.host, port=args.port, cors_origin=args.cors_origin)
+        serve_pairing(args.publication, host=args.host, port=args.port, cors_origin=args.cors_origin,
+                      tvl_publication=args.tvl_publication, current_bridge_policy=args.current_bridge_policy,
+                      comparison_database=args.comparison_db)
         return 0
     conn = open_db(args.db)
     event_source = get_event_source()

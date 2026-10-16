@@ -1,0 +1,154 @@
+[
+  {
+    "chainId": 1,
+    "asset": "0x3b3ac5386837dc563660fb6a0937dfaa5924333b",
+    "timestamp": 1780444799,
+    "priceUsd": "72061183.43742615",
+    "reason": "provider_quote_inconsistent_with_historical_pool_reserves",
+    "evidence": {
+      "blockNumber": 25233136,
+      "pool": "0x79a8c46dea5ada233abaffd40f3a0a2b1e5a4f27",
+      "lpSupplyRaw": "1759942781364018501535158",
+      "reserveBalanceRaw": [
+        "7368312252017025841662",
+        "7123232355",
+        "42585866336209942187",
+        "10179718670921902346264"
+      ],
+      "note": "Reject only this exact provider quote. Do not substitute a fallback USD valuation; repair the canonical provider and recollect."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x3b3ac5386837dc563660fb6a0937dfaa5924333b",
+    "timestamp": 1780531199,
+    "priceUsd": "72065274.82682166",
+    "reason": "provider_quote_inconsistent_with_historical_pool_reserves",
+    "evidence": {
+      "blockNumber": 25240302,
+      "pool": "0x79a8c46dea5ada233abaffd40f3a0a2b1e5a4f27",
+      "lpSupplyRaw": "1759942781364018501535158",
+      "reserveBalanceRaw": [
+        "7368312252017025841662",
+        "7123232355",
+        "42585866336209942187",
+        "10179718670921902346264"
+      ],
+      "note": "Reject only this exact provider quote. Do not substitute a fallback USD valuation; repair the canonical provider and recollect."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x3b3ac5386837dc563660fb6a0937dfaa5924333b",
+    "timestamp": 1780617599,
+    "priceUsd": "72230771.91554318",
+    "reason": "provider_quote_inconsistent_with_historical_pool_reserves",
+    "evidence": {
+      "blockNumber": 25247461,
+      "pool": "0x79a8c46dea5ada233abaffd40f3a0a2b1e5a4f27",
+      "lpSupplyRaw": "1759942781364018501535158",
+      "reserveBalanceRaw": [
+        "7368312252017025841662",
+        "7306855905",
+        "42669503077935148393",
+        "9999788461892046470079"
+      ],
+      "note": "Reject only this exact provider quote. Do not substitute a fallback USD valuation; repair the canonical provider and recollect."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x3b3ac5386837dc563660fb6a0937dfaa5924333b",
+    "timestamp": 1780703999,
+    "priceUsd": "48447943.47226524",
+    "reason": "provider_quote_inconsistent_with_historical_pool_reserves",
+    "evidence": {
+      "blockNumber": 25254619,
+      "pool": "0x79a8c46dea5ada233abaffd40f3a0a2b1e5a4f27",
+      "lpSupplyRaw": "1759942781364018501535158",
+      "reserveBalanceRaw": [
+        "6626460972744824564932",
+        "6773854480",
+        "28605315308032801160",
+        "14411553985318950818684"
+      ],
+      "note": "Reject only this exact provider quote. Do not substitute a fallback USD valuation; repair the canonical provider and recollect."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x3b3ac5386837dc563660fb6a0937dfaa5924333b",
+    "timestamp": 1780790399,
+    "priceUsd": "45447016.97993927",
+    "reason": "provider_quote_inconsistent_with_historical_pool_reserves",
+    "evidence": {
+      "blockNumber": 25261799,
+      "pool": "0x79a8c46dea5ada233abaffd40f3a0a2b1e5a4f27",
+      "lpSupplyRaw": "1759942781364018501535158",
+      "reserveBalanceRaw": [
+        "7721880151286898886038",
+        "8558879119",
+        "29302553991149406572",
+        "11717499360912476453638"
+      ],
+      "note": "Reject only this exact provider quote. Do not substitute a fallback USD valuation; repair the canonical provider and recollect."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x3b3ac5386837dc563660fb6a0937dfaa5924333b",
+    "timestamp": 1780876799,
+    "priceUsd": "50219948.33993393",
+    "reason": "provider_quote_inconsistent_with_historical_pool_reserves",
+    "evidence": {
+      "blockNumber": 25268963,
+      "pool": "0x79a8c46dea5ada233abaffd40f3a0a2b1e5a4f27",
+      "lpSupplyRaw": "1759942781364018501535158",
+      "reserveBalanceRaw": [
+        "7772193686494446473745",
+        "7347418071",
+        "26393934063491189155",
+        "13415422961813350743898"
+      ],
+      "note": "Reject only this exact provider quote. Do not substitute a fallback USD valuation; repair the canonical provider and recollect."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x3b3ac5386837dc563660fb6a0937dfaa5924333b",
+    "timestamp": 1780963199,
+    "priceUsd": "54675903.25362945",
+    "reason": "provider_quote_inconsistent_with_historical_pool_reserves",
+    "evidence": {
+      "blockNumber": 25276141,
+      "pool": "0x79a8c46dea5ada233abaffd40f3a0a2b1e5a4f27",
+      "lpSupplyRaw": "1759942781364018501535158",
+      "reserveBalanceRaw": [
+        "7218574018582915149813",
+        "8137036941",
+        "34266271313715523412",
+        "11379189814682996226858"
+      ],
+      "note": "Reject only this exact provider quote. Do not substitute a fallback USD valuation; repair the canonical provider and recollect."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x3b3ac5386837dc563660fb6a0937dfaa5924333b",
+    "timestamp": 1781049599,
+    "priceUsd": "58024224.25254812",
+    "reason": "provider_quote_inconsistent_with_historical_pool_reserves",
+    "evidence": {
+      "blockNumber": 25283318,
+      "pool": "0x79a8c46dea5ada233abaffd40f3a0a2b1e5a4f27",
+      "lpSupplyRaw": "1759942781364018501535158",
+      "reserveBalanceRaw": [
+        "7218574018582915149813",
+        "8137036941",
+        "34266271313715523412",
+        "11379189814682996226858"
+      ],
+      "note": "Reject only this exact provider quote. Do not substitute a fallback USD valuation; repair the canonical provider and recollect."
+    }
+  }
+]
