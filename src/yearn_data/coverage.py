@@ -49,13 +49,20 @@ def fingerprint(value) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
 
 
-def missing_ranges(conn, scope: Scope, start: int, end: int, chunk_size: int):
+def _coverage_table(table):
+    if table not in ("history_coverage", "tvl_history_coverage"):
+        raise ValueError("unsupported coverage table")
+    return table
+
+
+def missing_ranges(conn, scope: Scope, start: int, end: int, chunk_size: int, *, table="history_coverage"):
     """Subtract the union of covered intervals; chunk only the remaining gaps."""
     if start < 0 or end < start or chunk_size < 1:
         raise ValueError("invalid coverage bounds or chunk size")
+    table = _coverage_table(table)
     cursor = start
     rows = conn.execute(
-        """SELECT from_block, to_block FROM history_coverage
+        f"""SELECT from_block, to_block FROM {table}
         WHERE chain_id=? AND target=? AND family=? AND policy=?
           AND to_block>=? AND from_block<=? ORDER BY from_block, to_block""",
         (*scope.key, start, end),
@@ -73,16 +80,17 @@ def missing_ranges(conn, scope: Scope, start: int, end: int, chunk_size: int):
 
 
 def commit_range(conn, scope: Scope, start: int, end: int, *, source: str,
-                 end_hash: str, run_id: int | None, write):
+                 end_hash: str, run_id: int | None, write, table="history_coverage"):
     """Commit rows and their coverage together. Writers must never commit internally."""
     if conn.in_transaction:
         raise ValueError("coverage writer requires a clean transaction")
     if start < 0 or end < start or not end_hash:
         raise ValueError("invalid range evidence")
+    table = _coverage_table(table)
     with conn:
         count = write(conn)
         conn.execute(
-            "INSERT INTO history_coverage VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            f"INSERT INTO {table} VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (*scope.key, start, end, source, end_hash, count, run_id, int(time.time())),
         )
     return count

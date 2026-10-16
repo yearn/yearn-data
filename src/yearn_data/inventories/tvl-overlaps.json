@@ -1,0 +1,132 @@
+{
+  "source": "yearn-tvl-service/packages/shared/src/strategy-overlaps.ts",
+  "targets": [
+    {
+      "strategyAddress": "0x39c0aEc5738ED939876245224aFc7E09C8480a52",
+      "targetVaultAddress": "0x182863131F9a4630fF9E27830d945B1413e347E8",
+      "label": "unknown \u2192 USDS-1 yVault",
+      "chainId": 1
+    },
+    {
+      "strategyAddress": "0xfF03Dce6d95aa7a30B75EFbaFD11384221B9f9B5",
+      "targetVaultAddress": "0xBe53A109B494E5c9f97b9Cd39Fe969BE68BF6204",
+      "label": "unknown \u2192 USDC-1 yVault",
+      "chainId": 1
+    },
+    {
+      "strategyAddress": "0xAeDF7d5F3112552E110e5f9D08c9997Adce0b78d",
+      "targetVaultAddress": "0x182863131F9a4630fF9E27830d945B1413e347E8",
+      "label": "unknown \u2192 USDS-1 yVault",
+      "chainId": 1
+    },
+    {
+      "strategyAddress": "0x9e0A5943dFc1A85B48C191aa7c10487297aA675b",
+      "targetVaultAddress": "0xc9f01b5c6048B064E6d925d1c2d7206d4fEeF8a3",
+      "label": "unknown \u2192 Spark USDS Compounder",
+      "chainId": 1
+    },
+    {
+      "strategyAddress": "0x6164217CAa4Ff58fb722D726391875aC0C5Fb541",
+      "targetVaultAddress": "0x182863131F9a4630fF9E27830d945B1413e347E8",
+      "label": "DAI To Yearn Term USDS \u2192 USDS-1 yVault",
+      "chainId": 1
+    },
+    {
+      "sourceVaultAddress": "0xdA816459F1AB5631232FE5e97a05BBBb94970c95",
+      "strategyAddress": "0xA7496763F035e73ec6B56F4C86312cc1874a01e3",
+      "targetVaultAddress": "0x028eC7330ff87667b6dfb0D94b954c820195336c",
+      "label": "DAI V2 router \u2192 DAI-1 yVault",
+      "chainId": 1
+    },
+    {
+      "sourceVaultAddress": "0xa354F35829Ae975e850e23e9615b11Da1B3dC4DE",
+      "strategyAddress": "0xD5AAdCD054a00Eff71BCB922CDdc70752FA2bc68",
+      "targetVaultAddress": "0xBe53A109B494E5c9f97b9Cd39Fe969BE68BF6204",
+      "label": "USDC V2 router \u2192 USDC-1 yVault",
+      "chainId": 1
+    },
+    {
+      "sourceVaultAddress": "0x3B27F92C0e212C671EA351827EDF93DB27cc0c65",
+      "strategyAddress": "0xe07d1E27D93EdA41aB091Fc91a2026Df41763b56",
+      "targetVaultAddress": "0x310B7Ea7475A0B449Cfd73bE81522F1B88eFAFaa",
+      "label": "USDT V2 router \u2192 USDT-1 yVault",
+      "chainId": 1
+    },
+    {
+      "sourceVaultAddress": "0xA696a63cc78DfFa1a63E9E50587C197387FF6C7E",
+      "strategyAddress": "0x8b64692c42AC08A7275aFf3e2cc59e7401C471D5",
+      "targetVaultAddress": "0x751F0cC6115410A3eE9eC92d08f46Ff6Da98b708",
+      "label": "WBTC V2 router \u2192 WBTC-1 yVault",
+      "chainId": 1
+    },
+    {
+      "sourceVaultAddress": "0xa258C4606Ca8206D8aA700cE2143D7db854D168c",
+      "strategyAddress": "0x85907b1aF27Fd04a5EFaBC0Fb7162f8690a6B82F",
+      "targetVaultAddress": "0xc56413869c6CDf96496f2b1eF801fEDBdFA7dDB0",
+      "label": "WETH V2 router \u2192 WETH-1 yVault",
+      "chainId": 1
+    },
+    {
+      "strategyAddress": "0x0e297dE4005883C757c9F09fdF7cF1363C20e626",
+      "targetVaultAddress": "0xF9bdDd4A9b3A45f980e11fDDE96e16364dDBEc49",
+      "label": "Morpho Yearn OG USDC Compounder \u2192 Yearn OG USDC",
+      "chainId": 1
+    },
+    {
+      "strategyAddress": "0xF115C134c23C7A05FBD489A8bE3116EbF54B0D9f",
+      "targetVaultAddress": "0xef417a2512C5a41f69AE4e021648b69a7CdE5D03",
+      "label": "Morpho Yearn Morpho Vault 1 Compounder \u2192 Yearn OG USDC",
+      "chainId": 8453
+    },
+    {
+      "strategyAddress": "0xB75b4974F0799D6C8125676f90266a424Cad0a24",
+      "targetVaultAddress": "0x5920A6FC553af799542EDA628AdfCc9eA52e141C",
+      "label": "Morpho Yearn OG v2 WETH Compounder \u2192 Yearn OG ETH",
+      "chainId": 747474
+    },
+    {
+      "strategyAddress": "0x1e35dA1B596208Ce5059D0B4F4d08410426849B8",
+      "targetVaultAddress": "0xA2d38c8A3D810EBcF4C2075821c5eC8F976bb692",
+      "label": "Morpho Yearn Degen USDC Compounder \u2192 Yearn Degen USDC",
+      "chainId": 747474
+    },
+    {
+      "strategyAddress": "0x6E0D2096BA6A3fe35c8186077F81BEf2c33E5bed",
+      "targetVaultAddress": "0xca44cbe1FB03691d43d2d93AA460e2fCB03878fE",
+      "label": "Morpho Yearn OG v2 USDC Compounder \u2192 Yearn OG USDC",
+      "chainId": 747474
+    },
+    {
+      "strategyAddress": "0xC7f81E552bC0fEB746e92A84bb1AaF9A59A8B9a6",
+      "targetVaultAddress": "0x4284d4F9f4d61eA57B8F0943547c7C19C5B9B249",
+      "label": "Morpho Yearn OG v2 USDT Compounder \u2192 Yearn OG USDT",
+      "chainId": 747474
+    }
+  ],
+  "bridges": [
+    {
+      "sourceVaultAddress": "0x7B5A0182E400b241b317e781a4e9dEdFc1429822",
+      "label": "Katana Pre-Deposit USDC (v3)",
+      "sourceChainId": 1,
+      "targetChainId": 747474
+    },
+    {
+      "sourceVaultAddress": "0xcc6a16Be713f6a714f68b0E1f4914fD3db15fBeF",
+      "label": "Katana Pre-Deposit WETH (v3)",
+      "sourceChainId": 1,
+      "targetChainId": 747474
+    },
+    {
+      "sourceVaultAddress": "0x48c03B6FfD0008460F8657Db1037C7e09dEedfcb",
+      "label": "Katana Pre-Deposit USDT (v3)",
+      "sourceChainId": 1,
+      "targetChainId": 747474
+    },
+    {
+      "sourceVaultAddress": "0x92C82f5F771F6A44CfA09357DD0575B81BF5F728",
+      "label": "Katana Pre-Deposit WBTC (v3)",
+      "sourceChainId": 1,
+      "targetChainId": 747474
+    }
+  ]
+}
