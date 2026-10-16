@@ -150,5 +150,441 @@
       ],
       "note": "Reject only this exact provider quote. Do not substitute a fallback USD valuation; repair the canonical provider and recollect."
     }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x051d7e5609917bd9b73f04bac0ded8dd46a74301",
+    "timestamp": 1703116799,
+    "priceUsd": "918744596467720.4",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "lpSupplyRaw": "295029094619849619543",
+      "pool": "0xf253f83AcA21aAbD2A20553AE0BF7F65C755A07F",
+      "virtualPriceRaw": "1002746089943268863",
+      "reserveBalanceRaw": [
+        "17041213027",
+        "125461734629627490333"
+      ],
+      "canonicalCurveQuote": {},
+      "note": "Exact quote quarantine only; historical pool state contradicts the extreme LP quote. No replacement or later price is substituted."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x390f3595bca2df7d23783dfd126427cceb997bf4",
+    "timestamp": 1703116799,
+    "priceUsd": "420630180215.6298",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "lpSupplyRaw": "27222157344641009251269418",
+      "pool": "0x390f3595bca2df7d23783dfd126427cceb997bf4",
+      "virtualPriceRaw": "1004941696466427365",
+      "reserveBalanceRaw": [
+        "11471711882923",
+        "15885698793320544843793713"
+      ],
+      "canonicalCurveQuote": {},
+      "note": "Exact quote quarantine only; historical pool state contradicts the extreme LP quote. No replacement or later price is substituted."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x3d229e1b4faab62f621ef2f6a610961f7bd7b23b",
+    "timestamp": 1703116799,
+    "priceUsd": "52727246.44878311",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "lpSupplyRaw": "3152317372106991489438952",
+      "pool": "0x98a7F18d4E56Cfe84E3D081B40001B3d5bD3eB8B",
+      "virtualPriceRaw": "1003377239329468432",
+      "reserveBalanceRaw": [
+        "3540197140660",
+        "280964362"
+      ],
+      "canonicalCurveQuote": {},
+      "note": "Exact quote quarantine only; historical pool state contradicts the extreme LP quote. No replacement or later price is substituted."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x5282a4ef67d9c33135340fb3289cc1711c13638c",
+    "timestamp": 1703116799,
+    "priceUsd": "10783996087.25004",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "lpSupplyRaw": "4025699627621712569304819",
+      "pool": "0x2dded6Da1BF5DBdF597C45fcFaa3194e53EcfeAF",
+      "virtualPriceRaw": "1164602309000119047",
+      "reserveBalanceRaw": [
+        "15385566543512990",
+        "1419904715724012"
+      ],
+      "canonicalCurveQuote": {},
+      "note": "Exact quote quarantine only; historical pool state contradicts the extreme LP quote. No replacement or later price is substituted."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x5b5cfe992adac0c9d48e05854b2d91c73a003858",
+    "timestamp": 1703116799,
+    "priceUsd": "260533596.19773108",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "lpSupplyRaw": "23986018694643043022325",
+      "pool": "0x3eF6A01A0f81D6046290f3e2A8c5b843e738E604",
+      "virtualPriceRaw": "1055405811900560532",
+      "reserveBalanceRaw": [
+        "2961000865569",
+        "75054876531082044313"
+      ],
+      "canonicalCurveQuote": {},
+      "note": "Exact quote quarantine only; historical pool state contradicts the extreme LP quote. No replacement or later price is substituted."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x69accb968b19a53790f43e57558f5e443a91af22",
+    "timestamp": 1769731199,
+    "priceUsd": "5.6179382808005926E+17",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 24343955,
+      "lpSupplyRaw": "702333077788341659268",
+      "pool": "0x69ACcb968B19a53790f43e57558F5E443A91aF22",
+      "virtualPriceRaw": "None",
+      "reserveBalanceRaw": [
+        "43294163612791",
+        "98543928183015345649901089094320741"
+      ],
+      "canonicalCurveQuote": {},
+      "note": "The pool holds an inflated yETH reserve; nominal derivative-token balances cannot be valued as backed ETH. No replacement price is inferred.",
+      "derivativeToken": "0x1BED97CBC3c24A4fb5C069C6E311a967386131f7",
+      "derivativeTotalSupplyRaw": "235443031407908519912635443025109144448181362622575235916"
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x6e0e681441be6cb1d8405752462488bd4d691e3a",
+    "timestamp": 1703116799,
+    "priceUsd": "83726316182.0979",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "lpSupplyRaw": "239509614954755278125055",
+      "pool": "0x51Bcba35e5fa277592Cea83Ad14408A0963b86f8",
+      "virtualPriceRaw": "1001361555878976512",
+      "reserveBalanceRaw": [
+        "1335802010672",
+        "42479415867868057763674"
+      ],
+      "canonicalCurveQuote": {},
+      "note": "Exact quote quarantine only; historical pool state contradicts the extreme LP quote. No replacement or later price is substituted."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0xb19059ebb43466c323583928285a49f558e572fd",
+    "timestamp": 1703116799,
+    "priceUsd": "124174381049012.62",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "lpSupplyRaw": "44506390305268493458",
+      "pool": "0x4CA9b3063Ec5866A4B82E437059D2C43d1be596F",
+      "virtualPriceRaw": "1013379116117253127",
+      "reserveBalanceRaw": [
+        "26321216511906642629",
+        "1878127764"
+      ],
+      "canonicalCurveQuote": {},
+      "note": "Exact quote quarantine only; historical pool state contradicts the extreme LP quote. No replacement or later price is substituted."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0xecdd0ce505da71cd9de855cd6804ba1e8c7bdb07",
+    "timestamp": 1703116799,
+    "priceUsd": "6656790044458034.0",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "lpSupplyRaw": "1151862852195961084998818",
+      "pool": "0xecdd0ce505da71cd9de855cd6804ba1e8c7bdb07",
+      "virtualPriceRaw": "1000539160750998207",
+      "reserveBalanceRaw": [
+        "41920497",
+        "733371222449882571287020"
+      ],
+      "canonicalCurveQuote": {},
+      "note": "Exact quote quarantine only; historical pool state contradicts the extreme LP quote. No replacement or later price is substituted."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0xf5f5b97624542d72a9e06f04804bf81baa15e2b4",
+    "timestamp": 1703116799,
+    "priceUsd": "392231823731.53595",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "lpSupplyRaw": "39106923267540334210370",
+      "pool": "0xf5f5b97624542d72a9e06f04804bf81baa15e2b4",
+      "virtualPriceRaw": "1003029307729165284",
+      "reserveBalanceRaw": [
+        "17943426463302",
+        "40809253727"
+      ],
+      "canonicalCurveQuote": {},
+      "note": "Exact quote quarantine only; historical pool state contradicts the extreme LP quote. No replacement or later price is substituted."
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x02d341ccb60faaf662bc0554d13778015d1b285c",
+    "timestamp": 1703116799,
+    "priceUsd": "4736.303607511604",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "adjacentStoredQuotes": [
+        {
+          "timestamp": 1703203199,
+          "price_usd": 1.1080325134374827
+        }
+      ],
+      "lpSupplyRaw": "657209162686777817849046",
+      "pool": "0xEB16Ae0052ed37f479f7fe63849198Df1765a733",
+      "virtualPriceRaw": "1111977787295882711",
+      "reserveBalanceRaw": [
+        "389040756729904514401244",
+        "341776428767495995483858"
+      ],
+      "canonicalCurveQuote": {}
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x067079c14b85169e6a29703769daddef90816f4c",
+    "timestamp": 1703116799,
+    "priceUsd": "7868.965464419723",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "adjacentStoredQuotes": [
+        {
+          "timestamp": 1703030399,
+          "price_usd": 1.9971111054635011
+        },
+        {
+          "timestamp": 1703203199,
+          "price_usd": 1.9090720090524778
+        }
+      ],
+      "lpSupplyRaw": "2424966812294633742718300",
+      "pool": "0x9D8108DDD8aD1Ee89d527C0C9e928Cb9D2BBa2d3",
+      "virtualPriceRaw": "1002075095182592683",
+      "reserveBalanceRaw": [
+        "2354894735404751275190771",
+        "2504995906859692885500810"
+      ],
+      "canonicalCurveQuote": {}
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x3a283d9c08e8b55966afb64c515f5143cf907611",
+    "timestamp": 1703116799,
+    "priceUsd": "31474.91813921195",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "adjacentStoredQuotes": [
+        {
+          "timestamp": 1703203199,
+          "price_usd": 179.8751643651424
+        }
+      ],
+      "lpSupplyRaw": "107559187685153147209916",
+      "pool": "0xB576491F1E6e5E62f1d8F26062Ee822B40B0E0d4",
+      "virtualPriceRaw": "1032966685184053195",
+      "reserveBalanceRaw": [
+        "4334622831925445703490",
+        "2846341661242716515638395"
+      ],
+      "canonicalCurveQuote": {}
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x4acc1bf7d6a591016641325aa6664a1cd178f002",
+    "timestamp": 1703116799,
+    "priceUsd": "33461.075922547454",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "adjacentStoredQuotes": [
+        {
+          "timestamp": 1703203199,
+          "price_usd": 198.95020177580219
+        }
+      ],
+      "lpSupplyRaw": "18685964936868743144",
+      "pool": "0x8b0aFa4b63a3581b731dA9D79774a3eaE63B5ABD",
+      "virtualPriceRaw": "1207043129526334011",
+      "reserveBalanceRaw": [
+        "603063834810502611691",
+        "842275273340011377"
+      ],
+      "canonicalCurveQuote": {}
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x4ebdf703948ddcea3b11f675b4d1fba9d2414a14",
+    "timestamp": 1703116799,
+    "priceUsd": "226259.86056653102",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "adjacentStoredQuotes": [
+        {
+          "timestamp": 1703203199,
+          "price_usd": 33.97445334604811
+        }
+      ],
+      "lpSupplyRaw": "531565501364950676061995",
+      "pool": "0x4eBdF703948ddCEA3B11f675B4D1Fba9d2414A14",
+      "virtualPriceRaw": "1030298182230497436",
+      "reserveBalanceRaw": [
+        "5944729862649174740820393",
+        "2699899895187202245066"
+      ],
+      "canonicalCurveQuote": {}
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x971add32ea87f10bd192671630be3be8a11b8623",
+    "timestamp": 1703116799,
+    "priceUsd": "166951.7580753073",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "adjacentStoredQuotes": [
+        {
+          "timestamp": 1703203199,
+          "price_usd": 0.5754531139103825
+        }
+      ],
+      "lpSupplyRaw": "74625856741061497732040870",
+      "pool": "0x971add32Ea87f10bD192671630be3BE8A11b8623",
+      "virtualPriceRaw": "1005361424316068303",
+      "reserveBalanceRaw": [
+        "14782678400949597057055652",
+        "60670208216856680508680992"
+      ],
+      "canonicalCurveQuote": {}
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0x9978c6b08d28d3b74437c917c5dd7c026df9d55c",
+    "timestamp": 1703116799,
+    "priceUsd": "283614.74888595217",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "adjacentStoredQuotes": [
+        {
+          "timestamp": 1703203199,
+          "price_usd": 0.9986079968695681
+        }
+      ],
+      "lpSupplyRaw": "2211268109517341318251128",
+      "pool": "0x9978c6B08d28d3B74437c917c5dD7C026df9d55C",
+      "virtualPriceRaw": "1002006676280621921",
+      "reserveBalanceRaw": [
+        "1534206365457053818262511",
+        "681882794389808565627174"
+      ],
+      "canonicalCurveQuote": {}
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0xde5331ac4b3630f94853ff322b66407e0d6331e8",
+    "timestamp": 1703116799,
+    "priceUsd": "82704798.55920687",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "adjacentStoredQuotes": [
+        {
+          "timestamp": 1703203199,
+          "price_usd": 44732.771778645074
+        }
+      ],
+      "lpSupplyRaw": "14129479219694509677",
+      "pool": "0x7F55DDe206dbAD629C080068923b36fe9D6bDBeF",
+      "virtualPriceRaw": "1012693304459409085",
+      "reserveBalanceRaw": [
+        "2605535117580515593",
+        "11492397671632046982"
+      ],
+      "canonicalCurveQuote": {}
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0xbe4f3ad6c9458b901c81b734cb22d9eae9ad8b50",
+    "timestamp": 1703116799,
+    "priceUsd": "6983.681023873782",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "adjacentStoredQuotes": [
+        {
+          "timestamp": 1703203199,
+          "price_usd": 35.845604927519794
+        }
+      ],
+      "lpSupplyRaw": "13579483279382125706264",
+      "pool": "0x75A6787C7EE60424358B449B539A8b774c9B4862",
+      "virtualPriceRaw": "1006316103724615683",
+      "reserveBalanceRaw": [
+        "108426591691172635532",
+        "1721120574364450116657892"
+      ],
+      "canonicalCurveQuote": {}
+    }
+  },
+  {
+    "chainId": 1,
+    "asset": "0xfed2b54453f75634bcdaea5e5b11a3f99b9c28fa",
+    "timestamp": 1703116799,
+    "priceUsd": "113686.30503180118",
+    "reason": "provider_quote_inconsistent_with_historical_pool_state",
+    "evidence": {
+      "blockNumber": 18830533,
+      "adjacentStoredQuotes": [
+        {
+          "timestamp": 1703203199,
+          "price_usd": 1.9717514443612925
+        }
+      ],
+      "lpSupplyRaw": "1055540200569820565990822",
+      "pool": "0xF2B25362a03f6EACCa8De8d5350A9f37944c1e59",
+      "virtualPriceRaw": "1000427585870265401",
+      "reserveBalanceRaw": [
+        "810002334264",
+        "1292151271942969312749683"
+      ],
+      "canonicalCurveQuote": {}
+    }
   }
 ]

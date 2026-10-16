@@ -151,3 +151,51 @@ def prepare(dataset,progress=None):
     dataset._prepared=True
     prepare_totals(dataset)
     return {'datasetId':dataset.id,'status':'prepared','rows':count,'dates':len(dates)}
+
+
+def prepare_price_repair(dataset, previous):
+    """Copy an immutable prepared publication, recalculating only newly rejected days.
+
+    All accounting inputs and policies other than quote rejection must be identical.
+    A marker commits only with the copied rows and recomputed daily totals.
+    """
+    from .tvl_api import CHAINS, encoded
+    if not ready(previous):
+        raise ValueError('previous TVL history must be prepared')
+    excluded={'datasetId','publishedAt','asOfTimestamp','diagnostics','priceRejections'}
+    before={k:v for k,v in previous.manifest.items() if k not in excluded}
+    after={k:v for k,v in dataset.manifest.items() if k not in excluded}
+    if encoded(before)!=encoded(after):
+        raise ValueError('price repair must preserve all other publication inputs')
+    old={(r['chainId'],r['asset'].lower(),r['timestamp'],r['priceUsd']) for r in previous.manifest.get('priceRejections',[])}
+    new={(r['chainId'],r['asset'].lower(),r['timestamp'],r['priceUsd']) for r in dataset.manifest.get('priceRejections',[])}
+    if not old<=new:raise ValueError('price repair cannot remove previous rejections')
+    changed=tuple(sorted({r[2] for r in new-old}))
+    if ready(dataset):return {'status':'already-prepared','datasetId':dataset.id}
+    # Native daily accounting reapplies child/parent caps after valuation rejection.
+    frames=list(dataset.iter_frames(changed))
+    repaired=[];sums=[]
+    for timestamp,points,_,_ in frames:
+        grouped=defaultdict(list)
+        for row in points:
+            values=[row.get(field) for field in FIELDS];values[3]=row.get('category',row['version'])
+            values[5:]=[None if v is None else str(v) for v in values[5:]]
+            repaired.append((dataset.id,timestamp,*values))
+            for mode,field in [('raw','tvl_usd'),('external','external_tvl_usd')]:
+                if row.get(field) is None:continue
+                for group,series in [('chain',CHAINS.get(row['chain_id'],str(row['chain_id']))),('category',row.get('category',row['version']))]:
+                    grouped[(group,mode,series)].append(Decimal(str(row[field])))
+        with localcontext() as ctx:
+            ctx.prec=78
+            sums.extend((dataset.id,timestamp,*group,str(sum(values,Decimal(0)))) for group,values in grouped.items())
+    with closing(connect(dataset.database,direct=True)) as conn,conn:
+        marks=','.join('?' for _ in changed)
+        if not marks:raise ValueError('no new rejected quote days')
+        conn.execute(f'INSERT INTO tvl_chart_rows SELECT ?,timestamp,{",".join(FIELDS)} FROM tvl_chart_rows WHERE dataset_id=? AND timestamp NOT IN ({marks})',(dataset.id,previous.id,*changed))
+        conn.executemany('INSERT INTO tvl_chart_rows VALUES (?,?,?,?,?,?,?,?,?,?)',repaired)
+        conn.execute(f'INSERT INTO tvl_chart_totals SELECT ?,timestamp,group_by,mode,series,value FROM tvl_chart_totals WHERE dataset_id=? AND timestamp NOT IN ({marks})',(dataset.id,previous.id,*changed))
+        conn.executemany('INSERT INTO tvl_chart_totals VALUES (?,?,?,?,?,?)',sums)
+        count=conn.execute('SELECT COUNT(*) FROM tvl_chart_rows WHERE dataset_id=?',(dataset.id,)).fetchone()[0]
+        conn.execute('INSERT INTO tvl_chart_publications VALUES (?,?,?,?)',(dataset.id,VERSION+'+totals',count,int(time.time())))
+    dataset._prepared=True
+    return {'status':'prepared','datasetId':dataset.id,'recomputedDates':list(changed),'rows':count}
