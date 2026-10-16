@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from pathlib import Path
 
@@ -51,6 +52,16 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", required=True)
 
     sub.add_parser("init-db")
+
+    catchup_p = sub.add_parser("catch-up", help="Acquire one bounded chain window; no pricing or analysis")
+    catchup_p.add_argument("--chain", required=True, choices=sorted(CHAINS))
+    catchup_p.add_argument("--from-block", type=int, required=True)
+    catchup_p.add_argument("--to-block", type=int, required=True)
+    catchup_p.add_argument("--chunk-size", type=int, default=50_000)
+    catchup_p.add_argument("--source", choices=["auto", "rpc", "envio"], default="auto")
+    catchup_p.add_argument("--confirmations", type=int, help="Explicit alternative to RPC finalized")
+    catchup_p.add_argument("--discover", action="store_true", help="Also scan configured inventory sources in this window")
+    catchup_p.add_argument("--include-experimental-v2", action="store_true")
 
     discover_p = sub.add_parser("discover")
     discover_p.add_argument("--chains", nargs="+", help="Chains to discover")
@@ -147,6 +158,15 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "init-db":
         print(f"initialized {args.db}")
+        return 0
+
+    if args.command == "catch-up":
+        from .catchup import catch_up
+        result = catch_up(conn, args.chain, args.from_block, args.to_block,
+                          source=args.source, confirmations=args.confirmations,
+                          chunk_size=args.chunk_size, discover=args.discover,
+                          experimental=args.include_experimental_v2)
+        print(json.dumps(result, sort_keys=True))
         return 0
 
     if args.command == "discover":

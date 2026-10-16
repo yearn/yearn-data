@@ -256,7 +256,10 @@ def connect(path: str | Path = DEFAULT_DB_PATH) -> sqlite3.Connection:
 
 
 def init_db(conn: sqlite3.Connection) -> None:
+    from .coverage import SCHEMA as COVERAGE_SCHEMA
+
     conn.executescript(SCHEMA)
+    conn.executescript(COVERAGE_SCHEMA)
     _ensure_column(conn, "vault_inventory_events", "action", "TEXT NOT NULL DEFAULT 'added'")
     _ensure_column(conn, "vaults", "management", "TEXT NOT NULL DEFAULT 'yearn'")
     _ensure_column(conn, "vaults", "protocol", "TEXT")
