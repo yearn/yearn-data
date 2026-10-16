@@ -15,6 +15,11 @@ ASSET = "0x" + "3" * 40
 TX = "0x" + "ab" * 32
 
 
+@pytest.fixture(autouse=True)
+def processed_frontier(monkeypatch):
+    monkeypatch.setattr(envio, "latest_processed_block", lambda _chain_id: 1_000)
+
+
 def _v3_report_node(*, block: int = 100, log_index: int = 7) -> dict[str, str | int]:
     return {
         "gain": "10",
@@ -805,3 +810,170 @@ def test_pull_window_rejects_wrong_scope(monkeypatch, change):
     with pytest.raises(ValueError, match="mismatch"):
         envio._pull_window("StrategyReported", envio.V3_REPORT_FIELDS, 1, 100, 100,
             address_field="vaultAddress", address_values=[VAULT])
+
+
+@pytest.mark.parametrize("version", ["v2", "v3"])
+def test_past_discovery_preserves_later_membership_for_forward_import(tmp_path, monkeypatch, version):
+    conn = _db(tmp_path)
+    (_seed_v2_vault if version == "v2" else _seed_vault)(conn)
+    later = "0x" + "5" * 40
+    conn.execute("""INSERT INTO vaults (chain_id, version, address, asset, asset_decimals, updated_at)
+        VALUES (1, ?, ?, ?, 6, 1)""", (version, later, ASSET))
+    source_kind = "registry" if version == "v2" else "role_manager"
+    source_address = V2_ETH_REGISTRIES[0] if version == "v2" else V3_ROLE_MANAGERS[1]
+    _seed_inventory(conn, version=version, source_kind=source_kind, source_address=source_address, block=40)
+    _seed_inventory(conn, version=version, source_kind=source_kind, source_address=source_address,
+                    vault=later, block=101, log_index=2)
+    monkeypatch.setattr(envio, "_import_v3_vault_inventory", lambda *args: 0)
+    monkeypatch.setattr(envio, "_import_v2_vault_inventory", lambda *args: 0)
+    envio.discover_from_envio(conn, ["eth"], include_retired=True, to_block=100)
+    assert conn.execute("SELECT active FROM vaults WHERE address=?", (later,)).fetchone()[0] == 1
+
+    node = (_v2_report_node if version == "v2" else _v3_report_node)(block=110)
+    node["vaultAddress"] = later
+    def reports(entity, fields, chain_id, lo, hi, **kwargs):
+        return [node] if lo <= 110 <= hi and later in kwargs["address_values"] else []
+    monkeypatch.setattr(envio, "_pull_window", reports)
+    assert envio.import_reports_from_envio(conn, ["eth"], versions=[version], to_block=120) == 1
+    assert conn.execute("SELECT vault_address, block_number FROM strategy_reports").fetchone()[:] == (later, 110)
+    entity = "V2StrategyReported" if version == "v2" else "StrategyReported"
+    assert envio._get_envio_cursor(conn, 1, entity) == 120
+
+
+@pytest.mark.parametrize("include_retired", [False, True])
+def test_past_discovery_does_not_reactivate_later_removed_vault(tmp_path, monkeypatch, include_retired):
+    conn = _db(tmp_path)
+    _seed_vault(conn)
+    _seed_inventory(conn, block=40)
+    _seed_inventory(conn, action="removed", block=101, log_index=2)
+    conn.execute("UPDATE vaults SET active=0")
+    conn.commit()
+    monkeypatch.setattr(envio, "_import_v3_vault_inventory", lambda *args: 0)
+    envio.discover_from_envio(conn, ["eth"], skip_v2=True, include_retired=include_retired, to_block=100)
+    assert conn.execute("SELECT active FROM vaults").fetchone()[0] == 0
+    assert envio._vault_asset_map(conn, 1) == {}
+
+
+def test_unrelated_future_inventory_does_not_override_trusted_membership(tmp_path, monkeypatch):
+    conn = _db(tmp_path)
+    _seed_vault(conn)
+    _seed_inventory(conn, block=40)
+    _seed_inventory(conn, action="removed", block=50, log_index=2)
+    _seed_inventory(conn, source_address="0x" + "9" * 40, block=101, log_index=3)
+    monkeypatch.setattr(envio, "_import_v3_vault_inventory", lambda *args: 0)
+    envio.discover_from_envio(conn, ["eth"], skip_v2=True, include_retired=True, to_block=100)
+    assert conn.execute("SELECT active FROM vaults").fetchone()[0] == 0
+
+
+@pytest.mark.parametrize("chain", ["polygon", "kat"])
+def test_unconfigured_v2_discovery_preserves_existing_membership(tmp_path, monkeypatch, chain):
+    conn = _db(tmp_path)
+    _seed_v2_vault(conn)
+    chain_id = CHAINS[chain].chain_id
+    inactive = "0x" + "5" * 40
+    conn.execute("UPDATE vaults SET chain_id=?", (chain_id,))
+    conn.execute("""INSERT INTO vaults (chain_id, version, address, active, updated_at)
+        VALUES (?, 'v2', ?, 0, 1)""", (chain_id, inactive))
+    conn.commit()
+    monkeypatch.setattr(envio, "_import_v3_vault_inventory", lambda *args: 0)
+    monkeypatch.setattr(envio, "_import_v2_vault_inventory", lambda *args: pytest.fail("no configured V2 source"))
+    envio.discover_from_envio(conn, [chain], to_block=100)
+    assert {r["address"]: r["active"] for r in conn.execute("SELECT address, active FROM vaults")} == {
+        VAULT: 1, inactive: 0,
+    }
+
+
+@pytest.mark.parametrize("operation", ["discover", "forward", "bounded"])
+def test_unprocessed_bound_rejected_before_acquisition_or_cursor_changes(tmp_path, monkeypatch, operation):
+    conn = _db(tmp_path)
+    _seed_vault(conn)
+    envio._set_envio_cursor(conn, 1, "StrategyReported", 50)
+    envio._set_envio_cursor(conn, 1, "V3RoleManagerAddedNewVault", 50)
+    conn.commit()
+    monkeypatch.setattr(envio, "_pull_window", lambda *a, **kw: pytest.fail("unprocessed range must not be fetched"))
+    with pytest.raises(ValueError, match="exceeds Envio processed block 1000"):
+        if operation == "discover":
+            envio.discover_from_envio(conn, ["eth"], to_block=1_001)
+        else:
+            envio.import_reports_from_envio(conn, ["eth"], versions=["v3"], to_block=1_001,
+                                            from_block=0 if operation == "bounded" else None)
+    assert envio._get_envio_cursor(conn, 1, "StrategyReported") == 50
+    assert envio._get_envio_cursor(conn, 1, "V3RoleManagerAddedNewVault") == 50
+    assert conn.execute("SELECT COUNT(*) FROM strategy_reports").fetchone()[0] == 0
+    assert conn.execute("SELECT COUNT(*) FROM vault_inventory_events").fetchone()[0] == 0
+    assert conn.execute("SELECT active FROM vaults").fetchone()[0] == 1
+
+
+def test_upper_bound_uses_processed_frontier_and_accepts_exact_boundary(monkeypatch):
+    calls = []
+    monkeypatch.setattr(envio, "latest_processed_block", lambda chain_id: calls.append(chain_id) or 100)
+    assert envio._resolve_to_block("eth", None) == 100
+    assert envio._resolve_to_block("eth", 100) == 100
+    assert calls == [1, 1]
+    with pytest.raises(ValueError, match="non-negative"):
+        envio._resolve_to_block("eth", -1)
+    assert calls == [1, 1]
+
+
+@pytest.mark.parametrize("asset", [ASSET, None])
+def test_retired_vault_missing_from_kong_is_retained_with_unknown_metadata(tmp_path, monkeypatch, asset):
+    conn = _db(tmp_path)
+    _seed_inventory(conn, asset=asset, block=40)
+    _seed_inventory(conn, asset=None, action="removed", block=50, log_index=2)
+    monkeypatch.setattr(envio, "_import_v3_vault_inventory", lambda *args: 0)
+    monkeypatch.setattr(envio, "vault_metadata_from_kong", lambda *args: {})
+    messages = []
+    assert envio.discover_from_envio(conn, ["eth"], skip_v2=True, include_retired=True,
+                                     to_block=100, progress=messages.append) == 1
+    row = conn.execute("SELECT address, asset, asset_decimals, active FROM vaults").fetchone()
+    assert tuple(row) == (VAULT, asset, None, 0)
+    assert any(VAULT in message and "unresolved asset metadata" in message for message in messages)
+    monkeypatch.setattr(envio, "_pull_window", lambda *a, **kw: [_v3_report_node()])
+    assert envio.import_reports_from_envio(conn, ["eth"], versions=["v3"], from_block=0,
+                                          to_block=100, include_inactive=True, vault_addresses=[VAULT]) == 1
+    assert tuple(conn.execute("SELECT asset, asset_decimals, gain_raw FROM strategy_reports").fetchone()) == (asset, None, "10")
+    assert envio._get_envio_cursor(conn, 1, "StrategyReported") is None
+
+
+@pytest.mark.parametrize(("source", "arguments"), [
+    ("envio", ["--find-deployment"]),
+    ("envio", ["--include-non-yearn"]),
+    ("rpc", ["--to-block", "100"]),
+])
+def test_discovery_rejects_unsupported_source_flags_before_acquisition(tmp_path, monkeypatch, source, arguments):
+    from yearn_data import cli
+
+    monkeypatch.setenv("YEARN_DATA_EVENT_SOURCE", source)
+    monkeypatch.setattr(cli, "load_environment", lambda *args: None)
+    monkeypatch.setattr(cli, "discover", lambda *a, **kw: pytest.fail("unsupported RPC flags"))
+    monkeypatch.setattr(cli, "discover_from_envio", lambda *a, **kw: pytest.fail("unsupported Envio flags"))
+    with pytest.raises(ValueError, match=arguments[0]):
+        cli.main(["--db", str(tmp_path / "flags.sqlite"), "discover", "--chains", "eth", *arguments])
+
+
+def test_explicit_rpc_path_retains_non_yearn_report_ingestion(tmp_path, monkeypatch):
+    from yearn_data import cli, indexing
+
+    conn = _db(tmp_path)
+    _seed_vault(conn)
+    conn.execute("UPDATE vaults SET management='non_yearn'")
+    conn.commit()
+    monkeypatch.setenv("YEARN_DATA_EVENT_SOURCE", "rpc")
+    monkeypatch.setattr(cli, "load_environment", lambda *args: None)
+    monkeypatch.setattr(cli, "open_db", lambda _path: conn)
+    discovered = []
+    monkeypatch.setattr(cli, "discover", lambda *a, **kw: discovered.append(kw) or 1)
+    assert cli.main(["discover", "--chains", "eth", "--include-non-yearn"]) == 0
+    assert discovered[0]["include_non_yearn"] is True
+    imported = []
+    def reports(db, chain, version, vaults, **kwargs):
+        imported.extend(v["address"] for v in vaults)
+        assert kwargs["to_block"] == 100
+        insert_strategy_report(db, normalize_strategy_report(
+            1, "v3", VAULT, ASSET, 6, envio._log(_v3_report_node()),
+            1_700_000_000, envio._v3_report_args(_v3_report_node())))
+        return 1
+    monkeypatch.setattr(indexing, "_index_vault_batch", reports)
+    assert cli.main(["index-events", "--chains", "eth", "--to-block", "100"]) == 0
+    assert imported == [VAULT]
+    assert conn.execute("SELECT COUNT(*) FROM strategy_reports").fetchone()[0] == 1

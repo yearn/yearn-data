@@ -11,9 +11,25 @@ Discovery and report imports use Envio by default.
 To use the older RPC path, set `YEARN_DATA_EVENT_SOURCE=rpc`.
 Volume and legacy fee indexing always use RPC.
 
+Envio discovery and report imports cover Yearn-managed vaults only.
+Non-Yearn factory vaults require the RPC workflow for both commands:
+
+```bash
+YEARN_DATA_EVENT_SOURCE=rpc yearn-data discover --chains eth --include-non-yearn
+YEARN_DATA_EVENT_SOURCE=rpc yearn-data index-events --chains eth
+```
+
+Continue running both RPC commands to keep the non-Yearn reporting dimension
+current. Switching report imports to Envio does not refresh those rows.
+`discover --find-deployment` also requires RPC.
+`discover --to-block` requires Envio; unsupported flag/source combinations fail.
+
 The default chains are Ethereum, Polygon, Base, Arbitrum, and Katana.
 Optimism and Fantom are configured for explicit historical RPC work.
 They do not have a configured Envio source.
+Polygon and Katana have no configured V2 discovery source. Discovery leaves
+existing V2 membership flags unchanged on those chains; it does not establish
+whether historical V2 deployments exist there.
 
 ## Import a block range
 
@@ -27,6 +43,9 @@ yearn-data --db data/yearn.sqlite discover --chains eth --include-retired --to-b
 yearn-data --db data/yearn.sqlite index-events --chains eth --include-inactive --from-block "$FROM_BLOCK" --to-block "$TO_BLOCK"
 ```
 
+Both commands reject an upper block that Envio has not processed. Rejected
+bounds do not advance the report or inventory cursors.
+
 An import for a specific range requires both block limits.
 Use `--versions v2` to select V2 reports.
 Use `--vaults ADDRESS ...` to select specific vaults.
@@ -38,11 +57,18 @@ Select the upper block limit before you run them.
 
 Discovery keeps vaults that previously belonged to Yearn.
 It does not mark retired vaults as active again.
+When newer membership events are already cached, discovery at an earlier block
+preserves the existing active flag for those vaults, including later additions
+and removals.
 Use `discover --include-experimental-v2` to include experimental V2 registrations.
 
 A registration event does not prove when a vault was deployed.
 The importer keeps reports that occurred before registration.
 It does not assume token decimals when asset details are missing.
+Inventory vaults absent from Kong are retained with nullable metadata. Progress
+identifies each address with unresolved asset metadata. Their raw reports can
+still be imported; missing decimals and the corresponding valuations stay
+unknown. Refreshing catalog metadata does not rewrite previously stored reports.
 
 Earnings analysis can use stored reports from inactive vaults.
 

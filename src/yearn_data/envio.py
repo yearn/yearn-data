@@ -254,9 +254,12 @@ def latest_processed_block(chain_id: int) -> int:
 
 
 def _resolve_to_block(chain: str, to_block: int | None) -> int:
-    if to_block is not None:
-        return int(to_block)
-    return latest_processed_block(CHAINS[chain].chain_id)
+    if to_block is not None and to_block < 0:
+        raise ValueError("to_block must be non-negative")
+    processed = latest_processed_block(CHAINS[chain].chain_id)
+    if to_block is not None and to_block > processed:
+        raise ValueError(f"{chain}: requested to_block {to_block} exceeds Envio processed block {processed}")
+    return processed if to_block is None else int(to_block)
 
 
 def _cursor_event(entity: str) -> str:
@@ -645,6 +648,7 @@ def _build_envio_vault_records(
     max_block: int | None = None,
     inventory_source_kinds: tuple[str, ...] | None = None,
     inventory_source_addresses: tuple[str, ...] | None = None,
+    progress: ProgressCallback | None = None,
 ) -> list[VaultRecord]:
     """Reuse cached metadata; resolve only missing records through Yearn Kong."""
     cfg = CHAINS[chain]
@@ -685,8 +689,8 @@ def _build_envio_vault_records(
         asset_decimals = metadata["asset_decimals"] if metadata else row["asset_decimals"] if row else None
         name = metadata["name"] if metadata else row["name"] if row else None
         api_version = metadata["api_version"] if metadata else row["api_version"] if row else None
-        if metadata is None and row is None:
-            continue
+        if progress and (asset is None or asset_decimals is None):
+            progress(f"{chain} {version}: retaining {address} with unresolved asset metadata; missing values remain null")
 
         records.append(
             VaultRecord(
@@ -759,7 +763,6 @@ def _upsert_envio_vaults(conn, vaults: list[VaultRecord]) -> int:
             asset_decimals=excluded.asset_decimals,
             name=excluded.name,
             api_version=excluded.api_version,
-            active=1,
             updated_at=excluded.updated_at
         """,
         rows,
@@ -773,22 +776,31 @@ def _set_active_membership(
     chain_id: int,
     version: str,
     addresses: set[str],
+    max_block: int,
+    source_addresses: tuple[str, ...],
 ) -> None:
-    """Keep cached rows and mark only the selected block's membership active."""
+    """Apply membership without overwriting newer cached membership evidence."""
+    address_params = sorted(address.lower() for address in addresses)
+    placeholders = ",".join("?" for _ in address_params) or "NULL"
+    source_placeholders = ",".join("?" for _ in source_addresses)
+    source_kinds = ("role_manager",) if version == "v3" else ("registry", "registry2", "registry_experimental")
+    kind_placeholders = ",".join("?" for _ in source_kinds)
     conn.execute(
-        "UPDATE vaults SET active=0 WHERE chain_id=? AND version=? AND management='yearn'",
-        (chain_id, version),
+        f"""
+        UPDATE vaults
+        SET active=CASE WHEN lower(address) IN ({placeholders}) THEN 1 ELSE 0 END
+        WHERE chain_id=? AND version=? AND management='yearn'
+          AND NOT EXISTS (
+              SELECT 1 FROM vault_inventory_events e
+              WHERE e.chain_id=vaults.chain_id AND e.version=vaults.version
+                AND lower(e.vault_address)=lower(vaults.address)
+                AND lower(e.source_address) IN ({source_placeholders})
+                AND e.source_kind IN ({kind_placeholders}) AND e.block_number>?
+          )
+        """,
+        (*address_params, chain_id, version, *(address.lower() for address in source_addresses),
+         *source_kinds, max_block),
     )
-    if addresses:
-        placeholders = ",".join("?" for _ in addresses)
-        conn.execute(
-            f"""
-            UPDATE vaults
-            SET active=1
-            WHERE chain_id=? AND version=? AND lower(address) IN ({placeholders})
-            """,
-            (chain_id, version, *(address.lower() for address in addresses)),
-        )
     conn.commit()
 
 
@@ -807,7 +819,8 @@ def discover_from_envio(
         cfg = CHAINS[chain]
         hi = _resolve_to_block(chain, to_block)
         _import_v3_vault_inventory(conn, chain, hi, progress)
-        if not skip_v2:
+        has_v2_source = not skip_v2 and cfg.chain_id in V2_REGISTRIES_BY_CHAIN
+        if has_v2_source:
             _import_v2_vault_inventory(conn, chain, hi, progress)
         role_manager = V3_ROLE_MANAGERS.get(cfg.chain_id)
         active_v3 = (
@@ -848,6 +861,7 @@ def discover_from_envio(
             sorted(v3_addresses),
             source_address_override=role_manager,
             max_block=hi,
+            progress=progress,
         )
         records.extend(
             _build_envio_vault_records(
@@ -858,11 +872,12 @@ def discover_from_envio(
                 max_block=hi,
                 inventory_source_kinds=v2_source_kinds,
                 inventory_source_addresses=V2_REGISTRIES_BY_CHAIN.get(cfg.chain_id),
+                progress=progress,
             )
         )
         total += _upsert_envio_vaults(conn, records)
         if role_manager is not None:
-            _set_active_membership(conn, cfg.chain_id, "v3", active_v3)
-        if not skip_v2:
-            _set_active_membership(conn, cfg.chain_id, "v2", v2_addresses)
+            _set_active_membership(conn, cfg.chain_id, "v3", active_v3, hi, (role_manager,))
+        if has_v2_source:
+            _set_active_membership(conn, cfg.chain_id, "v2", v2_addresses, hi, V2_REGISTRIES_BY_CHAIN[cfg.chain_id])
     return total

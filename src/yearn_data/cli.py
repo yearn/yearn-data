@@ -151,6 +151,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "discover":
         if event_source == "envio":
+            if args.find_deployment:
+                raise ValueError("--find-deployment requires YEARN_DATA_EVENT_SOURCE=rpc")
             if args.include_non_yearn:
                 raise ValueError("--include-non-yearn is only available with YEARN_DATA_EVENT_SOURCE=rpc")
             count = discover_from_envio(
@@ -163,6 +165,8 @@ def main(argv: list[str] | None = None) -> int:
                 progress=progress,
             )
         else:
+            if args.to_block is not None:
+                raise ValueError("discover --to-block requires YEARN_DATA_EVENT_SOURCE=envio")
             if args.include_retired:
                 raise ValueError("--include-retired requires Envio discovery")
             if args.include_experimental_v2:
