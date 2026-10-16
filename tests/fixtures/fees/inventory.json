@@ -394,5 +394,53 @@
     "contract_family": "yearn-v3-tokenized-strategy",
     "deployment_block": 4644824,
     "is_retired": 0
+  },
+  {
+    "address": "0x0dec85e74a92c52b7f708c4b10207d9560cefaf0",
+    "api_version": "0.4.3",
+    "asset_address": "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83",
+    "asset_decimals": 18,
+    "chain_id": 250,
+    "classification_source": "onchain",
+    "classification_status": "complete",
+    "contract_family": "yearn-v2-vault",
+    "deployment_block": 16476356,
+    "is_retired": 1
+  },
+  {
+    "address": "0x27cbf0fddb356a2d1ebdef604cfa90f8f300d34e",
+    "api_version": "0.4.3",
+    "asset_address": "0x21be370d5312f44cb42ce377bc9b8a0cef1a4c83",
+    "asset_decimals": 18,
+    "chain_id": 250,
+    "classification_source": "onchain",
+    "classification_status": "complete",
+    "contract_family": "yearn-v2-vault",
+    "deployment_block": 41553311,
+    "is_retired": 1
+  },
+  {
+    "address": "0x2c850cced00ce2b14aa9d658b7cad5df659493db",
+    "api_version": "0.4.3",
+    "asset_address": "0x29b0da86e484e1c0029b56e817912d778ac0ec69",
+    "asset_decimals": 18,
+    "chain_id": 250,
+    "classification_source": "onchain",
+    "classification_status": "complete",
+    "contract_family": "yearn-v2-vault",
+    "deployment_block": 16844703,
+    "is_retired": 1
+  },
+  {
+    "address": "0xcbcaf8cb8cbeafa927ecee0c5c56560f83e9b7d9",
+    "api_version": "0.4.3",
+    "asset_address": "0x58e57ca18b7a47112b877e31929798cd3d703b0f",
+    "asset_decimals": 18,
+    "chain_id": 250,
+    "classification_source": "onchain",
+    "classification_status": "complete",
+    "contract_family": "yearn-v2-vault",
+    "deployment_block": 25557852,
+    "is_retired": 1
   }
 ]
